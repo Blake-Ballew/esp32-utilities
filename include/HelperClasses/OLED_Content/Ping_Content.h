@@ -114,6 +114,7 @@ public:
         time = Navigation_Manager::getTime().value();
         date = Navigation_Manager::getDate().value();
 
+        uint64_t recipient = msg == nullptr ? 0 : msg->sender;
         uint64_t sender = Network_Manager::userID;
         const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
 
@@ -134,7 +135,7 @@ public:
 #endif
 
         const char *status = statusList[statusIdx].as<const char *>();
-        Message_Ping *msgPing = new Message_Ping(time, date, sender, senderName, msgID, R, G, B, lat, lng, status);
+        Message_Ping *msgPing = new Message_Ping(time, date, recipient, sender, senderName, msgID, R, G, B, lat, lng, status);
 
         uint8_t returnCode;
         bool isBroadcast = msg == nullptr;
@@ -150,7 +151,6 @@ public:
 #ifdef DEBUG
             Serial.println("Sending broadcast");
 #endif
-            returnCode = Network_Manager::queueBroadcastMessage(msgPing);
         }
         else
         {
@@ -158,8 +158,11 @@ public:
             Serial.print("Sending direct message to: ");
             Serial.println(msg->senderName);
 #endif
-            returnCode = Network_Manager::queueMessageToUser(msg->sender, msgPing);
         }
+
+        returnCode = Network_Manager::queueMessage(msgPing);
+        Serial.print("Return code: ");
+        Serial.println(returnCode);
 
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
@@ -200,7 +203,7 @@ public:
             break;
         }
 
-        display->fillRect(OLED_WIDTH, OLED_HEIGHT, OLED_WIDTH - 24, OLED_HEIGHT - 8, BLACK);
+        // display->fillRect(OLED_WIDTH, OLED_HEIGHT, OLED_WIDTH - 24, OLED_HEIGHT - 8, BLACK);
         display->display();
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }

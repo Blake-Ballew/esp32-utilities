@@ -17,6 +17,8 @@ namespace
 {
     const char *MESSAGE_TYPE_KEY PROGMEM = "t";
     const char *MESSAGE_TYPE_ID PROGMEM = "i";
+    const char *MESSAGE_TYPE_BOUNCES_LEFT PROGMEM = "B";
+    const char *MESSAGE_TYPE_RECIPIENT PROGMEM = "R ";
     const char *MESSAGE_TYPE_FROM PROGMEM = "f";
     const char *MESSAGE_TYPE_FROM_NAME PROGMEM = "n";
     const char *MESSAGE_TYPE_TIME PROGMEM = "T";
@@ -43,6 +45,9 @@ public:
 
     MessageType msgType;
     uint32_t msgID;
+    uint8_t bouncesLeft;
+
+    uint64_t recipient = 0;
 
     uint64_t sender;
     char senderName[NAME_LENGTH + 1];
@@ -55,14 +60,16 @@ public:
         this->msgType = MESSAGE_BASE;
     }
     // Constructor for message created by this node
-    Message_Base(uint32_t time, uint32_t date, uint64_t sender, const char *senderName, uint32_t msgID)
+    Message_Base(uint32_t time, uint32_t date, uint64_t recipient, uint64_t sender, const char *senderName, uint32_t msgID)
     {
         messageOpened = false;
 
         this->time = time;
         this->date = date;
+        this->recipient = recipient;
         this->sender = sender;
         this->msgType = MESSAGE_BASE;
+        this->bouncesLeft = 5;
 
         memcpy(this->senderName, senderName, NAME_LENGTH);
         if (msgID != 0)
@@ -106,6 +113,8 @@ public:
         ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
         doc[MESSAGE_TYPE_KEY] = msgType;
         doc[MESSAGE_TYPE_ID] = msgID;
+        doc[MESSAGE_TYPE_BOUNCES_LEFT] = bouncesLeft;
+        doc[MESSAGE_TYPE_RECIPIENT] = recipient;
         doc[MESSAGE_TYPE_FROM] = sender;
         doc[MESSAGE_TYPE_FROM_NAME] = senderName;
         doc[MESSAGE_TYPE_TIME] = time;
@@ -132,6 +141,12 @@ public:
         }
 
         msgID = doc[MESSAGE_TYPE_ID];
+        if (doc.containsKey(MESSAGE_TYPE_BOUNCES_LEFT))
+            bouncesLeft = doc[MESSAGE_TYPE_BOUNCES_LEFT];
+        else
+            bouncesLeft = 0;
+        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
+            recipient = doc[MESSAGE_TYPE_RECIPIENT];
         sender = doc[MESSAGE_TYPE_FROM];
         strcpy(senderName, doc[MESSAGE_TYPE_FROM_NAME].as<const char *>());
         time = doc[MESSAGE_TYPE_TIME];
@@ -168,14 +183,14 @@ public:
         uint8_t diffHours = (timeDiff & 0xFF000000) >> 24;
         uint8_t diffMinutes = (timeDiff & 0xFF0000) >> 16;
 
-        #if DEBUG == 1
+#if DEBUG == 1
         Serial.print("Time diff: ");
         Serial.println(timeDiff);
         Serial.print("Hours: ");
         Serial.println(diffHours);
         Serial.print("Minutes: ");
         Serial.println(diffMinutes);
-        #endif
+#endif
 
         if (timeDiff > 0xFFFFFFFF)
         {
@@ -206,8 +221,8 @@ public:
         this->msgType = MESSAGE_PING;
     }
 
-    Message_Ping(uint32_t time, uint32_t date, uint64_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
-        : Message_Base(time, date, sender, senderName, msgID)
+    Message_Ping(uint32_t time, uint32_t date, uint64_t recipient, uint64_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
+        : Message_Base(time, date, recipient, sender, senderName, msgID)
     {
         this->msgType = MESSAGE_PING;
         messageOpened = false;
@@ -242,6 +257,7 @@ public:
         ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
         doc[MESSAGE_TYPE_KEY] = msgType;
         doc[MESSAGE_TYPE_ID] = msgID;
+        doc[MESSAGE_TYPE_RECIPIENT] = recipient;
         doc[MESSAGE_TYPE_FROM] = sender;
         doc[MESSAGE_TYPE_FROM_NAME] = senderName;
         doc[MESSAGE_TYPE_TIME] = time;
@@ -297,6 +313,8 @@ public:
 #endif
 
         msgID = doc[MESSAGE_TYPE_ID];
+        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
+            recipient = doc[MESSAGE_TYPE_RECIPIENT];
         sender = doc[MESSAGE_TYPE_FROM];
         const char *sendName = doc[MESSAGE_TYPE_FROM_NAME].as<const char *>();
         size_t nameLen = strlen(sendName);

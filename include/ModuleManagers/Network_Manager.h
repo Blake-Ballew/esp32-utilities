@@ -41,11 +41,10 @@ struct MessageQueueItem
 class Network_Manager
 {
 public:
-    static RHMesh *manager;
+    static RHReliableDatagram *manager;
     static RH_DRIVER driver;
     static RHHardwareSPI rf_spi;
 
-    static std::map<uint8_t, uint64_t> nodeIDs;
     static std::map<uint64_t, Message_Base *> messages;
     static std::map<uint64_t, Message_Base *> messagesSent;
 
@@ -61,7 +60,7 @@ public:
     // Implement later. Software defined channel hopping. Only store mesh nodes on the same channel
     // static uint8_t channel;
 
-    // Essentially an IP address
+    // Essentially an IP address. Will be used to determine the node type
     static uint8_t nodeID;
 
     // User ID. Will eventually be used as a public key
@@ -71,9 +70,11 @@ public:
 
     static uint8_t sendBroadcastMessage(Message_Base *msg);
     static uint8_t sendMessageToUser(uint64_t user, Message_Base *msg);
+    static void rebroadcastMessage(Message_Base *msg);
 
     static uint8_t queueMessageToUser(uint64_t user, Message_Base *msg);
     static uint8_t queueBroadcastMessage(Message_Base *msg);
+    static uint8_t queueMessage(Message_Base *msg);
 
     static void listenForMessages(void *taskParams);
 
@@ -94,7 +95,7 @@ public:
     static void loadStatusList();
 
 private:
-    static uint8_t findNodeIDofUser(uint64_t user);
+    // static uint8_t findNodeIDofUser(uint64_t user);
 
     static ArduinoJson::DynamicJsonDocument statusList;
     static uint8_t messageDataBuffer[];

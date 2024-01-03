@@ -1,5 +1,5 @@
-#include "Navigation_Manager.h"
 #include "OLED_Window.h"
+#include "Navigation_Manager.h"
 #include "GPS_Content.h"
 
 class GPS_Window : public OLED_Window

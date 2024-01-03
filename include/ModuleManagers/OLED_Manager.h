@@ -14,6 +14,7 @@
 #include "Ping_Window.h"
 #include "Home_Window.h"
 #include "SOS_Window.h"
+#include "Saved_Msg_Window.h"
 #include "globalDefines.h"
 // #include "esp_event_base.h"
 
@@ -64,6 +65,7 @@ public:
     static void toggleSilentMode(void *arg);
     static void quickActionMenu(void *arg);
     static void openSOS(void *arg);
+    static void openSavedMsg(void *arg);
 
 private:
     static TickType_t lastButtonPressTick;

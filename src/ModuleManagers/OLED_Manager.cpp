@@ -201,6 +201,7 @@ void OLED_Manager::initializeCallbacks()
     registerCallback(ACTION_TOGGLE_SILENT_MODE, toggleSilentMode);
     registerCallback(ACTION_GENERATE_QUICK_ACTION_MENU, quickActionMenu);
     registerCallback(ACTION_SOS, openSOS);
+    registerCallback(ACTION_OPEN_SAVED_MESSAGES_WINDOW, openSavedMsg);
 #if DEBUG == 1
     Serial.println("OLED_Manager::initializeCallbacks: done");
 #endif
@@ -229,7 +230,8 @@ void OLED_Manager::registerCallback(uint32_t resourceID, fp callback)
     OLED_Manager::callbackMap[resourceID] = callback;
 }
 
-void OLED_Manager::displayLowBatteryShutdownNotice() {
+void OLED_Manager::displayLowBatteryShutdownNotice()
+{
     display.clearDisplay();
     display.setCursor(OLED_Content::centerTextHorizontal(11), OLED_Content::selectTextLine(2));
     display.println("Low Battery");
@@ -320,7 +322,7 @@ void OLED_Manager::generateSettingsWindow(void *arg)
 {
     OLED_Settings_Window *newWindow = new OLED_Settings_Window(currentWindow);
     OLED_Manager::attachNewWindow(newWindow);
-    //newWindow->drawWindow();
+    // newWindow->drawWindow();
 }
 
 void OLED_Manager::generateStatusesWindow(void *arg)
@@ -328,7 +330,7 @@ void OLED_Manager::generateStatusesWindow(void *arg)
     Statuses_Window *window = new Statuses_Window(currentWindow);
     OLED_Manager::attachNewWindow(window);
 
-    //window->drawWindow();
+    // window->drawWindow();
 }
 
 void OLED_Manager::generateMenuWindow(void *arg)
@@ -342,6 +344,7 @@ void OLED_Manager::generateMenuWindow(void *arg)
     newWindow->content = list;
 
     list->addNode(new Content_Node(ACTION_GENERATE_STATUSES_WINDOW, "Messages", 8));
+    list->addNode(new Content_Node(ACTION_OPEN_SAVED_MESSAGES_WINDOW, "Saved Messages", 15));
     list->addNode(new Content_Node(ACTION_GENERATE_SETTINGS_WINDOW, "Settings", 8));
     list->addNode(new Content_Node(ACTION_TOGGLE_FLASHLIGHT, "Flashlight", 10));
     list->addNode(new Content_Node(ACTION_GENERATE_COMPASS_WINDOW, "Compass", 7));
@@ -351,7 +354,7 @@ void OLED_Manager::generateMenuWindow(void *arg)
     list->addNode(new Content_Node(ACTION_REBOOT_DEVICE, "Reboot Device", 14));
     list->addNode(new Content_Node(ACTION_SHUTDOWN_DEVICE, "Shutdown Device", 15));
 
-    //currentWindow->drawWindow();
+    // currentWindow->drawWindow();
 }
 
 void OLED_Manager::generateCompassWindow(void *arg)
@@ -359,7 +362,7 @@ void OLED_Manager::generateCompassWindow(void *arg)
     Compass_Window *window = new Compass_Window(currentWindow);
     OLED_Manager::attachNewWindow(window);
 
-    //window->drawWindow();
+    // window->drawWindow();
 }
 
 void OLED_Manager::generateGPSWindow(void *arg)
@@ -444,4 +447,13 @@ void OLED_Manager::openSOS(void *arg)
     OLED_Window *sosWindow = new SOS_Window(currentWindow);
     OLED_Manager::attachNewWindow(sosWindow);
     sosWindow->drawWindow();
+}
+
+void OLED_Manager::openSavedMsg(void *arg)
+{
+    OLED_Window *newWindow = new Saved_Msg_Window(currentWindow);
+    OLED_Manager::attachNewWindow(newWindow);
+
+    currentWindow->drawWindow();
+    vTaskDelay(pdMS_TO_TICKS(200));
 }

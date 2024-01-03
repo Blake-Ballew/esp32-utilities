@@ -112,9 +112,11 @@ void LED_Manager::buzzerNotification(uint16_t frequency, size_t duration)
     tone(BUZZER_PIN, frequency, duration);
 }
 
-void LED_Manager::ledShutdownAnimation() {
+void LED_Manager::ledShutdownAnimation()
+{
     float brightness = 1.0f;
-    while (brightness >= 0.0f){
+    while (brightness >= 0.0f)
+    {
         for (uint8_t i = 0; i < NUM_COMPASS_LEDS; i++)
         {
             leds[i] = CRGB(255 * brightness, 0, 0);
@@ -183,6 +185,11 @@ void LED_Manager::pulseCircle(uint8_t r, uint8_t g, uint8_t b, size_t tick)
         leds[i] = CRGB(r * brightness, g * brightness, b * brightness);
     }
     FastLED.show();
+}
+
+void LED_Manager::displayScrollWheel(size_t currentIdx, size_t listSize)
+{
+    interpolateLEDsDegrees((currentIdx / (float)listSize) * 360.0f, 500.0f, r, g, b);
 }
 
 void LED_Manager::interpolateLEDsDegrees(double deg, double distanceAway, uint8_t r, uint8_t g, uint8_t b)

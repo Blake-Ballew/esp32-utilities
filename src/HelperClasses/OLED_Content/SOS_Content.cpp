@@ -132,9 +132,9 @@ void SOS_Content::sendSOS()
 #endif
 
     const char *status = SOS_CONTENT_MESSAGE;
-    Message_Ping *msgPing = new Message_Ping(time, date, sender, senderName, msgID, R, G, B, lat, lng, status);
+    Message_Ping *msgPing = new Message_Ping(time, date, 0, sender, senderName, msgID, R, G, B, lat, lng, status);
 
-    uint8_t returnCode = Network_Manager::queueBroadcastMessage(msgPing);
+    uint8_t returnCode = Network_Manager::queueMessage(msgPing);
 }
 
 void SOS_Content::sendOkay()
@@ -170,7 +170,7 @@ void SOS_Content::sendOkay()
 #endif
 
     const char *status = OK_CONTENT_MESSAGE;
-    Message_Ping *msgPing = new Message_Ping(time, date, sender, senderName, msgID, R, G, B, lat, lng, status);
+    Message_Ping *msgPing = new Message_Ping(time, date, 0, sender, senderName, msgID, R, G, B, lat, lng, status);
 
-    uint8_t returnCode = Network_Manager::queueBroadcastMessage(msgPing);
+    uint8_t returnCode = Network_Manager::queueMessage(msgPing);
 }

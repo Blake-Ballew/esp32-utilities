@@ -1,13 +1,20 @@
 #include "Settings_Manager.h"
 
 ArduinoJson::DynamicJsonDocument Settings_Manager::settings = ArduinoJson::DynamicJsonDocument(SIZE_SETTINGS_OBJECT);
+ArduinoJson::DynamicJsonDocument Settings_Manager::savedMessages = ArduinoJson::DynamicJsonDocument(SIZE_SAVED_MESSAGES_OBJECT);
+
 // EepromStream Settings_Manager::eepromStream = EepromStream(EEPROM_SETTINGS_ADDR, EEPROM_SETTINGS_SIZE);
 
 void Settings_Manager::init()
 {
+#ifdef USE_SPIFFS
+    SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED);
+#else
     EEPROM.begin(SIZE_SETTINGS_OBJECT);
+#endif
     // #if UPLOAD_SETTINGS != 1
     readSettingsFromEEPROM();
+    readMessagesFromEEPROM();
     // #endif
 }
 
@@ -17,18 +24,43 @@ bool Settings_Manager::readSettingsFromEEPROM()
     Serial.println();
     Serial.println("Reading settings from EEPROM");
 #endif
+#ifdef USE_SPIFFS
+    File settingsFile = SPIFFS.open("/settings.json", FILE_READ);
+    if (!settingsFile)
+    {
+        Serial.println("Failed to open settings file");
+        return false;
+    }
+    deserializeMsgPack(settings, settingsFile);
+    settingsFile.close();
+    settings.shrinkToFit();
+    return true;
+#else
     EepromStream eepromStream = EepromStream(EEPROM_SETTINGS_ADDR, SIZE_SETTINGS_OBJECT);
     deserializeMsgPack(settings, eepromStream);
     settings.shrinkToFit();
     return true;
+#endif
 }
 
 bool Settings_Manager::writeSettingsToEEPROM()
 {
+#ifdef USE_SPIFFS
+    File settingsFile = SPIFFS.open("/settings.json", FILE_WRITE);
+    if (!settingsFile)
+    {
+        Serial.println("Failed to open settings file");
+        return false;
+    }
+    serializeMsgPack(settings, settingsFile);
+    settingsFile.close();
+    return true;
+#else
     EepromStream eepromStream = EepromStream(EEPROM_SETTINGS_ADDR, SIZE_SETTINGS_OBJECT);
     serializeMsgPack(settings, eepromStream);
     eepromStream.flush();
     return true;
+#endif
 }
 
 bool Settings_Manager::readSettingsFromSerial()
@@ -54,6 +86,114 @@ bool Settings_Manager::writeSettingsToSerial()
     serializeJson(settings, Serial);
     Serial.println();
     return true;
+}
+
+bool Settings_Manager::readMessagesFromEEPROM()
+{
+#ifdef USE_SPIFFS
+    File msgFile = SPIFFS.open("/messages.json", FILE_READ);
+    if (!msgFile)
+    {
+        Serial.println("Failed to open messages file");
+        return false;
+    }
+    deserializeMsgPack(savedMessages, msgFile);
+    msgFile.close();
+    return true;
+#else
+    EepromStream eepromStream = EepromStream(EEPROM_SAVED_MESSAGES_ADDR, SIZE_SAVED_MESSAGES_OBJECT);
+    deserializeMsgPack(savedMessages, eepromStream);
+    return true;
+#endif
+}
+
+bool Settings_Manager::writeMessagesToEEPROM()
+{
+#ifdef USE_SPIFFS
+    File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
+    if (!msgFile)
+    {
+        Serial.println("Failed to open messages file");
+        return false;
+    }
+    serializeMsgPack(savedMessages, msgFile);
+    msgFile.close();
+    return true;
+#else
+    EepromStream eepromStream = EepromStream(EEPROM_SAVED_MESSAGES_ADDR, SIZE_SAVED_MESSAGES_OBJECT);
+    serializeMsgPack(savedMessages, eepromStream);
+    eepromStream.flush();
+    return true;
+#endif
+}
+
+bool Settings_Manager::readMessagesFromSerial()
+{
+    if (Serial.available() == 0)
+    {
+        return false;
+    }
+    while (Serial.available() > 0)
+    {
+        deserializeJson(savedMessages, Serial);
+    }
+    return true;
+}
+
+bool Settings_Manager::writeMessagesToSerial()
+{
+    if (Serial.availableForWrite() == 0)
+    {
+        return false;
+    }
+    serializeJson(savedMessages, Serial);
+    Serial.println();
+    return true;
+}
+
+bool Settings_Manager::addMessage(const char *msg, size_t msgLength)
+{
+    if (msgLength > maxMsgLength)
+    {
+        return false;
+    }
+    if (savedMessages["Messages"].as<JsonArray>().size() >= maxMsges)
+    {
+        return false;
+    }
+    savedMessages.add(msg);
+    return true;
+}
+
+bool Settings_Manager::deleteMessage(size_t msgIdx)
+{
+    if (msgIdx >= savedMessages.size())
+    {
+        return false;
+    }
+    savedMessages["Messages"].as<JsonArray>().remove(msgIdx);
+    return true;
+}
+
+bool Settings_Manager::deleteMessage(JsonArray::iterator msgIt)
+{
+    savedMessages["Messages"].as<JsonArray>().remove(msgIt);
+    return true;
+}
+
+size_t Settings_Manager::getNumMsges()
+{
+    return savedMessages["Messages"].as<JsonArray>().size();
+}
+
+JsonArray::iterator Settings_Manager::getMsgIteratorBegin()
+{
+    return savedMessages["Messages"].as<JsonArray>().begin();
+}
+
+JsonArray::iterator Settings_Manager::getMsgIteratorEnd()
+{
+    return savedMessages["Messages"].as<JsonArray>().end();
 }
 
 bool Settings_Manager::readStatusesFromEEPROM(ArduinoJson::JsonDocument &doc)
@@ -179,11 +319,45 @@ void Settings_Manager::flashSettings()
     Compass["Z_MAX"] = 0;
     doc["GPS"]["refreshDelayms"] = 5000;
 
-    serializeMsgPack(doc, Serial);
-    serializeMsgPack(doc, eepromStream);
-
     // ========================== End Generated Code ==========================
 
-    eepromStream.flush();
+    // Write default messages to EEPROM
+    DynamicJsonDocument msgDoc(SIZE_SAVED_MESSAGES_OBJECT);
+    JsonArray msgArray = msgDoc.createNestedArray("Messages");
+    msgArray.add("Meet here");
+    msgArray.add("Follow me");
+    msgArray.add("Point of interest");
+
+#ifdef USE_SPIFFS
+    File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
+    if (!msgFile)
+    {
+        Serial.println("Failed to open messages file");
+        return;
+    }
+    serializeJson(msgDoc, Serial);
+    serializeMsgPack(msgDoc, msgFile);
+    File settingsFile = SPIFFS.open("/settings.json", FILE_WRITE);
+    if (!settingsFile)
+    {
+        Serial.println("Failed to open settings file");
+        return;
+    }
+    serializeJson(doc, Serial);
+    serializeMsgPack(doc, settingsFile);
+    settingsFile.close();
+    msgFile.close();
+    msgDoc.clear();
     doc.clear();
+#else
+    EepromStream msgStream = EepromStream(EEPROM_SAVED_MESSAGES_ADDR, SIZE_SAVED_MESSAGES_OBJECT);
+    serializeJson(msgDoc, Serial);
+    serializeMsgPack(msgDoc, msgStream);
+    serializeJson(doc, Serial);
+    serializeMsgPack(doc, eepromStream);
+    msgStream.flush();
+    eepromStream.flush();
+    msgDoc.clear();
+    doc.clear();
+#endif
 }

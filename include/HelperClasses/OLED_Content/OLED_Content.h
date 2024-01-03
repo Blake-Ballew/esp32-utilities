@@ -23,6 +23,7 @@ enum class ContentType
     EDIT_ENUM,
     HOME,
     SOS,
+    SAVED_MSG,
 };
 // Abstract class for OLED content
 class OLED_Content
@@ -75,7 +76,8 @@ public:
     static size_t getUintLength(uint64_t num)
     {
         size_t len = 0;
-        if (num == 0) {
+        if (num == 0)
+        {
             return 1;
         }
         while (num > 0)

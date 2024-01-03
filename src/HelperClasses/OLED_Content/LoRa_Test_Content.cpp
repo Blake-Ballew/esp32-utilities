@@ -110,9 +110,9 @@ uint8_t LoRa_Test_Content::sendBroadcast()
     uint32_t time = Navigation_Manager::getTime().value();
     uint32_t date = Navigation_Manager::getDate().value();
     const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
-    Message_Base msg = Message_Base(time, date, Network_Manager::userID, senderName, esp_random());
+    Message_Base msg = Message_Base(time, date, 0, Network_Manager::userID, senderName, esp_random());
 
-    return Network_Manager::sendBroadcastMessage(&msg);
+    return Network_Manager::queueMessage(&msg);
 }
 
 void LoRa_Test_Content::updateMessages()

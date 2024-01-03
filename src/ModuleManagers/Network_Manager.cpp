@@ -2,13 +2,12 @@
 
 RHHardwareSPI Network_Manager::rf_spi;
 RH_DRIVER Network_Manager::driver(RFM95_CS, RFM95_Int, rf_spi);
-RHMesh *Network_Manager::manager;
+RHReliableDatagram *Network_Manager::manager;
 
 StaticQueue_t Network_Manager::messageQueueBuffer;
 QueueHandle_t Network_Manager::messageQueue;
 uint8_t Network_Manager::messageDataBuffer[MESSAGE_QUEUE_MAX * sizeof(MessageQueueItem)];
 
-std::map<uint8_t, uint64_t> Network_Manager::nodeIDs;
 std::map<uint64_t, Message_Base *> Network_Manager::messages;
 std::map<uint64_t, Message_Base *> Network_Manager::messagesSent;
 
@@ -52,7 +51,7 @@ bool Network_Manager::init(TaskHandle_t *taskHandle)
 
         Serial.println(userID, HEX);
 #endif
-        nodeID = Settings_Manager::settings["Radio"]["NodeID"]["cfgVal"].as<uint8_t>() | DEFAULT_NODE_ID;
+        nodeID = DEFAULT_NODE_ID;
         freq = Settings_Manager::settings["Radio"]["Frequency"]["cfgVal"] | RF95_FREQ;
         size_t cfgIdx = Settings_Manager::settings["Radio"]["Modem Config"]["cfgVal"].as<size_t>();
         modemConfig = (RH_RF95::ModemConfigChoice)Settings_Manager::settings["Radio"]["Modem Config"]["vals"].as<JsonArray>()[cfgIdx].as<uint32_t>();
@@ -64,7 +63,7 @@ bool Network_Manager::init(TaskHandle_t *taskHandle)
         freq = RF95_FREQ;
     }
     // rf_spi.setPins(RF95_SPI_MISO, RF95_SPI_MOSI, RF95_SPI_SCK);
-    manager = new RHMesh(driver, nodeID);
+    manager = new RHReliableDatagram(driver, nodeID);
     manager->setTimeout(10000);
     if (!manager->init())
     {
@@ -99,10 +98,6 @@ bool Network_Manager::init(TaskHandle_t *taskHandle)
 
 uint8_t Network_Manager::sendBroadcastMessage(Message_Base *message)
 {
-#if DEBUG == 1
-    Serial.print("Sending broadcast message from nodeID: ");
-    Serial.println(manager->thisAddress());
-#endif
     size_t msgLen = 0;
     uint8_t *msg = message->serialize(msgLen);
     uint8_t ret;
@@ -114,31 +109,23 @@ uint8_t Network_Manager::sendBroadcastMessage(Message_Base *message)
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
-#if DEBUG == 1
-    Serial.print("Sent broadcast message of length: ");
-    Serial.println(msgLen);
-    Serial.print("RHMesh.sendtoWait to broadcast returned with code: ");
-    Serial.println(ret);
-    Serial.println("Deserialized to: ");
-    Message_Base::printFromBuffer(msg);
-    Serial.println();
-    Serial.print("Raw bytes: ");
-    for (uint8_t i = 0; i < msgLen; i++)
-    {
-        Serial.print(msg[i]);
-        Serial.print(" ");
-    }
-    Serial.println();
-#endif
     delete msg;
-    return ret;
+
+    if (ret)
+    {
+        return RH_ROUTER_ERROR_NONE;
+    }
+    else
+    {
+        return RH_ROUTER_ERROR_UNABLE_TO_DELIVER;
+    }
 }
 
 uint8_t Network_Manager::sendMessageToUser(uint64_t user, Message_Base *message)
 {
     size_t msgLen = 0;
     uint8_t *msg = message->serialize(msgLen);
-    uint8_t nodeID = findNodeIDofUser(user);
+    uint8_t nodeID = 1;
 #if DEBUG == 1
     Serial.print("Sending message to nodeID: ");
     Serial.println(nodeID);
@@ -168,6 +155,24 @@ uint8_t Network_Manager::sendMessageToUser(uint64_t user, Message_Base *message)
 #endif
     delete msg;
     return ret;
+}
+
+// Review later
+void Network_Manager::rebroadcastMessage(Message_Base *msg)
+{
+    size_t msgLen = 0;
+    uint8_t *msgBytes = msg->serialize(msgLen);
+    uint8_t ret;
+    for (uint8_t sendLoop = 0; sendLoop < numRetries; sendLoop++)
+    {
+        ret = manager->sendtoWait(msgBytes, msgLen, RH_BROADCAST_ADDRESS);
+        if (ret == RH_ROUTER_ERROR_NONE)
+        {
+            break;
+        }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+    delete msgBytes;
 }
 
 uint8_t Network_Manager::queueBroadcastMessage(Message_Base *msg)
@@ -212,6 +217,28 @@ uint8_t Network_Manager::queueMessageToUser(uint64_t user, Message_Base *msg)
     return returnCode;
 }
 
+uint8_t Network_Manager::queueMessage(Message_Base *msg)
+{
+    uint8_t returnCode = RETURN_CODE_UNABLE_TO_QUEUE;
+    MessageQueueItem item;
+    item.isBroadcast = true;
+    item.user = msg->recipient;
+    item.msg = msg;
+    item.returnCode = &returnCode;
+    xQueueSend(messageQueue, &item, 0);
+    unsigned long beginTimer = millis();
+    while (millis() - beginTimer < MESSAGE_QUEUE_TIMEOUT)
+    {
+        if (returnCode != RETURN_CODE_UNABLE_TO_QUEUE)
+        {
+            return returnCode;
+        }
+    }
+
+    return returnCode;
+}
+
+/*
 uint8_t Network_Manager::findFreeNodeID()
 {
 #if DEBUG == 1
@@ -234,6 +261,7 @@ uint8_t Network_Manager::findFreeNodeID()
     }
     return id;
 }
+*/
 
 void Network_Manager::listenForMessages(void *taskParams)
 {
@@ -303,44 +331,8 @@ void Network_Manager::listenForMessages(void *taskParams)
                 }
                 }
 
-                // Update nodeID map
-                uint8_t savedNodeID = findNodeIDofUser(msg->sender);
-#if DEBUG == 1
-                if (savedNodeID != 255)
-                {
-                    Serial.print("Saved nodeID for UserID 0x");
-                    Serial.print(msg->sender, HEX);
-                    Serial.print(": ");
-                    Serial.println(savedNodeID);
-                }
-                else
-                {
-                    Serial.print("UserID 0x");
-                    Serial.print(msg->sender, HEX);
-                    Serial.println(" not found in nodeID map");
-                }
-#endif
-                if (savedNodeID == 255)
-                {
-                    nodeIDs[from] = msg->sender;
-                }
-                else if (savedNodeID != from)
-                {
-                    nodeIDs.erase(savedNodeID);
-                    nodeIDs[from] = msg->sender;
-                }
-
-                // Check if sender has same nodeID as this node
-                if (from == nodeID)
-                {
-#if DEBUG == 1
-                    Serial.println("This node's ID is currently in use. Finding new ID");
-#endif
-                    nodeID = findFreeNodeID();
-                    manager->setThisAddress(nodeID);
-                }
-
                 bool sendNotification = true;
+                bool rebroadcast = true;
 
                 // Update message map
                 if (messages.find(msg->sender) != messages.end())
@@ -348,10 +340,25 @@ void Network_Manager::listenForMessages(void *taskParams)
                     if (messages.find(msg->sender)->second->msgID == msg->msgID)
                     {
                         sendNotification = false;
+                        rebroadcast = false;
                     }
                     delete messages[msg->sender];
                 }
                 messages[msg->sender] = msg;
+
+                // Check if message needs to bounce
+                if (msg->bouncesLeft > 0)
+                {
+                    msg->bouncesLeft--;
+                }
+                else
+                {
+                    rebroadcast = false;
+                }
+
+                if (rebroadcast)
+                {
+                }
 
                 // TODO: send interrupt to OLED_Manager to update screen
                 if (taskHandle != nullptr && sendNotification)
@@ -366,6 +373,7 @@ void Network_Manager::listenForMessages(void *taskParams)
     }
 }
 
+/*
 uint8_t Network_Manager::findNodeIDofUser(uint64_t user)
 {
     std::map<uint8_t, uint64_t>::iterator it;
@@ -379,6 +387,7 @@ uint8_t Network_Manager::findNodeIDofUser(uint64_t user)
     // 255 is broadcast address, so it is returned if the user is not found
     return 255;
 }
+*/
 
 Message_Base *Network_Manager::findMessageByIdx(uint16_t idx)
 {
