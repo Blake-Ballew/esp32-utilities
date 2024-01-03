@@ -22,7 +22,7 @@ public:
         display = disp;
         type = ContentType::PING;
         this->msg = msg;
-        statusList = Network_Manager::getStatusList();
+        statusList = Settings_Manager::savedMessages["Messages"].as<JsonArray>();
         statusIdx = 0;
     }
 

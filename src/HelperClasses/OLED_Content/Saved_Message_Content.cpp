@@ -28,7 +28,9 @@ void Saved_Msg_Content::printContent()
     display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
     // Print message
-    display->setCursor(OLED_Content::centerTextHorizontal(Settings_Manager::savedMessages["Messages"][msgIdx].as<const char *>()), OLED_Content::centerTextVertical());
+    display->setCursor(OLED_Content::centerTextHorizontal(18), OLED_Content::selectTextLine(2));
+    display->printf("Total saved %d/%d", msgListSize, Settings_Manager::maxMsges);
+    display->setCursor(OLED_Content::centerTextHorizontal(Settings_Manager::savedMessages["Messages"][msgIdx].as<const char *>()), OLED_Content::selectTextLine(3));
     display->print(Settings_Manager::savedMessages["Messages"][msgIdx].as<const char *>());
 
     LED_Manager::displayScrollWheel(msgIdx, msgListSize);
