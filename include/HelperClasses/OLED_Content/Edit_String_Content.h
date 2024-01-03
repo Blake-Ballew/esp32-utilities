@@ -135,7 +135,11 @@ public:
 
     const char *getString() { return currStr; }
 
-    void clearString() { delete[] currStr; }
+    void clearString()
+    {
+        delete[] currStr;
+        currStr = nullptr;
+    }
 
 private:
     static void timerCallback(TimerHandle_t xTimer)

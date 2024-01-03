@@ -38,14 +38,14 @@ void Saved_Msg_Content::printContent()
 
 void Saved_Msg_Content::encUp()
 {
-    if (Settings_Manager::savedMessages["Messages"].size() == 0)
+    if (msgListSize == 0)
     {
         return;
     }
 
     if (msgIdx == 0)
     {
-        msgIdx = Settings_Manager::savedMessages["Messages"].size() - 1;
+        msgIdx = msgListSize - 1;
     }
     else
     {
@@ -57,13 +57,13 @@ void Saved_Msg_Content::encUp()
 
 void Saved_Msg_Content::encDown()
 {
-    if (Settings_Manager::savedMessages["Messages"].size() == 0)
+    if (msgListSize == 0)
     {
         return;
     }
 
     msgIdx++;
-    if (msgIdx >= Settings_Manager::savedMessages["Messages"].size())
+    if (msgIdx >= msgListSize)
     {
         msgIdx = 0;
     }

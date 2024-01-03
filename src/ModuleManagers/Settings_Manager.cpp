@@ -155,23 +155,42 @@ bool Settings_Manager::addMessage(const char *msg, size_t msgLength)
 {
     if (msgLength > maxMsgLength)
     {
+#if DEBUG == 1
+        Serial.println("Message too long");
+#endif
         return false;
     }
     if (savedMessages["Messages"].as<JsonArray>().size() >= maxMsges)
     {
+#if DEBUG == 1
+        Serial.println("Too many messages");
+#endif
         return false;
     }
-    savedMessages.add(msg);
+    savedMessages["Messages"].as<JsonArray>().add(msg);
     return true;
 }
 
 bool Settings_Manager::deleteMessage(size_t msgIdx)
 {
-    if (msgIdx >= savedMessages.size())
+
+    if (msgIdx >= savedMessages["Messages"].size())
     {
+#if DEBUG == 1
+        Serial.printf("msgIdx: %d is out of bounds\n", msgIdx);
+#endif
         return false;
     }
+#if DEBUG == 1
+    Serial.print("Deleting message at index: ");
+    Serial.println(msgIdx);
+    Serial.printf("Message: %s\n", savedMessages["Messages"][msgIdx].as<const char *>());
+    Serial.printf("Array size before: %d\n", savedMessages["Messages"].as<JsonArray>().size());
+#endif
     savedMessages["Messages"].as<JsonArray>().remove(msgIdx);
+#if DEBUG == 1
+    Serial.printf("Array size after: %d\n", savedMessages["Messages"].as<JsonArray>().size());
+#endif
     return true;
 }
 

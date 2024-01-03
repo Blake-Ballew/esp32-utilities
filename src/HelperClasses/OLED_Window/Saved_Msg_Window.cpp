@@ -55,7 +55,10 @@ void Saved_Msg_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
             {
                 memcpy(newMsg, editContent->getString(), Settings_Manager::maxMsgLength + 1);
                 editContent->stop();
-                Settings_Manager::addMessage(newMsg, Settings_Manager::maxMsgLength);
+#if DEBUG == 1
+                Serial.printf("Message Saving: %s\n", newMsg);
+#endif
+                msgContent->saveMsg(newMsg, Settings_Manager::maxMsgLength);
                 editContent->clearString();
                 OLED_Content::clearContentArea();
                 display->setCursor(OLED_Content::centerTextHorizontal(13), OLED_Content::centerTextVertical());
@@ -63,9 +66,13 @@ void Saved_Msg_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
                 display->display();
                 saveList = true;
                 vTaskDelay(pdMS_TO_TICKS(1000));
-                this->content = this->msgContent;
-                this->content->printContent();
             }
+            this->content = this->msgContent;
+            this->content->printContent();
+            this->assignButton(ACTION_NONE, 1, "", 0);
+            this->assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, 2, "Delete", 6);
+            this->assignButton(ACTION_BACK, 3, "Back", 4);
+            this->assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, 4, "New Message", 11);
         }
         break;
     }
