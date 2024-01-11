@@ -1,6 +1,7 @@
 #include "OLED_Window.h"
 #include "Navigation_Manager.h"
 #include "GPS_Content.h"
+#include "Edit_String_Content.h"
 
 class GPS_Window : public OLED_Window
 {
@@ -11,6 +12,8 @@ public:
     void execBtnCallback(uint8_t buttonNumber, void *arg);
 
 private:
+    GPS_Content *gpsContent;
+    Edit_String_Content *editStringContent;
     static GPS_Window *thisInstance;
     static TimerHandle_t updateTimer;
     static StaticTimer_t updateTimerBuffer;

@@ -67,7 +67,8 @@ void Home_Content::printContent()
         display->setCursor(OLED_Content::alignTextLeft(8), OLED_Content::selectTextLine(2));
         display->printf(":%d", unreadMsgs);
 
-        if (unreadMsgs > 0 ) {
+        if (unreadMsgs > 0)
+        {
             display->drawLine(OLED_WIDTH / 2, OLED_HEIGHT - 1, (OLED_WIDTH / 2) - 3, OLED_HEIGHT - 3, WHITE);
             display->drawLine((OLED_WIDTH / 2) + 1, OLED_HEIGHT - 1, (OLED_WIDTH / 2) + 4, OLED_HEIGHT - 3, WHITE);
             display->setCursor(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(4));

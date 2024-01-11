@@ -2,6 +2,7 @@
 
 ArduinoJson::DynamicJsonDocument Settings_Manager::settings = ArduinoJson::DynamicJsonDocument(SIZE_SETTINGS_OBJECT);
 ArduinoJson::DynamicJsonDocument Settings_Manager::savedMessages = ArduinoJson::DynamicJsonDocument(SIZE_SAVED_MESSAGES_OBJECT);
+ArduinoJson::DynamicJsonDocument Settings_Manager::savedCoordinates = ArduinoJson::DynamicJsonDocument(SIZE_COORDS_OBJECT);
 
 // EepromStream Settings_Manager::eepromStream = EepromStream(EEPROM_SETTINGS_ADDR, EEPROM_SETTINGS_SIZE);
 
@@ -15,6 +16,7 @@ void Settings_Manager::init()
     // #if UPLOAD_SETTINGS != 1
     readSettingsFromEEPROM();
     readMessagesFromEEPROM();
+    readCoordsFromEEPROM();
     // #endif
 }
 
@@ -215,6 +217,109 @@ JsonArray::iterator Settings_Manager::getMsgIteratorEnd()
     return savedMessages["Messages"].as<JsonArray>().end();
 }
 
+bool Settings_Manager::readCoordsFromEEPROM()
+{
+    File coordFile = SPIFFS.open("/coords.json", FILE_READ);
+    if (!coordFile)
+    {
+        Serial.println("Failed to open coords file");
+        return false;
+    }
+    deserializeMsgPack(savedCoordinates, coordFile);
+    coordFile.close();
+    return true;
+}
+
+bool Settings_Manager::writeCoordsToEEPROM()
+{
+    File coordFile = SPIFFS.open("/coords.json", FILE_WRITE);
+    if (!coordFile)
+    {
+        Serial.println("Failed to open coords file");
+        return false;
+    }
+    serializeMsgPack(savedCoordinates, coordFile);
+    coordFile.close();
+    return true;
+}
+
+bool Settings_Manager::readCoordsFromSerial()
+{
+    if (Serial.available() == 0)
+    {
+        return false;
+    }
+    while (Serial.available() > 0)
+    {
+        deserializeJson(savedCoordinates, Serial);
+    }
+    return true;
+}
+
+bool Settings_Manager::writeCoordsToSerial()
+{
+    if (Serial.availableForWrite() == 0)
+    {
+        return false;
+    }
+    serializeJson(savedCoordinates, Serial);
+    Serial.println();
+    return true;
+}
+
+bool Settings_Manager::addCoordinate(const char *name, float lat, float lon)
+{
+    if (savedCoordinates["Coords"].as<JsonArray>().size() >= maxCoords)
+    {
+#if DEBUG == 1
+        Serial.println("Too many coordinates");
+#endif
+        return false;
+    }
+    JsonObject coord = savedCoordinates["Coords"].as<JsonArray>().createNestedObject();
+    coord["n"] = name;
+    coord["la"] = lat;
+    coord["lo"] = lon;
+    return true;
+}
+
+bool Settings_Manager::deleteCoordinate(size_t coordIdx)
+{
+    if (coordIdx >= savedCoordinates["Coords"].size())
+    {
+#if DEBUG == 1
+        Serial.printf("coordIdx: %d is out of bounds\n", coordIdx);
+#endif
+        return false;
+    }
+#if DEBUG == 1
+    Serial.print("Deleting coordinate at index: ");
+    Serial.println(coordIdx);
+    Serial.printf("Coordinate: %s\n", savedCoordinates["Coords"][coordIdx]["n"].as<const char *>());
+    Serial.printf("Array size before: %d\n", savedCoordinates["Coords"].as<JsonArray>().size());
+#endif
+    savedCoordinates["Coords"].as<JsonArray>().remove(coordIdx);
+#if DEBUG == 1
+    Serial.printf("Array size after: %d\n", savedCoordinates["Coords"].as<JsonArray>().size());
+#endif
+    return true;
+}
+
+size_t Settings_Manager::getNumCoords()
+{
+    return savedCoordinates["Coords"].as<JsonArray>().size();
+}
+
+JsonArray::iterator Settings_Manager::getCoordIteratorBegin()
+{
+    return savedCoordinates["Coords"].as<JsonArray>().begin();
+}
+
+JsonArray::iterator Settings_Manager::getCoordIteratorEnd()
+{
+    return savedCoordinates["Coords"].as<JsonArray>().end();
+}
+
 bool Settings_Manager::readStatusesFromEEPROM(ArduinoJson::JsonDocument &doc)
 {
     EepromStream statusStream = EepromStream(EEPROM_STATUSES_ADDR, SIZE_STATUSES_OBJECT);
@@ -338,8 +443,6 @@ void Settings_Manager::flashSettings()
     Compass["Z_MAX"] = 0;
     doc["GPS"]["refreshDelayms"] = 5000;
 
-    // ========================== End Generated Code ==========================
-
     // Write default messages to EEPROM
     DynamicJsonDocument msgDoc(SIZE_SAVED_MESSAGES_OBJECT);
     JsonArray msgArray = msgDoc.createNestedArray("Messages");
@@ -347,15 +450,27 @@ void Settings_Manager::flashSettings()
     msgArray.add("Follow me");
     msgArray.add("Point of interest");
 
+    DynamicJsonDocument coordDoc(SIZE_COORDS_OBJECT);
+
+    JsonArray Coords = coordDoc["Coords"].to<JsonArray>();
+
+    JsonObject Coords_0 = Coords.createNestedObject();
+    Coords_0["la"] = 33.7488;
+    Coords_0["lo"] = -84.3877;
+    Coords_0["n"] = "Atlanta";
+
+    JsonObject Coords_1 = Coords.createNestedObject();
+    Coords_1["la"] = 37.7749;
+    Coords_1["lo"] = -122.4194;
+    Coords_1["n"] = "San Francisco";
+
+    JsonObject Coords_2 = Coords.createNestedObject();
+    Coords_2["la"] = 40.7128;
+    Coords_2["lo"] = -74.0060;
+    Coords_2["n"] = "New York";
+
 #ifdef USE_SPIFFS
-    File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
-    if (!msgFile)
-    {
-        Serial.println("Failed to open messages file");
-        return;
-    }
-    serializeJson(msgDoc, Serial);
-    serializeMsgPack(msgDoc, msgFile);
+    // Save settings
     File settingsFile = SPIFFS.open("/settings.json", FILE_WRITE);
     if (!settingsFile)
     {
@@ -364,10 +479,33 @@ void Settings_Manager::flashSettings()
     }
     serializeJson(doc, Serial);
     serializeMsgPack(doc, settingsFile);
+
+    // Save messages
+    File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
+    if (!msgFile)
+    {
+        Serial.println("Failed to open messages file");
+        return;
+    }
+    serializeJson(msgDoc, Serial);
+    serializeMsgPack(msgDoc, msgFile);
+
+    // Save coords
+    File coordFile = SPIFFS.open("/coords.json", FILE_WRITE);
+    if (!coordFile)
+    {
+        Serial.println("Failed to open coords file");
+        return;
+    }
+    serializeJson(coordDoc, Serial);
+    serializeMsgPack(coordDoc, coordFile);
+
+    coordFile.close();
     settingsFile.close();
     msgFile.close();
     msgDoc.clear();
     doc.clear();
+    coordDoc.clear();
 #else
     EepromStream msgStream = EepromStream(EEPROM_SAVED_MESSAGES_ADDR, SIZE_SAVED_MESSAGES_OBJECT);
     serializeJson(msgDoc, Serial);

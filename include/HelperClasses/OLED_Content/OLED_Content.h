@@ -24,6 +24,7 @@ enum class ContentType
     HOME,
     SOS,
     SAVED_MSG,
+    SAVE_CONFIRM
 };
 // Abstract class for OLED content
 class OLED_Content
@@ -32,9 +33,24 @@ public:
     ContentType type = ContentType::NONE;
     static Adafruit_SSD1306 *display;
 
-    virtual void encUp();
-    virtual void encDown();
-    virtual void printContent();
+    const char *btn1text = "";
+    const char *btn2text = "";
+    const char *btn3text = "";
+    const char *btn4text = "";
+
+    int btn1TextLength = 0;
+    int btn2TextLength = 0;
+    int btn3TextLength = 0;
+    int btn4TextLength = 0;
+
+    uint32_t btn1CallbackID = ACTION_NONE;
+    uint32_t btn2CallbackID = ACTION_NONE;
+    uint32_t btn3CallbackID = ACTION_NONE;
+    uint32_t btn4CallbackID = ACTION_NONE;
+
+    virtual void encUp() = 0;
+    virtual void encDown() = 0;
+    virtual void printContent() = 0;
 
     virtual void passButtonPress(uint8_t btnNumber) {}
 

@@ -12,6 +12,7 @@ class Settings_Manager
 public:
     static ArduinoJson::DynamicJsonDocument settings;
     static ArduinoJson::DynamicJsonDocument savedMessages;
+    static ArduinoJson::DynamicJsonDocument savedCoordinates;
     // static EepromStream eepromStream;
 
     static void init();
@@ -28,6 +29,17 @@ public:
     static JsonArray::iterator getMsgIteratorBegin();
     static JsonArray::iterator getMsgIteratorEnd();
 
+    // Saved Coordinates
+    static bool readCoordsFromEEPROM();
+    static bool writeCoordsToEEPROM();
+    static bool readCoordsFromSerial();
+    static bool writeCoordsToSerial();
+    static bool addCoordinate(const char *name, float lat, float lon);
+    static bool deleteCoordinate(size_t coordIdx);
+    static size_t getNumCoords();
+    static JsonArray::iterator getCoordIteratorBegin();
+    static JsonArray::iterator getCoordIteratorEnd();
+
     static bool readSettingsFromEEPROM();
     static bool writeSettingsToEEPROM();
 
@@ -41,4 +53,5 @@ public:
 
     const static int maxMsgLength = 23;
     const static int maxMsges = 100;
+    const static int maxCoords = 100;
 };

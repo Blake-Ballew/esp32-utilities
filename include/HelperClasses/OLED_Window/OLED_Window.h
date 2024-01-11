@@ -37,6 +37,24 @@ public:
         if (content != NULL)
             content->encDown();
     }
+
+    virtual void switchContent(OLED_Content *content, bool copyButtons)
+    {
+        if (content == nullptr)
+        {
+            return;
+        }
+
+        this->content = content;
+
+        if (copyButtons)
+        {
+            assignButton(content->btn1CallbackID, BUTTON_1, content->btn1text, content->btn1TextLength);
+            assignButton(content->btn2CallbackID, BUTTON_2, content->btn2text, content->btn2TextLength);
+            assignButton(content->btn3CallbackID, BUTTON_3, content->btn3text, content->btn3TextLength);
+            assignButton(content->btn4CallbackID, BUTTON_4, content->btn4text, content->btn4TextLength);
+        }
+    }
     // void execBtnCallback(uint8_t buttonNumber, void *arg);
 
     virtual ~OLED_Window();

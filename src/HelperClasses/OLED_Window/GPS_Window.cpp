@@ -8,7 +8,9 @@ GPS_Window::GPS_Window(OLED_Window *parent) : OLED_Window(parent)
 {
     assignButton(ACTION_BACK, BUTTON_3, "Back", 4);
     btnCallback = handleBtnInterrupt;
-    content = new GPS_Content(display);
+    editStringContent = new Edit_String_Content(display);
+    gpsContent = new GPS_Content(display);
+    content = gpsContent;
     thisInstance = this;
     xTimerStart(this->updateTimer, 0);
 }
@@ -23,7 +25,10 @@ GPS_Window::~GPS_Window()
         thisInstance = nullptr;
         xTimerStop(updateTimer, 0);
     }
-    delete content;
+    delete gpsContent;
+    gpsContent = nullptr;
+    delete editStringContent;
+    editStringContent = nullptr;
     content = nullptr;
 }
 
