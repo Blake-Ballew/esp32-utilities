@@ -109,10 +109,10 @@ public:
         cursorCharPos = 0;
     }
 
-    void passButtonPress(uint8_t btnNumber)
+    void passButtonPress(uint8_t inputID)
     {
         // Delete
-        if (btnNumber == 1)
+        if (inputID == 1)
         {
             if (cursorPos > 0)
             {
@@ -122,7 +122,7 @@ public:
         }
 
         // Enter
-        if (btnNumber == 4)
+        if (inputID == 4)
         {
             if (cursorPos < currStrLen)
             {

@@ -3,7 +3,9 @@
 Save_Confirm_Content::Save_Confirm_Content(Adafruit_SSD1306 *disp)
 {
     display = disp;
-    type = ContentType::SAVE_CONFIRM;
+    type = ContentType::SAVE_CONFIRM; 
+
+    /*
     btn2text = "Save Msg";
     btn4text = "Save Coords";
     btn3text = "Back";
@@ -15,6 +17,7 @@ Save_Confirm_Content::Save_Confirm_Content(Adafruit_SSD1306 *disp)
     btn2CallbackID = ACTION_DEFER_CALLBACK_TO_WINDOW;
     btn4CallbackID = ACTION_DEFER_CALLBACK_TO_WINDOW;
     btn3CallbackID = ACTION_DEFER_CALLBACK_TO_WINDOW;
+    */
 }
 
 Save_Confirm_Content::~Save_Confirm_Content()

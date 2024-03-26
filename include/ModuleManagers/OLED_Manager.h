@@ -45,6 +45,9 @@ public:
     static void processEventCallback(uint32_t resourceID, void *event_args);
     static void registerCallback(uint32_t resourceID, fp callback);
     static void displayLowBatteryShutdownNotice();
+    static void switchWindowState(uint8_t inputID);
+    static void callFunctionalWindowState(uint8_t inputID);
+    static void returnFromFunctionWindowState(uint8_t inputID);
 
     // Menu functions
 

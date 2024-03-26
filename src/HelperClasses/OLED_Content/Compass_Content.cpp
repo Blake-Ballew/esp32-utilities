@@ -87,12 +87,12 @@ void Compass_Content::encDown()
 {
 }
 
-void Compass_Content::Pause()
+void Compass_Content::stop()
 {
     xTimerStop(this->updateTimer, 0);
 }
 
-void Compass_Content::Resume()
+void Compass_Content::start()
 {
     xTimerStart(this->updateTimer, 0);
 }

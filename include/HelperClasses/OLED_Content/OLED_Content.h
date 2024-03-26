@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <map>
 #include "globalDefines.h"
 
 enum class ContentType
@@ -24,8 +25,17 @@ enum class ContentType
     HOME,
     SOS,
     SAVED_MSG,
-    SAVE_CONFIRM
+    SAVE_CONFIRM,
+    CONFIRM
 };
+
+// Struct for Callbacks
+struct CallbackData
+{
+    uint32_t callbackID;
+    char displayText[BUTTON_TEXT_MAX + 1];
+};
+
 // Abstract class for OLED content
 class OLED_Content
 {
@@ -33,26 +43,17 @@ public:
     ContentType type = ContentType::NONE;
     static Adafruit_SSD1306 *display;
 
-    const char *btn1text = "";
-    const char *btn2text = "";
-    const char *btn3text = "";
-    const char *btn4text = "";
-
-    int btn1TextLength = 0;
-    int btn2TextLength = 0;
-    int btn3TextLength = 0;
-    int btn4TextLength = 0;
-
-    uint32_t btn1CallbackID = ACTION_NONE;
-    uint32_t btn2CallbackID = ACTION_NONE;
-    uint32_t btn3CallbackID = ACTION_NONE;
-    uint32_t btn4CallbackID = ACTION_NONE;
+    // map inputID to callback struct
+    std::map<uint8_t, CallbackData> buttonCallbacks;
 
     virtual void encUp() = 0;
     virtual void encDown() = 0;
     virtual void printContent() = 0;
 
-    virtual void passButtonPress(uint8_t btnNumber) {}
+    virtual void start() {}
+    virtual void stop() {}
+
+    virtual void passButtonPress(uint8_t inputID) {}
 
     static void drawBatteryIcon(size_t x, size_t y);
     static void drawBatteryIcon(size_t x, size_t y, uint8_t percentage);

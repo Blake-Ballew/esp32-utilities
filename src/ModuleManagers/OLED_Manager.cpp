@@ -80,7 +80,7 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
             if (OLED_Manager::currentWindow != NULL)
             {
                 uint32_t callbackID = 0;
-                uint8_t buttonNumber = 0;
+                uint8_t inputID = 0;
 
                 if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_1))
                 {
@@ -88,7 +88,7 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                     if (OLED_Manager::currentWindow->btn1CallbackID != 0)
                     {
                         callbackID = OLED_Manager::currentWindow->btn1CallbackID;
-                        buttonNumber = 1;
+                        inputID = BUTTON_1;
                         LED_Manager::pulseButton(1);
                         // processEventCallback(OLED_Manager::currentWindow->btn1CallbackID, NULL);
                         //  OLED_Manager::callbackMap[OLED_Manager::currentWindow->btn1CallbackID](event_data);
@@ -99,7 +99,7 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                     if (OLED_Manager::currentWindow->btn2CallbackID != 0)
                     {
                         callbackID = OLED_Manager::currentWindow->btn2CallbackID;
-                        buttonNumber = 2;
+                        inputID = 2;
                         LED_Manager::pulseButton(2);
                         // processEventCallback(OLED_Manager::currentWindow->btn2CallbackID, NULL);
                     }
@@ -109,7 +109,7 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                     if (OLED_Manager::currentWindow->btn3CallbackID != 0)
                     {
                         callbackID = OLED_Manager::currentWindow->btn3CallbackID;
-                        buttonNumber = 3;
+                        inputID = 3;
                         LED_Manager::pulseButton(3);
                         // processEventCallback(OLED_Manager::currentWindow->btn3CallbackID, NULL);
                     }
@@ -119,7 +119,7 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                     if (OLED_Manager::currentWindow->btn4CallbackID != 0)
                     {
                         callbackID = OLED_Manager::currentWindow->btn4CallbackID;
-                        buttonNumber = 4;
+                        inputID = 4;
                         LED_Manager::pulseButton(4);
                         // processEventCallback(OLED_Manager::currentWindow->btn4CallbackID, NULL);
                     }
@@ -128,11 +128,13 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                 {
                     OLED_Manager::currentWindow->encUp();
                     LED_Manager::pulseButton(6);
+                    inputID = 5;
                 }
                 else if (notification & BIT_SHIFT((uint8_t)EVENT_ENCODER_UP))
                 {
                     OLED_Manager::currentWindow->encDown();
                     LED_Manager::pulseButton(7);
+                    inputID = 6;
                 }
                 else if (notification & BIT_SHIFT((uint8_t)EVENT_MESSAGE_RECEIVED))
                 {
@@ -153,28 +155,37 @@ void OLED_Manager::processButtonPressEvent(void *taskParams)
                     {
                         LED_Manager::buzzerNotification();
                     }
-                }
-                else if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_SOS))
-                {
-                    openSOS(nullptr);
-                    LED_Manager::pulseButton(5);
-                }
-                if (callbackID != 0)
-                {
 
-                    OLED_Manager::currentWindow->execBtnCallback(buttonNumber, NULL);
-                    if (callbackID != ACTION_DEFER_CALLBACK_TO_WINDOW)
+                    // If old callback system isn't used, check new system
+                    if (callbackID == 0)
                     {
-                        processEventCallback(callbackID, NULL);
+                        CallbackData *callbackData = OLED_Manager::currentWindow->getCallbackDataByInputID(inputID);
+                        if (callbackData != nullptr)
+                        {
+                            callbackID = callbackData->callbackID;
+                        }
+                    }
+
+                    if (callbackID != 0)
+                    {
+                        OLED_Manager::currentWindow->execBtnCallback(inputID, NULL);
+                        if (callbackID < 0xF0000000)
+                        {
+                            processEventCallback(callbackID, NULL);
+                        }
+                        else if (callbackID == ACTION_SWITCH_WINDOW_STATE)
+                        {
+                            OLED_Manager::currentWindow->switchWindowState(inputID);
+                        }
                     }
                 }
-            }
-            currentWindow->drawWindow();
+                currentWindow->drawWindow();
 
-            // reset notification
-            notification = 0;
-            lastButtonPressTick = xTaskGetTickCount();
-            enableInterrupts();
+                // reset notification
+                notification = 0;
+                lastButtonPressTick = xTaskGetTickCount();
+                enableInterrupts();
+            }
         }
     }
 }
@@ -456,4 +467,31 @@ void OLED_Manager::openSavedMsg(void *arg)
 
     currentWindow->drawWindow();
     vTaskDelay(pdMS_TO_TICKS(200));
+}
+
+void OLED_Manager::switchWindowState(uint8_t inputID)
+{
+    if (currentWindow != nullptr)
+    {
+        currentWindow->currentState->processInput(inputID);
+        currentWindow->switchWindowState(inputID);
+    }
+}
+
+void OLED_Manager::callFunctionalWindowState(uint8_t inputID)
+{
+    if (currentWindow != nullptr)
+    {
+        currentWindow->currentState->processInput(inputID);
+        currentWindow->callFunctionState(inputID);
+    }
+}
+
+void OLED_Manager::returnFromFunctionWindowState(uint8_t inputID)
+{
+    if (currentWindow != nullptr)
+    {
+        currentWindow->currentState->processInput(inputID);
+        currentWindow->returnFromFunctionState(inputID);
+    }
 }

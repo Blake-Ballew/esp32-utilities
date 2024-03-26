@@ -3,6 +3,13 @@
 #include "OLED_Content.h"
 #include "ArduinoJson.h"
 
+struct Enum_Data
+{
+    ArduinoJson::JsonArray valueArray;
+    ArduinoJson::JsonArray textArray;
+    size_t selectedIndex;
+};
+
 class Edit_Enum_Content : public OLED_Content
 {
 public:
@@ -62,6 +69,11 @@ public:
         display->setCursor(OLED_Content::centerTextHorizontal(enumText), OLED_Content::centerTextVertical());
         display->print(enumText);
         display->display();
+    }
+
+    void assignEnum(Enum_Data *enumValues)
+    {
+        assignEnum(enumValues->valueArray, enumValues->textArray, enumValues->selectedIndex);
     }
 
     void assignEnum(ArduinoJson::JsonArray valueArray, ArduinoJson::JsonArray textArray, size_t index = 0)

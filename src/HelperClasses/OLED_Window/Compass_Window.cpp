@@ -7,6 +7,12 @@ Compass_Window::Compass_Window(OLED_Window *parent) : OLED_Window(parent)
     // btnCallback = handleBtnInterrupt;
     content = new Compass_Content(display);
     compassContent = (Compass_Content *)content;
+    compassState = new Compass_Display_State(compassContent);
+    currentState = compassState;
+
+    State_Transfer_Data transferData;
+
+    currentState->enterState(transferData);
 }
 
 Compass_Window::~Compass_Window()
@@ -15,49 +21,32 @@ Compass_Window::~Compass_Window()
     Serial.println("Compass_Window::~Compass_Window()");
 #endif
 
+    // Clean up state
+    State_Transfer_Data transferData;
+    compassState->exitState();
+    delete compassState;
+    compassState = nullptr;
+
+    // Clean up content
     delete content;
     content = nullptr;
+
+    // Clear LED ring
+    LED_Manager::clearRing();
 }
 
 void Compass_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
 {
-    uint8_t callbackID;
-    switch (buttonNumber)
-    {
-    case BUTTON_1:
-        callbackID = btn1CallbackID;
-        break;
-    case BUTTON_2:
-        callbackID = btn2CallbackID;
-        break;
-    case BUTTON_3:
-        callbackID = btn3CallbackID;
-        break;
-    case BUTTON_4:
-        callbackID = btn4CallbackID;
-        break;
-    default:
-        break;
-    }
-
-    switch (callbackID)
-    {
-    case ACTION_BACK:
-        LED_Manager::clearRing();
-        break;
-    default:
-        break;
-    }
 }
 
 void Compass_Window::Pause()
 {
-    compassContent->Pause();
+    compassContent->stop();
 }
 
 void Compass_Window::Resume()
 {
-    compassContent->Pause();
+    compassContent->start();
 }
 
 /* void Compass_Window::updateCompass(TimerHandle_t xTimer)

@@ -4,6 +4,7 @@
 #include "Navigation_Manager.h"
 #include "QMC5883LCompass.h"
 #include "Compass_Content.h"
+#include "Compass_States.h"
 #include "LED_Manager.h"
 
 class Compass_Window : public OLED_Window
@@ -19,4 +20,6 @@ public:
 
 private:
     Compass_Content *compassContent;
+
+    Compass_Display_State *compassState;
 };

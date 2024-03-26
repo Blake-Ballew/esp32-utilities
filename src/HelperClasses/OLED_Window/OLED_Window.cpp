@@ -104,6 +104,11 @@ void OLED_Window::drawWindow()
         content->printContent();
     else
         display->display();
+
+    if (currentState != nullptr)
+    {
+        currentState->displayState();
+    }
 }
 
 OLED_Window *OLED_Window::getParentWindow()
@@ -113,31 +118,29 @@ OLED_Window *OLED_Window::getParentWindow()
 
 void OLED_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
 {
-    uint8_t callbackID;
-    switch (buttonNumber)
-    {
-    case BUTTON_1:
-        callbackID = btn1CallbackID;
-        break;
-    case BUTTON_2:
-        callbackID = btn2CallbackID;
-        break;
-    case BUTTON_3:
-        callbackID = btn3CallbackID;
-        break;
-    case BUTTON_4:
-        callbackID = btn4CallbackID;
-        break;
-    default:
-        break;
-    }
+    CallbackData callback;
 
-    switch (callbackID)
+    if (currentState != nullptr)
     {
-    case ACTION_BACK:
-        break;
-    default:
-        break;
+        if (currentState->buttonCallbacks.find(buttonNumber) != currentState->buttonCallbacks.end())
+        {
+            callback = currentState->buttonCallbacks[buttonNumber];
+            if (callback.callbackID == ACTION_DEFER_CALLBACK_TO_CONTENT &&
+                currentState->renderContent != nullptr)
+            {
+                content->passButtonPress(buttonNumber);
+            }
+        }
+    }
+    else
+    {
+        if (content != nullptr)
+        {
+            if (content->buttonCallbacks.find(buttonNumber) != content->buttonCallbacks.end())
+            {
+                callback = content->buttonCallbacks[buttonNumber];
+            }
+        }
     }
 }
 

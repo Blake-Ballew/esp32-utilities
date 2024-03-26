@@ -15,8 +15,8 @@ public:
     void encUp();
     void encDown();
 
-    void Pause();
-    void Resume();
+    void start();
+    void stop();
 
 private:
     static TimerHandle_t updateTimer;

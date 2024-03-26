@@ -30,6 +30,7 @@
       "-Iinclude/HelperClasses/LED_Patterns",
       "-Iinclude/HelperClasses/OLED_Content",
       "-Iinclude/HelperClasses/OLED_Window",
+      "-Iinclude/HelperClasses/Window_States",
       "-Iinclude/HelperClasses/Message_Types",
       "-Iinclude/ModuleManagers",
       "-Isrc/",
@@ -37,6 +38,7 @@
       "-Isrc/HelperClasses/LED_Patterns",
       "-Isrc/HelperClasses/OLED_Content",
       "-Isrc/HelperClasses/OLED_Window",
+      "-Isrc/HelperClasses/Window_States",
       "-Isrc/ModuleManagers"
     ]
   }
