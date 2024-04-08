@@ -20,23 +20,12 @@ Compass_Window::~Compass_Window()
 #if DEBUG == 1
     Serial.println("Compass_Window::~Compass_Window()");
 #endif
-
-    // Clean up state
-    State_Transfer_Data transferData;
-    compassState->exitState();
-    delete compassState;
-    compassState = nullptr;
-
-    // Clean up content
-    delete content;
-    content = nullptr;
-
-    // Clear LED ring
-    LED_Manager::clearRing();
-}
-
-void Compass_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
-{
+    if (compassState != nullptr)
+    {
+        compassState->exitState();
+        delete compassState;
+        compassState = nullptr;
+    }
 }
 
 void Compass_Window::Pause()

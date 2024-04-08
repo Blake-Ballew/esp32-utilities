@@ -53,16 +53,16 @@ OLED_Settings_Window::~OLED_Settings_Window()
     content = nullptr;
 }
 
-void OLED_Settings_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+void OLED_Settings_Window::execBtnCallback(uint8_t inputID)
 {
     uint8_t callbackID;
 
 #if DEBUG == 1
     Serial.print("OLED_Settings_Window::execBtnCallback(uint8_t buttonNumber, void *arg): Button number: ");
-    Serial.println(buttonNumber);
+    Serial.println(inputID);
 #endif
 
-    switch (buttonNumber)
+    switch (inputID)
     {
     case BUTTON_1:
         callbackID = btn1CallbackID;
@@ -161,9 +161,9 @@ void OLED_Settings_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
                 {
                     Settings_Manager::writeSettingsToEEPROM();
                     this->saveSettings = false;
-                    OLED_Manager::rebootDevice(nullptr);
+                    OLED_Manager::rebootDevice(inputID);
                 }
-                OLED_Manager::goBack(NULL);
+                OLED_Manager::goBack(inputID);
             }
             else
             {

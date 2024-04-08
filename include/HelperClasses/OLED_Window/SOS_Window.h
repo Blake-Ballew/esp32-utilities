@@ -9,7 +9,7 @@ public:
     SOS_Window(OLED_Window *parent);
     ~SOS_Window();
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg);
+    void execBtnCallback(uint8_t inputID);
     void Pause();
     void Resume();
 

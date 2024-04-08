@@ -13,7 +13,7 @@ public:
     Compass_Window(OLED_Window *parent);
     ~Compass_Window();
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg);
+    void execBtnCallback(uint8_t inputID) {}
 
     void Pause();
     void Resume();

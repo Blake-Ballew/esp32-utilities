@@ -32,10 +32,10 @@ GPS_Window::~GPS_Window()
     content = nullptr;
 }
 
-void GPS_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+void GPS_Window::execBtnCallback(uint8_t inputID)
 {
     uint8_t callbackID;
-    switch (buttonNumber)
+    switch (inputID)
     {
     case BUTTON_1:
         callbackID = btn1CallbackID;
@@ -75,17 +75,17 @@ void GPS_Window::updateGPS(TimerHandle_t xTimer)
     thisInstance->content->printContent();
 }
 
-void GPS_Window::handleBtnInterrupt(uint8_t buttonNumber, void *arg, OLED_Window *window)
+void GPS_Window::handleBtnInterrupt(uint8_t inputID, OLED_Window *window)
 {
 #if DEBUG == 1
     Serial.print("void Compass_Window::handleBtnInterrupt(uint8_t buttonNumber, void *arg): Button number: ");
-    Serial.println(buttonNumber);
+    Serial.println(inputID);
 #endif
 
     GPS_Window *thisWindow = (GPS_Window *)window;
     GPS_Content *content = (GPS_Content *)thisWindow->content;
     uint32_t callbackID;
-    switch (buttonNumber)
+    switch (inputID)
     {
     case BUTTON_1:
         callbackID = thisWindow->btn1CallbackID;

@@ -8,6 +8,9 @@ StaticQueue_t Network_Manager::messageQueueBuffer;
 QueueHandle_t Network_Manager::messageQueue;
 uint8_t Network_Manager::messageDataBuffer[MESSAGE_QUEUE_MAX * sizeof(MessageQueueItem)];
 
+SemaphoreHandle_t Network_Manager::messageAccessSemaphore;
+StaticSemaphore_t Network_Manager::messageAccessSemaphoreBuffer;
+
 std::map<uint64_t, Message_Base *> Network_Manager::messages;
 std::map<uint64_t, Message_Base *> Network_Manager::messagesSent;
 
@@ -20,6 +23,8 @@ TaskHandle_t *Network_Manager::taskHandle = nullptr;
 uint8_t Network_Manager::nodeID;
 uint64_t Network_Manager::userID;
 uint8_t Network_Manager::numRetries = 1;
+int64_t Network_Manager::lastMessageInsertDeleteTime = 0;
+int64_t Network_Manager::lastUnreadMessageInsertDeleteTime = 0;
 
 ArduinoJson::DynamicJsonDocument Network_Manager::statusList(SIZE_STATUSES_OBJECT);
 
@@ -89,6 +94,8 @@ bool Network_Manager::init(TaskHandle_t *taskHandle)
 #else
     Settings_Manager::readStatusesFromEEPROM(statusList);
 #endif
+
+    messageAccessSemaphore = xSemaphoreCreateMutexStatic(&messageAccessSemaphoreBuffer);
 
 #if DEBUG == 1
     Serial.println("Network Manager init complete");
@@ -334,6 +341,9 @@ void Network_Manager::listenForMessages(void *taskParams)
                 bool sendNotification = true;
                 bool rebroadcast = true;
 
+                // Lock Mutex
+                xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
                 // Update message map
                 if (messages.find(msg->sender) != messages.end())
                 {
@@ -344,7 +354,16 @@ void Network_Manager::listenForMessages(void *taskParams)
                     }
                     delete messages[msg->sender];
                 }
+                else
+                {
+                    lastMessageInsertDeleteTime = esp_timer_get_time();
+                    lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
+                }
+
                 messages[msg->sender] = msg;
+
+                // Unlock Mutex
+                xSemaphoreGive(messageAccessSemaphore);
 
                 // Check if message needs to bounce
                 if (msg->bouncesLeft > 0)
@@ -413,8 +432,16 @@ ArduinoJson::JsonArray Network_Manager::getStatusList()
     }
 }
 
+size_t Network_Manager::getNumMessages()
+{
+    return messages.size();
+}
+
 size_t Network_Manager::getNumUnreadMessages()
 {
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
     size_t numUnread = 0;
     for (auto it = messages.begin(); it != messages.end(); it++)
     {
@@ -430,10 +457,30 @@ size_t Network_Manager::getNumUnreadMessages()
         }
     }
 
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+
     return numUnread;
 }
 
-std::map<uint64_t, Message_Base *>::iterator Network_Manager::getUnreadBegin()
+const char *Network_Manager::getReturnCodeString(uint8_t returnCode)
+{
+    switch (returnCode)
+    {
+    case RH_ROUTER_ERROR_NONE:
+        return MESSAGE_SENT;
+    case RH_ROUTER_ERROR_NO_ROUTE:
+        return NO_ROUTE;
+    case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
+        return DELIVERY_FAILED;
+    case RETURN_CODE_UNABLE_TO_QUEUE:
+        return UNABLE_TO_QUEUE;
+    default:
+        return UNKNOWN_ERROR;
+    }
+}
+
+/* std::map<uint64_t, Message_Base *>::iterator Network_Manager::getUnreadBegin()
 {
     std::map<uint64_t, Message_Base *>::iterator it = messages.begin();
     for (; it != messages.end(); it++)
@@ -516,7 +563,7 @@ std::map<uint64_t, Message_Base *>::iterator Network_Manager::getBeginIterator()
 std::map<uint64_t, Message_Base *>::iterator Network_Manager::getEndIterator()
 {
     return messages.end();
-}
+} */
 
 void Network_Manager::loadStatusList()
 {
@@ -527,4 +574,135 @@ void Network_Manager::loadStatusList()
     Statuses.add("Point of Interest");
 
     // Settings_Manager::writeStatusesToEEPROM(statusList);
+}
+
+void Network_Manager::createUpdateMessageEntry(uint64_t user, Message_Base *msg)
+{
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    if (messages.find(user) != messages.end())
+    {
+        delete messages[user];
+    }
+    messages[user] = msg;
+
+    lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
+    lastMessageInsertDeleteTime = esp_timer_get_time();
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+}
+
+void Network_Manager::deleteMessageEntry(uint64_t user)
+{
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    if (messages.find(user) != messages.end())
+    {
+        if (messages[user]->messageOpened)
+        {
+            lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
+        }
+
+        delete messages[user];
+        messages.erase(user);
+        lastMessageInsertDeleteTime = esp_timer_get_time();
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+}
+
+void Network_Manager::markMessageAsRead(uint64_t user)
+{
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    if (messages.find(user) != messages.end())
+    {
+        messages[user]->messageOpened = true;
+        lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+}
+
+Message_Base *Network_Manager::getMessageEntry(uint64_t user)
+{
+    Message_Base *msg = nullptr;
+
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    if (messages.find(user) != messages.end() && messages[user] != nullptr)
+    {
+        msg = messages[user]->clone();
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+
+    return msg;
+}
+
+Message_Base *Network_Manager::cloneMessageEntry(uint64_t user)
+{
+    Message_Base *msg = nullptr;
+
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    if (messages.find(user) != messages.end() && messages[user] != nullptr)
+    {
+        msg = messages[user]->clone();
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+
+    return msg;
+}
+
+ArduinoJson::DynamicJsonDocument *Network_Manager::getMessages()
+{
+    ArduinoJson::DynamicJsonDocument *doc = new ArduinoJson::DynamicJsonDocument((messages.size() * sizeof(uint32_t)) + 64);
+    ArduinoJson::JsonArray messagesArray = doc->createNestedArray("UserIDs");
+
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
+        messagesArray.add(it->first);
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+
+    return doc;
+}
+
+ArduinoJson::DynamicJsonDocument *Network_Manager::getMessagesUnreadMessages()
+{
+    ArduinoJson::DynamicJsonDocument *doc = new ArduinoJson::DynamicJsonDocument((messages.size() * sizeof(uint32_t)) + 64);
+    ArduinoJson::JsonArray messagesArray = doc->createNestedArray("UserIDs");
+
+    // Lock Mutex
+    xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+
+    for (auto it = messages.begin(); it != messages.end(); it++)
+    {
+        if (!it->second->messageOpened)
+        {
+            messagesArray.add(it->first);
+        }
+    }
+
+    // Unlock Mutex
+    xSemaphoreGive(messageAccessSemaphore);
+
+    return doc;
 }

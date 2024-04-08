@@ -13,10 +13,10 @@ public:
         assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Send", 4);
     }
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg)
+    void execBtnCallback(uint8_t inputID)
     {
         uint8_t callbackID;
-        switch (buttonNumber)
+        switch (inputID)
         {
         case BUTTON_1:
             callbackID = btn1CallbackID;

@@ -15,14 +15,14 @@ SOS_Window::~SOS_Window()
 #endif
 }
 
-void SOS_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+void SOS_Window::execBtnCallback(uint8_t inputID)
 {
 #if DEBUG == 1
     Serial.println("SOS_Window::execBtnCallback");
-    Serial.printf("buttonNumber: %d\n", buttonNumber);
+    Serial.printf("inputID: %d\n", inputID);
 #endif
     uint32_t callbackID;
-    switch (buttonNumber)
+    switch (inputID)
     {
     case BUTTON_1:
         callbackID = btn1CallbackID;

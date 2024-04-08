@@ -45,6 +45,8 @@
 #define BUTTON_4 4
 #define ENC_DOWN 5
 #define ENC_UP 6
+#define MESSAGE_RECEIVED 7
+#define BUTTON_SOS 8
 
 #define BUTTON_1_PIN 36
 #define BUTTON_2_PIN 26
@@ -61,7 +63,7 @@
 
 #define OLED_RESET -1
 
-#define DEFAULT_MAX_CALLBACKS 64
+#define DEFAULT_MAX_CALLBACKS 0xF0000000
 
 #define BUTTON_TEXT_MAX 12
 #define NODE_TEXT_MAX 32

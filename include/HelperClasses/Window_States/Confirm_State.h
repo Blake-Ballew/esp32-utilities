@@ -15,6 +15,7 @@ class Confirm_State : public Window_State
 public:
     Confirm_State()
     {
+        // typeID = __COUNTER__;
         CallbackData noBtn;
         noBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(noBtn.displayText, "No");

@@ -5,7 +5,9 @@
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <stack>
+#include <vector>
 #include "OLED_Content.h"
+#include "LED_Manager.h"
 #include "Window_State.h"
 #include "globalDefines.h"
 // #include "OLED_Manager.h"
@@ -19,8 +21,8 @@ public:
     OLED_Window(OLED_Window *parent);
 
     static Adafruit_SSD1306 *display;
-    OLED_Content *content;
-    Window_State *currentState;
+    OLED_Content *content = nullptr;
+    Window_State *currentState = nullptr;
     std::stack<Window_State *> stateStack;
 
     virtual void drawWindow();
@@ -29,9 +31,21 @@ public:
     OLED_Window *getParentWindow();
 
     // Only use in child class
-    virtual void execBtnCallback(uint8_t buttonNumber, void *arg);
-    virtual void Pause() {}
-    virtual void Resume() {}
+    virtual void execBtnCallback(uint8_t inputID);
+    virtual void Pause()
+    {
+        if (currentState != nullptr && currentState->renderContent != nullptr)
+        {
+            currentState->renderContent->stop();
+        }
+    }
+    virtual void Resume()
+    {
+        if (currentState != nullptr && currentState->renderContent != nullptr)
+        {
+            currentState->renderContent->start();
+        }
+    }
 
     virtual void encUp()
     {
@@ -84,25 +98,20 @@ public:
             return;
         }
 
+        // Get next state
+        Window_State *prevState = currentState;
+        Window_State *newState = currentState->adjacentStates[inputID];
+
         // Setup transfer data
         State_Transfer_Data transferData;
         transferData.inputID = inputID;
         transferData.callbackID = ACTION_SWITCH_WINDOW_STATE;
         transferData.serializedData = nullptr;
-
-        // Get next state
-        Window_State *prevState = currentState;
-        currentState = currentState->adjacentStates[inputID];
+        transferData.oldState = prevState;
+        transferData.newState = newState;
 
         // Transfer
-        prevState->exitState(transferData);
-        currentState->enterState(transferData);
-
-        // Clean up
-        if (transferData.serializedData != nullptr)
-        {
-            delete transferData.serializedData;
-        }
+        transferState(transferData);
     }
 
     // Switches state to the adjacent state with the given inputID
@@ -126,54 +135,49 @@ public:
         // Save current state
         stateStack.push(currentState);
 
+        // Get next state
+        Window_State *prevState = currentState;
+        Window_State *newState = currentState->adjacentStates[inputID];
+
         // Setup transfer data
         State_Transfer_Data transferData;
         transferData.inputID = inputID;
         transferData.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
         transferData.serializedData = nullptr;
+        transferData.oldState = prevState;
+        transferData.newState = newState;
 
-        // Get next state
-        Window_State *prevState = currentState;
-        currentState = itNextState->second;
-
-        // Transfer
-        prevState->exitState(transferData);
-        currentState->enterState(transferData);
-
-        // Clean up
-        if (transferData.serializedData != nullptr)
-        {
-            delete transferData.serializedData;
-        }
+        transferState(transferData);
     }
 
     virtual void returnFromFunctionState(uint8_t inputID)
     {
+#if DEBUG == 1
+        Serial.println("Returning from function state");
+#endif
         if (stateStack.empty())
         {
+#if DEBUG == 1
+            Serial.println("State stack is empty");
+#endif
             return;
         }
+
+        // Get next state
+        Window_State *prevState = currentState;
+        Window_State *newState = stateStack.top();
+        stateStack.pop();
 
         // Setup transfer data
         State_Transfer_Data transferData;
         transferData.inputID = inputID;
         transferData.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         transferData.serializedData = nullptr;
-
-        // Get next state
-        Window_State *prevState = currentState;
-        currentState = stateStack.top();
-        stateStack.pop();
+        transferData.oldState = prevState;
+        transferData.newState = newState;
 
         // Transfer
-        prevState->exitState(transferData);
-        currentState->enterState(transferData);
-
-        // Clean up
-        if (transferData.serializedData != nullptr)
-        {
-            delete transferData.serializedData;
-        }
+        transferState(transferData);
     }
 
     void setInitialState(Window_State *initialState)
@@ -202,7 +206,48 @@ public:
     // ArduinoJson::JsonDocument callbackData;
 
 protected:
-    void (*btnCallback)(uint8_t, void *, OLED_Window *);
+    // Exits the old state and sends its transfer data to the new state
+    // After entering the new state, the return code is read
+    virtual void transferState(State_Transfer_Data &transferData)
+    {
+#if DEBUG == 1
+        Serial.println("OLED_Window::transferState()");
+#endif
+
+        transferData.oldState->exitState(transferData);
+
+        // Child classes will process transfer data coming out of the old state if needed
+
+        transferData.newState->enterState(transferData);
+
+        // processStateChangeReturnCode(transferData.returnCode);
+
+        currentState = transferData.newState;
+
+        // Clean up
+        if (transferData.serializedData != nullptr)
+        {
+            delete transferData.serializedData;
+        }
+    }
+
+    virtual void processStateChangeReturnCode(size_t returnCode)
+    {
+        switch (returnCode)
+        {
+        case ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE:
+            returnFromFunctionState(0);
+            break;
+        default:
+            break;
+        }
+    }
+
+    void (*btnCallback)(uint8_t, OLED_Window *);
+
+    // These will be used to auto delete the content and state classes
+    std::vector<Window_State *> stateList;
+    std::vector<OLED_Content *> contentList;
 
     size_t returnAction = 0;
 

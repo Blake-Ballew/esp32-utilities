@@ -6,13 +6,13 @@
 #include "Settings_Manager.h"
 #include "Message_Types.h"
 
-namespace
-{
-    const char *MESSAGE_SENT PROGMEM = "Message sent";
-    const char *NO_ROUTE PROGMEM = "No route";
-    const char *DELIVERY_FAILED PROGMEM = "Delivery failed";
-    const char *UNABLE_TO_QUEUE PROGMEM = "Unable to queue";
-}
+// namespace
+// {
+//     const char *MESSAGE_SENT PROGMEM = "Message sent";
+//     const char *NO_ROUTE PROGMEM = "No route";
+//     const char *DELIVERY_FAILED PROGMEM = "Delivery failed";
+//     const char *UNABLE_TO_QUEUE PROGMEM = "Unable to queue";
+// }
 
 class Ping_Content : public OLED_Content
 {

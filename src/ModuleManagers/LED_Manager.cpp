@@ -143,25 +143,25 @@ void LED_Manager::pulseButton(uint8_t buttonNumber)
 
     switch (buttonNumber)
     {
-    case 1:
+    case BUTTON_1:
         ledIdx = 22;
         break;
-    case 2:
+    case BUTTON_2:
         ledIdx = 19;
         break;
-    case 3:
+    case BUTTON_3:
         ledIdx = 18;
         break;
-    case 4:
+    case BUTTON_4:
         ledIdx = 17;
         break;
-    case 5: // SOS
+    case BUTTON_SOS: // SOS
         ledIdx = 16;
         break;
-    case 6: // Encoder up
+    case ENC_UP: // Encoder up
         ledIdx = 20;
         break;
-    case 7: // Encoder down
+    case ENC_DOWN: // Encoder down
         ledIdx = 21;
         break;
     default:

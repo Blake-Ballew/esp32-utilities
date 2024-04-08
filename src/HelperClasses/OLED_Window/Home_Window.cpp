@@ -2,43 +2,61 @@
 
 Home_Window::Home_Window(OLED_Window *parent) : OLED_Window(parent)
 {
-    this->content = new Home_Content(display);
-    homeContent = (Home_Content *)this->content;
-    pingContent = new Ping_Content(display, nullptr);
-    trackingContent = new Tracking_Content(display);
-
-    assignButton(ACTION_GENERATE_QUICK_ACTION_MENU, BUTTON_1, "Actions", 7);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "Broadcast", 9);
-    assignButton(ACTION_NONE, BUTTON_3, "\0", 1);
-    assignButton(ACTION_GENERATE_MENU_WINDOW, BUTTON_4, "Main Menu", 9);
+    Home_Window();
 }
 
 Home_Window::Home_Window() : OLED_Window()
 {
-    this->content = new Home_Content(display);
-    homeContent = (Home_Content *)this->content;
-    pingContent = new Ping_Content(display, nullptr);
+#if DEBUG == 1
+    Serial.println("DOES PRINTING EVEN WORK HERE??????????????");
+#endif
+    homeContent = new Home_Content(display);
     trackingContent = new Tracking_Content(display);
+    receivedMessagesContent = new Received_Messages_Content(display, false, false);
+    savedMessagesContent = new Saved_Messages_Content();
+    savedLocationsContent = new Saved_Locations_Content(display);
 
-    assignButton(ACTION_GENERATE_QUICK_ACTION_MENU, BUTTON_1, "Actions", 7);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "Broadcast", 9);
-    assignButton(ACTION_NONE, BUTTON_3, "\0", 1);
-    assignButton(ACTION_GENERATE_MENU_WINDOW, BUTTON_4, "Main Menu", 9);
+    receivedMessagesState = new Received_Messages_State(receivedMessagesContent);
+    homeState = new Home_State(homeContent);
+    trackingState = new Tracking_State(trackingContent);
+    selectMessageState = new Select_Message_State(savedMessagesContent);
+    selectLocationState = new Select_Location_State(savedLocationsContent);
+
+    contentList.push_back(homeContent);
+    contentList.push_back(trackingContent);
+    contentList.push_back(receivedMessagesContent);
+    contentList.push_back(selectMessageState->renderContent);
+    contentList.push_back(selectLocationState->renderContent);
+
+    stateList.push_back(homeState);
+    stateList.push_back(trackingState);
+    stateList.push_back(receivedMessagesState);
+    stateList.push_back(selectMessageState);
+    stateList.push_back(selectLocationState);
+
+    setInitialState(homeState);
+
+    homeState->setAdjacentState(BUTTON_2, selectLocationState);
+    homeState->setAdjacentState(ENC_DOWN, receivedMessagesState);
+
+    receivedMessagesState->setAdjacentState(ENC_UP, homeState);
+    receivedMessagesState->setAdjacentState(BUTTON_1, trackingState);
+    receivedMessagesState->setAdjacentState(BUTTON_4, selectLocationState);
 
     System_Utils::monitorSystemHealth(nullptr);
 }
 
-void Home_Window::Pause()
-{
-    homeContent->Pause();
-}
+// void Home_Window::Pause()
+// {
+//     homeContent->Pause();
+// }
 
-void Home_Window::Resume()
-{
-    homeContent->Resume();
-}
+// void Home_Window::Resume()
+// {
+//     homeContent->Resume();
+// }
 
-void Home_Window::encUp()
+/* void Home_Window::encUp()
 {
     content->encUp();
 
@@ -72,26 +90,26 @@ void Home_Window::encDown()
             homeContent2();
         }
     }
-}
+} */
 
-void Home_Window::drawWindow()
+/* void Home_Window::drawWindow()
 {
 #if DEBUG == 1
     Serial.println("Home_Window::drawWindow()");
 #endif
     OLED_Window::drawWindow();
     // homeContent->printContent();
-}
+} */
 
-void Home_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+/* void Home_Window::execBtnCallback(uint8_t inputID)
 {
-    switch (buttonNumber)
+    switch (inputID)
     {
     case BUTTON_1:
     {
         if (content->type == ContentType::HOME)
         {
-            if (homeContent->contentMode == HOME_CONTENT_MESSAGES)
+            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
             {
                 swapToTracking(homeContent->getCurrentMessage());
             }
@@ -102,11 +120,11 @@ void Home_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
     {
         if (content->type == ContentType::HOME)
         {
-            if (homeContent->contentMode == HOME_CONTENT_MAIN)
+            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MAIN)
             {
                 swapToPing(nullptr);
             }
-            else if (homeContent->contentMode == HOME_CONTENT_MESSAGES)
+            else if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
             {
                 // Mark message read
 
@@ -150,7 +168,7 @@ void Home_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
 
         if (content->type == ContentType::HOME)
         {
-            if (homeContent->contentMode == HOME_CONTENT_MESSAGES)
+            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
             {
                 Message_Base *msg = homeContent->getCurrentMessage();
                 if (msg != nullptr)
@@ -164,107 +182,151 @@ void Home_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
     default:
         break;
     }
-}
+} */
 
-void Home_Window::swapToTracking(Message_Base *msg)
-{
-    if (content->type == ContentType::TRACKING)
-    {
-        return;
-    }
-
-    if (content->type == ContentType::HOME)
-    {
-        homeContent->Pause();
-    }
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_1, "\0", 1);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "\0", 1);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_3, "Back", 4);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "\0", 1);
-
-    LED_Manager::clearRing();
-
-    content = trackingContent;
-    trackingContent->assignMsg(msg);
-    trackingContent->start();
-}
-
-void Home_Window::swapToPing(Message_Base *msg)
+void Home_Window::transferState(State_Transfer_Data &transferData)
 {
 #if DEBUG == 1
-    Serial.println("Swapping to ping content");
+    Serial.println("Home_Window::transferState()");
 #endif
-    if (content->type == ContentType::PING)
-    {
-        return;
-    }
 
-    if (content->type == ContentType::HOME)
+    Window_State *oldState = transferData.oldState;
+    Window_State *newState = transferData.newState;
+
+    oldState->exitState(transferData);
+
+    // ***************** Mid-transfer logic *****************
+    if ((oldState == homeState || oldState == receivedMessagesState) && newState == selectLocationState)
     {
 #if DEBUG == 1
-        Serial.println("Pausing home content");
+        Serial.println("Transfering to select location state");
 #endif
-        homeContent->Pause();
+        if (transferData.serializedData != nullptr)
+        {
+            DynamicJsonDocument *doc = transferData.serializedData;
+            if (doc->containsKey("sendDirect"))
+            {
+                sendDirect = (*doc)["sendDirect"].as<bool>();
+                if (sendDirect)
+                {
+                    recipientID = (*doc)["recipientID"].as<uint64_t>();
+                }
+                else
+                {
+                    recipientID = 0;
+                }
+            }
+        }
     }
-
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_1, "\0", 1);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "\0", 1);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_3, "Back", 4);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Send", 4);
-
-    LED_Manager::clearRing();
-
-    content = pingContent;
+    else if (oldState == selectLocationState && transferData.serializedData != nullptr)
+    {
 #if DEBUG == 1
-    Serial.println("Assigning message");
+        Serial.println("Detecting return from select location state");
 #endif
-    pingContent->assignMsg(msg);
+        DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
+        if (doc != nullptr && doc->containsKey("isCurrLocation"))
+        {
+            if ((*doc)["isCurrLocation"] == true)
+            {
+#if DEBUG == 1
+                Serial.println("Using current location");
+#endif
+                useCurrLocation = true;
+            }
+            else
+            {
+#if DEBUG == 1
+                Serial.println("Using selected location");
+#endif
+                useCurrLocation = false;
+                locationIdx = (*doc)["idx"].as<int>();
+                locName = (*doc)["name"].as<const char *>();
+                latitude = (*doc)["lat"].as<double>();
+                longitude = (*doc)["lon"].as<double>();
+            }
+        }
+#if DEBUG == 1
+        else
+        {
+            Serial.println("No location data");
+        }
+#endif
+
+        // Transfer to Select Message State
+        delete transferData.serializedData;
+        transferData.serializedData = nullptr;
+
+        if (!useCurrLocation)
+        {
+            transferData.serializedData = new DynamicJsonDocument(128);
+            (*transferData.serializedData)["message"] = locName;
+        }
+
+        newState = selectMessageState;
+    }
+    else if (oldState == selectMessageState && transferData.serializedData != nullptr)
+    {
+        DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
+        if (doc != nullptr && doc->containsKey("message"))
+        {
+            const char *message = (*doc)["message"].as<const char *>();
+            // Send message
+
+            Message_Ping *newMsg = new Message_Ping(
+                Navigation_Manager::getTime().value(),
+                Navigation_Manager::getDate().value(),
+                recipientID,
+                Network_Manager::userID,
+                Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+                0,
+                Settings_Manager::settings["User"]["Theme Red"]["cfgVal"].as<uint8_t>(),
+                Settings_Manager::settings["User"]["Theme Green"]["cfgVal"].as<uint8_t>(),
+                Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"].as<uint8_t>(),
+                latitude,
+                longitude,
+                message);
+
+            uint8_t returnCode;
+
+            if (sendDirect)
+            {
+                returnCode = Network_Manager::queueMessageToUser(recipientID, newMsg);
+            }
+            else
+            {
+                returnCode = Network_Manager::queueBroadcastMessage(newMsg);
+            }
+
+            OLED_Content::clearContentArea();
+            auto returnStr = Network_Manager::getReturnCodeString(returnCode);
+
+            display->setCursor(OLED_Content::centerTextHorizontal(returnStr), OLED_Content::centerTextVertical());
+            display->print(returnStr);
+
+            display->display();
+            clearMessageInfo();
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
+        }
+    }
+    // ***************** End mid-transfer logic *****************
+
+    newState->enterState(transferData);
+
+    currentState = newState;
+
+    if (transferData.serializedData != nullptr)
+    {
+        delete transferData.serializedData;
+    }
 }
 
-void Home_Window::swapToHome()
+void Home_Window::clearMessageInfo()
 {
-    if (content->type == ContentType::HOME)
-    {
-        return;
-    }
-
-    if (content->type == ContentType::PING)
-    {
-        LED_Manager::clearRing();
-        pingContent->unassignMsg();
-    }
-    else if (content->type == ContentType::TRACKING)
-    {
-        LED_Manager::clearRing();
-        trackingContent->unassignMsg();
-        trackingContent->stop();
-    }
-
-    assignButton(ACTION_GENERATE_QUICK_ACTION_MENU, BUTTON_1, "Actions", 7);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "Broadcast", 9);
-    assignButton(ACTION_NONE, BUTTON_3, "\0", 1);
-    assignButton(ACTION_GENERATE_MENU_WINDOW, BUTTON_4, "Main Menu", 9);
-
-    LED_Manager::clearRing();
-
-    content = homeContent;
-    homeContent->contentMode = HOME_CONTENT_MAIN;
-    homeContent->Resume();
-    homeContent->printContent();
-}
-
-void Home_Window::homeContent1()
-{
-    assignButton(ACTION_GENERATE_QUICK_ACTION_MENU, BUTTON_1, "Actions", 7);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "Broadcast", 9);
-    assignButton(ACTION_NONE, BUTTON_3, "\0", 1);
-    assignButton(ACTION_GENERATE_MENU_WINDOW, BUTTON_4, "Main Menu", 9);
-}
-
-void Home_Window::homeContent2()
-{
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_1, "Track", 5);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_2, "Mark Read", 9);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_3, "\0", 1);
-    assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Reply", 5);
+    sendDirect = false;
+    recipientID = 0;
+    useCurrLocation = false;
+    locationIdx = -1;
+    locName = nullptr;
+    latitude = 0;
+    longitude = 0;
 }

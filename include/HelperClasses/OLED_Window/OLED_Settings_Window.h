@@ -18,7 +18,7 @@ public:
     OLED_Settings_Window(OLED_Window *parent);
     ~OLED_Settings_Window();
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg);
+    void execBtnCallback(uint8_t inputID);
     void drawWindow();
 
     // void execBtnCallback(uint8_t buttonNumber, void *arg);

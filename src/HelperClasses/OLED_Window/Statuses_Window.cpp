@@ -2,7 +2,7 @@
 
 Statuses_Window::Statuses_Window(OLED_Window *parent) : OLED_Window(parent)
 {
-    this->statusContent = new Statuses_Content(this->display);
+    this->statusContent = new Received_Messages_Content(this->display);
     this->trackingContent = new Tracking_Content(this->display);
     this->pingContent = new Ping_Content(this->display, nullptr);
     this->content = statusContent;
@@ -36,10 +36,10 @@ Statuses_Window::~Statuses_Window()
     content = nullptr;
 }
 
-void Statuses_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+void Statuses_Window::execBtnCallback(uint8_t inputID)
 {
     uint8_t callbackID;
-    switch (buttonNumber)
+    switch (inputID)
     {
         // Track button
     case BUTTON_1:

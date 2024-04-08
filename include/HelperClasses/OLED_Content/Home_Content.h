@@ -6,12 +6,12 @@
 #include "Network_Manager.h"
 #include "System_Utils.h"
 
-const uint8_t HOME_CONTENT_MAIN = 1;
-const uint8_t HOME_CONTENT_MESSAGES = 2;
-
 class Home_Content : public OLED_Content
 {
 public:
+    const static uint8_t HOME_CONTENT_MAIN = 1;
+    const static uint8_t HOME_CONTENT_MESSAGES = 2;
+
     uint8_t contentMode;
 
     Home_Content(Adafruit_SSD1306 *display);
@@ -21,8 +21,8 @@ public:
     void encUp();
     void encDown();
 
-    void Pause();
-    void Resume();
+    void stop();
+    void start();
 
     static void timerCallback(TimerHandle_t xTimer);
 

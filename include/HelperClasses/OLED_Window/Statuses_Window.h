@@ -1,7 +1,7 @@
 #pragma once
 
 #include "OLED_Window.h"
-#include "Statuses_Content.h"
+#include "Received_Messages_Content.h"
 #include "Tracking_Content.h"
 #include "Ping_Content.h"
 
@@ -11,7 +11,7 @@ public:
     Statuses_Window(OLED_Window *parent);
     ~Statuses_Window();
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg);
+    void execBtnCallback(uint8_t inputID);
     void Pause()
     {
         isPaused = true;
@@ -24,9 +24,8 @@ public:
         content->printContent();
     }
 
-    
 private:
-    Statuses_Content *statusContent;
+    Received_Messages_Content *statusContent;
     Tracking_Content *trackingContent;
     Ping_Content *pingContent;
 };

@@ -10,6 +10,7 @@ class Edit_Bool_State : public Window_State
 public:
     Edit_Bool_State()
     {
+        // typeID = __COUNTER__;
         CallbackData backBtn;
         backBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(backBtn.displayText, "Back");
@@ -94,6 +95,7 @@ class Edit_Enum_State : public Window_State
 public:
     Edit_Enum_State(Edit_Enum_Content *enumContent) : editEnumContent(enumContent), renderContent(enumContent)
     {
+        // typeID = __COUNTER__;
         CallbackData backBtn;
         backBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(backBtn.displayText, "Back");
@@ -172,6 +174,7 @@ class Edit_Float_State : public Window_State
 public:
     Edit_Float_State(Edit_Float_Content *floatContent) : editFloatContent(floatContent), renderContent(floatContent)
     {
+        // typeID = __COUNTER__;
         CallbackData backBtn;
         backBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(backBtn.displayText, "Back");
@@ -244,6 +247,7 @@ class Edit_Int_State : public Window_State
 public:
     Edit_Int_State(Edit_Int_Content *intContent) : editIntContent(intContent), renderContent(intContent)
     {
+        // typeID = __COUNTER__;
         CallbackData backBtn;
         backBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(backBtn.displayText, "Back");
@@ -332,6 +336,7 @@ class Edit_String_State : public Window_State
 {
     Edit_String_State(Edit_String_Content *stringContent) : editStringContent(stringContent), renderContent(stringContent)
     {
+        // typeID = __COUNTER__;
         CallbackData backBtn;
         backBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
         strncpy(backBtn.displayText, "Back");

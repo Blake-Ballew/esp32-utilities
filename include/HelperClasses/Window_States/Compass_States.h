@@ -6,6 +6,7 @@ class Compass_Display_State : public Window_State
 public:
     Compass_Display_State(Compass_Content *compass)
     {
+        // typeID = __COUNTER__;
         compassContent = compass;
         renderContent = compass;
         CallbackData backBtn;

@@ -153,6 +153,47 @@ public:
         date = doc[MESSAGE_TYPE_DATE];
     }
 
+    virtual void deserialize(DynamicJsonDocument *doc)
+    {
+        msgType = (*doc)[MESSAGE_TYPE_KEY];
+        if (msgType != MESSAGE_BASE)
+        {
+            msgType = MESSAGE_INVALID;
+            return;
+        }
+
+        msgID = (*doc)[MESSAGE_TYPE_ID];
+        if (doc->containsKey(MESSAGE_TYPE_BOUNCES_LEFT))
+            bouncesLeft = (*doc)[MESSAGE_TYPE_BOUNCES_LEFT];
+        else
+            bouncesLeft = 0;
+        if (doc->containsKey(MESSAGE_TYPE_RECIPIENT))
+            recipient = (*doc)[MESSAGE_TYPE_RECIPIENT];
+        sender = (*doc)[MESSAGE_TYPE_FROM];
+        strcpy(senderName, (*doc)[MESSAGE_TYPE_FROM_NAME].as<const char *>());
+        time = (*doc)[MESSAGE_TYPE_TIME];
+        date = (*doc)[MESSAGE_TYPE_DATE];
+    }
+
+    virtual DynamicJsonDocument *serializeJSON()
+    {
+        DynamicJsonDocument *doc = new DynamicJsonDocument(MSG_BASE_SIZE);
+        (*doc)[MESSAGE_TYPE_KEY] = msgType;
+        (*doc)[MESSAGE_TYPE_ID] = msgID;
+        (*doc)[MESSAGE_TYPE_BOUNCES_LEFT] = bouncesLeft;
+        (*doc)[MESSAGE_TYPE_RECIPIENT] = recipient;
+        (*doc)[MESSAGE_TYPE_FROM] = sender;
+        (*doc)[MESSAGE_TYPE_FROM_NAME] = senderName;
+        (*doc)[MESSAGE_TYPE_TIME] = time;
+        (*doc)[MESSAGE_TYPE_DATE] = date;
+        return doc;
+    }
+
+    virtual Message_Base *clone()
+    {
+        return new Message_Base(time, date, recipient, sender, senderName, msgID);
+    }
+
     virtual void toString(char *buffer, size_t bufferLen)
     {
         snprintf(buffer, bufferLen, "MsgID: %X", msgID);
@@ -360,6 +401,61 @@ public:
         color_R = doc[MESSAGE_TYPE_COLOR_R];
         color_G = doc[MESSAGE_TYPE_COLOR_G];
         color_B = doc[MESSAGE_TYPE_COLOR_B];
+    }
+
+    void deserialize(DynamicJsonDocument *doc)
+    {
+        msgType = (*doc)[MESSAGE_TYPE_KEY];
+        if (msgType != MESSAGE_PING)
+        {
+            msgType = MESSAGE_INVALID;
+            return;
+        }
+
+        msgID = (*doc)[MESSAGE_TYPE_ID];
+        if (doc->containsKey(MESSAGE_TYPE_RECIPIENT))
+            recipient = (*doc)[MESSAGE_TYPE_RECIPIENT];
+        sender = (*doc)[MESSAGE_TYPE_FROM];
+        strcpy(senderName, (*doc)[MESSAGE_TYPE_FROM_NAME].as<const char *>());
+        time = (*doc)[MESSAGE_TYPE_TIME];
+        date = (*doc)[MESSAGE_TYPE_DATE];
+
+        lat = (*doc)[MESSAGE_TYPE_LAT];
+        lng = (*doc)[MESSAGE_TYPE_LNG];
+
+        strcpy(status, (*doc)[MESSAGE_TYPE_STATUS].as<const char *>());
+
+        color_R = (*doc)[MESSAGE_TYPE_COLOR_R];
+        color_G = (*doc)[MESSAGE_TYPE_COLOR_G];
+        color_B = (*doc)[MESSAGE_TYPE_COLOR_B];
+    }
+
+    DynamicJsonDocument *serializeJSON()
+    {
+        DynamicJsonDocument *doc = new DynamicJsonDocument(MSG_BASE_SIZE);
+        (*doc)[MESSAGE_TYPE_KEY] = msgType;
+        (*doc)[MESSAGE_TYPE_ID] = msgID;
+        (*doc)[MESSAGE_TYPE_RECIPIENT] = recipient;
+        (*doc)[MESSAGE_TYPE_FROM] = sender;
+        (*doc)[MESSAGE_TYPE_FROM_NAME] = senderName;
+        (*doc)[MESSAGE_TYPE_TIME] = time;
+        (*doc)[MESSAGE_TYPE_DATE] = date;
+
+        (*doc)[MESSAGE_TYPE_LAT] = lat;
+        (*doc)[MESSAGE_TYPE_LNG] = lng;
+
+        (*doc)[MESSAGE_TYPE_STATUS] = status;
+
+        (*doc)[MESSAGE_TYPE_COLOR_R] = color_R;
+        (*doc)[MESSAGE_TYPE_COLOR_G] = color_G;
+        (*doc)[MESSAGE_TYPE_COLOR_B] = color_B;
+
+        return doc;
+    }
+
+    Message_Base *clone()
+    {
+        return new Message_Ping(time, date, recipient, sender, senderName, msgID, color_R, color_G, color_B, lat, lng, status);
     }
 
     void displayMessage(Adafruit_SSD1306 *display)

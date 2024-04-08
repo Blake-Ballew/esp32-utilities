@@ -18,87 +18,78 @@ Home_Content::~Home_Content()
 
 void Home_Content::printContent()
 {
-    if (contentMode == HOME_CONTENT_MAIN)
-    {
-        Navigation_Manager::updateGPS();
-        Navigation_Manager::read();
-        // TinyGPSDate date;
-        TinyGPSTime time = Navigation_Manager::getTime();
-        if (time.isValid())
-        {
-            // Adjust for timezone -4
-            int hour = time.hour();
-            if (hour < 4)
-            {
-                hour += 20;
-            }
-            else
-            {
-                hour -= 4;
-            }
 
-            if (Settings_Manager::settings["Device"]["24HTime"].as<bool>())
-            {
-                display->setCursor(OLED_Content::alignTextRight(5), OLED_Content::selectTextLine(2));
-                display->printf("%02d:%02d", hour, time.minute());
-            }
-            else
-            {
-                display->setCursor(OLED_Content::alignTextRight(8), OLED_Content::selectTextLine(2));
-                display->printf("%02d:%02d %s", hour % 12, time.minute(), hour < 12 ? "AM" : "PM");
-            }
+    Navigation_Manager::updateGPS();
+    Navigation_Manager::read();
+    // TinyGPSDate date;
+    TinyGPSTime time = Navigation_Manager::getTime();
+    if (time.isValid())
+    {
+        // Adjust for timezone -4
+        int hour = time.hour();
+        if (hour < 4)
+        {
+            hour += 20;
         }
         else
         {
-            display->setCursor(OLED_Content::alignTextRight(6), OLED_Content::selectTextLine(2));
-            display->printf("No GPS");
+            hour -= 4;
         }
 
-        OLED_Content::drawBatteryIcon(OLED_Content::alignTextLeft(0), OLED_Content::selectTextLine(2), System_Utils::getBatteryPercentage());
-
-        size_t unreadMsgs = Network_Manager::getNumUnreadMessages();
-
-        /*display->setCursor(OLED_Content::alignTextLeft(), OLED_Content::selectTextLine(3));
-        display->printf("Unread: %d", unreadMsgs);*/
-
-        OLED_Content::drawBellIcon(OLED_Content::alignTextLeft(3), OLED_Content::selectTextLine(2), System_Utils::silentMode);
-
-        OLED_Content::drawMessageIcon(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(2));
-        display->setCursor(OLED_Content::alignTextLeft(8), OLED_Content::selectTextLine(2));
-        display->printf(":%d", unreadMsgs);
-
-        if (unreadMsgs > 0)
+        if (Settings_Manager::settings["Device"]["24HTime"].as<bool>())
         {
-            display->drawLine(OLED_WIDTH / 2, OLED_HEIGHT - 1, (OLED_WIDTH / 2) - 3, OLED_HEIGHT - 3, WHITE);
-            display->drawLine((OLED_WIDTH / 2) + 1, OLED_HEIGHT - 1, (OLED_WIDTH / 2) + 4, OLED_HEIGHT - 3, WHITE);
-            display->setCursor(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(4));
-            display->print("Msgs");
+            display->setCursor(OLED_Content::alignTextRight(5), OLED_Content::selectTextLine(2));
+            display->printf("%02d:%02d", hour, time.minute());
+        }
+        else
+        {
+            display->setCursor(OLED_Content::alignTextRight(8), OLED_Content::selectTextLine(2));
+            display->printf("%02d:%02d %s", hour % 12, time.minute(), hour < 12 ? "AM" : "PM");
         }
     }
-    else if (contentMode == HOME_CONTENT_MESSAGES)
+    else
     {
-        Message_Base *msg = msgIterator->second;
-        msg->displayMessage(display);
+        display->setCursor(OLED_Content::alignTextRight(6), OLED_Content::selectTextLine(2));
+        display->printf("No GPS");
     }
+
+    OLED_Content::drawBatteryIcon(OLED_Content::alignTextLeft(0), OLED_Content::selectTextLine(2), System_Utils::getBatteryPercentage());
+
+    size_t unreadMsgs = Network_Manager::getNumUnreadMessages();
+
+    /*display->setCursor(OLED_Content::alignTextLeft(), OLED_Content::selectTextLine(3));
+    display->printf("Unread: %d", unreadMsgs);*/
+
+    OLED_Content::drawBellIcon(OLED_Content::alignTextLeft(3), OLED_Content::selectTextLine(2), System_Utils::silentMode);
+
+    OLED_Content::drawMessageIcon(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(2));
+    display->setCursor(OLED_Content::alignTextLeft(8), OLED_Content::selectTextLine(2));
+    display->printf(":%d", unreadMsgs);
+
+    if (unreadMsgs > 0)
+    {
+        display->drawLine(OLED_WIDTH / 2, OLED_HEIGHT - 1, (OLED_WIDTH / 2) - 3, OLED_HEIGHT - 3, WHITE);
+        display->drawLine((OLED_WIDTH / 2) + 1, OLED_HEIGHT - 1, (OLED_WIDTH / 2) + 4, OLED_HEIGHT - 3, WHITE);
+        display->setCursor(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(4));
+        display->print("Msgs");
+    }
+
     display->display();
 }
 
-void Home_Content::Pause()
+void Home_Content::stop()
 {
     xTimerStop(this->timer, 0);
 }
 
-void Home_Content::Resume()
+void Home_Content::start()
 {
     xTimerStart(this->timer, 0);
 }
 
 void Home_Content::timerCallback(TimerHandle_t xTimer)
 {
-    if (thisInstance->contentMode == HOME_CONTENT_MAIN)
-    {
-        thisInstance->printContent();
-    }
+    thisInstance->printContent();
 }
 
 Message_Base *Home_Content::getCurrentMessage()
@@ -112,28 +103,28 @@ Message_Base *Home_Content::getCurrentMessage()
 
 void Home_Content::encUp()
 {
-    switch (contentMode)
-    {
-    case HOME_CONTENT_MESSAGES:
-    {
-        auto newIt = Network_Manager::decrementUnreadIterator(msgIterator);
-        if (newIt != Network_Manager::getEndIterator())
+    /*     switch (contentMode)
         {
-            msgIterator = newIt;
-        }
-        else
+        case HOME_CONTENT_MESSAGES:
         {
-            LED_Manager::clearRing();
-            contentMode = HOME_CONTENT_MAIN;
+            auto newIt = Network_Manager::decrementUnreadIterator(msgIterator);
+            if (newIt != Network_Manager::getEndIterator())
+            {
+                msgIterator = newIt;
+            }
+            else
+            {
+                LED_Manager::clearRing();
+                contentMode = HOME_CONTENT_MAIN;
+            }
+            break;
         }
-        break;
-    }
-    }
+        } */
 }
 
 void Home_Content::encDown()
 {
-    switch (contentMode)
+    /* switch (contentMode)
     {
     case HOME_CONTENT_MAIN:
     {
@@ -152,6 +143,5 @@ void Home_Content::encDown()
             msgIterator = newIt;
         }
         break;
-    }
-    }
+    } */
 }

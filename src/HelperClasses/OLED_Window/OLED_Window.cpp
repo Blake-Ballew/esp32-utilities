@@ -82,7 +82,45 @@ void OLED_Window::drawWindow()
     display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     display->fillRect(0, 0, OLED_WIDTH, 8, SSD1306_BLACK);
     display->fillRect(0, OLED_HEIGHT - 8, OLED_WIDTH, 8, SSD1306_BLACK);
-    display->setCursor(0, 0);
+
+    if (currentState != nullptr)
+    {
+#if DEBUG == 1
+        Serial.println("State is not null");
+#endif
+        if (currentState->buttonCallbacks.find(BUTTON_1) != currentState->buttonCallbacks.end())
+        {
+            display->setCursor(0, 0);
+
+            display->print(currentState->buttonCallbacks[BUTTON_1].displayText);
+        }
+
+        if (currentState->buttonCallbacks.find(BUTTON_2) != currentState->buttonCallbacks.end())
+        {
+            display->setCursor(OLED_WIDTH - (strlen(currentState->buttonCallbacks[BUTTON_2].displayText) * 6), 0);
+            display->print(currentState->buttonCallbacks[BUTTON_2].displayText);
+        }
+
+        if (currentState->buttonCallbacks.find(BUTTON_3) != currentState->buttonCallbacks.end())
+        {
+            display->setCursor(0, OLED_HEIGHT - 8);
+            display->print(currentState->buttonCallbacks[BUTTON_3].displayText);
+        }
+
+        if (currentState->buttonCallbacks.find(BUTTON_4) != currentState->buttonCallbacks.end())
+        {
+            display->setCursor(OLED_WIDTH - (strlen(currentState->buttonCallbacks[BUTTON_4].displayText) * 6), OLED_HEIGHT - 8);
+            display->print(currentState->buttonCallbacks[BUTTON_4].displayText);
+        }
+    }
+#if DEBUG == 1
+    else
+    {
+        Serial.println("State is null");
+    }
+#endif
+
+    /*
     if (btn1Text[0] != '\0')
         display->print(btn1Text);
     if (btn2Text[0] != '\0')
@@ -104,11 +142,15 @@ void OLED_Window::drawWindow()
         content->printContent();
     else
         display->display();
+    */
 
     if (currentState != nullptr)
     {
         currentState->displayState();
     }
+#if DEBUG == 1
+    Serial.println("OLED_Window::drawWindow() finished");
+#endif
 }
 
 OLED_Window *OLED_Window::getParentWindow()
@@ -116,29 +158,38 @@ OLED_Window *OLED_Window::getParentWindow()
     return parentWindow;
 }
 
-void OLED_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
+void OLED_Window::execBtnCallback(uint8_t inputID)
 {
     CallbackData callback;
 
+#if DEBUG == 1
+    Serial.println("OLED_Window::execBtnCallback()");
+#endif
+
     if (currentState != nullptr)
     {
-        if (currentState->buttonCallbacks.find(buttonNumber) != currentState->buttonCallbacks.end())
-        {
-            callback = currentState->buttonCallbacks[buttonNumber];
-            if (callback.callbackID == ACTION_DEFER_CALLBACK_TO_CONTENT &&
-                currentState->renderContent != nullptr)
-            {
-                content->passButtonPress(buttonNumber);
-            }
-        }
+
+#if DEBUG == 1
+        Serial.println("Current state is not null");
+#endif
+        currentState->processInput(inputID);
+        // if (currentState->buttonCallbacks.find(inputID) != currentState->buttonCallbacks.end())
+        // {
+        //     callback = currentState->buttonCallbacks[inputID];
+        //     if (callback.callbackID == ACTION_DEFER_CALLBACK_TO_CONTENT &&
+        //         currentState->renderContent != nullptr)
+        //     {
+        //         content->passButtonPress(inputID);
+        //     }
+        // }
     }
     else
     {
         if (content != nullptr)
         {
-            if (content->buttonCallbacks.find(buttonNumber) != content->buttonCallbacks.end())
+            if (content->buttonCallbacks.find(inputID) != content->buttonCallbacks.end())
             {
-                callback = content->buttonCallbacks[buttonNumber];
+                callback = content->buttonCallbacks[inputID];
             }
         }
     }
@@ -146,12 +197,25 @@ void OLED_Window::execBtnCallback(uint8_t buttonNumber, void *arg)
 
 OLED_Window::~OLED_Window()
 {
-#if DEBUG == 1
-    Serial.println("OLED_Window::~OLED_Window()");
-#endif
     if (content != nullptr)
-        delete content;
-#if DEBUG == 1
-    Serial.println("OLED_Window::~OLED_Window() Finished");
-#endif
+    {
+        for (auto &it : stateList)
+        {
+            delete it;
+        }
+
+        for (auto &it : contentList)
+        {
+            delete it;
+        }
+    }
+
+    if (currentState != nullptr)
+    {
+        currentState->exitState();
+        delete currentState;
+        currentState = nullptr;
+    }
+
+    LED_Manager::clearRing();
 }

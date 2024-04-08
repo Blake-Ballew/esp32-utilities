@@ -8,5 +8,5 @@ class LoRa_Test_Window : public OLED_Window
 public:
     LoRa_Test_Window(OLED_Window *parent);
 
-    void execBtnCallback(uint8_t buttonNumber, void *arg);
+    void execBtnCallback(uint8_t inputID);
 };
