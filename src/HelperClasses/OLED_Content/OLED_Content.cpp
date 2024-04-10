@@ -50,6 +50,14 @@ Content_Node::~Content_Node()
 {
 }
 
+OLED_Content_List::OLED_Content_List()
+{
+    this->head = NULL;
+    this->current = NULL;
+    this->listSize = 0;
+    this->type = ContentType::LIST;
+}
+
 OLED_Content_List::OLED_Content_List(Adafruit_SSD1306 *display)
 {
     this->display = display;

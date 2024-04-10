@@ -126,6 +126,7 @@ class OLED_Content_List : public OLED_Content
 public:
     Content_Node *getCurrentNode();
 
+    OLED_Content_List();
     OLED_Content_List(Adafruit_SSD1306 *display);
     ~OLED_Content_List();
 
