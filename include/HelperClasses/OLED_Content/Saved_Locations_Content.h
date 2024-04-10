@@ -58,9 +58,11 @@ public:
         if (locationIt == savedLocations.begin())
         {
             locationIt = savedLocations.end();
+            scrollIdx = savedLocations.size();
         }
 
         locationIt--;
+        scrollIdx--;
 
         printContent();
     }
@@ -71,9 +73,11 @@ public:
         Serial.println("Saved_Locations_Content::encDown()");
 #endif
         locationIt++;
+        scrollIdx++;
         if (locationIt == savedLocations.end())
         {
             locationIt = savedLocations.begin();
+            scrollIdx = 0;
         }
 
         printContent();
@@ -118,6 +122,11 @@ public:
                 display->setCursor(OLED_Content::centerTextHorizontal(locationName), OLED_Content::selectTextLine(3));
                 display->print(locationName);
             }
+
+            if (savedLocations.size() > 1)
+            {
+                LED_Manager::displayScrollWheel(scrollIdx, savedLocations.size());
+            }
         }
 
         display->display();
@@ -148,17 +157,18 @@ public:
         return nullptr;
     }
 
-private:
+protected:
     // In select mode, the end iterator is used to display current location
     std::vector<Saved_Location> savedLocations;
     std::vector<Saved_Location>::iterator locationIt;
+    size_t scrollIdx = 0;
     bool showCurrentLocation;
     bool promptSelection;
 
     void loadLocations()
     {
         savedLocations.clear();
-        if (!showCurrentLocation)
+        if (showCurrentLocation)
         {
             Saved_Location location;
             location.idx = -1;

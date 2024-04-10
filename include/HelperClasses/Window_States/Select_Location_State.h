@@ -74,6 +74,8 @@ public:
         default:
             break;
         }
+
+        LED_Manager::clearRing();
     }
 
     void processInput(uint8_t inputID)

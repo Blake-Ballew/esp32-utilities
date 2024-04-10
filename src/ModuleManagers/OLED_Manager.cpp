@@ -357,7 +357,7 @@ void OLED_Manager::select(uint8_t inputID)
 {
     if (OLED_Manager::currentWindow->content != NULL)
     {
-        if (OLED_Manager::currentWindow->content->type == ContentType::LIST)
+        if (OLED_Manager::currentWindow->currentState->renderContent->type == ContentType::LIST)
         {
             OLED_Content_List *list = (OLED_Content_List *)currentWindow->content;
 #if DEBUG == 1
@@ -433,7 +433,7 @@ void OLED_Manager::generateStatusesWindow(uint8_t inputID)
 void OLED_Manager::generateMenuWindow(uint8_t inputID)
 {
     OLED_Window *newWindow = OLED_Manager::attachNewWindow();
-    Window_State *state = new Window_State();
+    Select_Content_List_State *state = new Select_Content_List_State();
     newWindow->currentState = state;
 
     state->assignInput(BUTTON_3, ACTION_BACK, "Back");

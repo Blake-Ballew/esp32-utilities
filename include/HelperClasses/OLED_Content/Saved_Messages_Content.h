@@ -33,6 +33,11 @@ struct Saved_Message
     }
 };
 
+namespace {
+    uint8_t promptSelectMode = 0;
+    uint8_t promptNumSavedMsges = 1;
+}
+
 class Saved_Messages_Content : public OLED_Content
 {
 public:
@@ -62,8 +67,15 @@ public:
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
         // Print message
-        display->setCursor(OLED_Content::centerTextHorizontal(18), OLED_Content::selectTextLine(2));
-        display->printf("Total saved %d/%d", msgList.size(), Settings_Manager::maxMsges);
+        if (promptMode == promptNumSavedMsges) {
+            display->setCursor(OLED_Content::centerTextHorizontal(18), OLED_Content::selectTextLine(2));
+            display->printf("Total saved %d/%d", msgList.size(), Settings_Manager::maxMsges);   
+        }
+        else if (promptMode == promptSelectMode) {
+            display->setCursor(OLED_Content::centerTextHorizontal("Select a message"), OLED_Content::selectTextLine(2));
+            display->print("Select a message");
+        }
+        
         display->setCursor(OLED_Content::centerTextHorizontal(msgList[msgIdx].msg), OLED_Content::selectTextLine(3));
         display->print(msgList[msgIdx].msg);
 
@@ -186,6 +198,21 @@ public:
         return Settings_Manager::savedMessages["Messages"][msgIdx].as<const char *>();
     }
 
+    void clearAdditionalMessages()
+    {
+        additionalMsgList.clear();
+    }
+
+    void setSelectMsgPrompt()
+    {
+        promptMode = promptSelectMode;
+    }
+
+    void setNumSavedMsgPrompt()
+    {
+        promptMode = promptNumSavedMsges;
+    }
+
 protected:
     void loadMessagesFromEEPROM()
     {
@@ -210,6 +237,7 @@ protected:
 #endif
     }
 
+    uint8_t promptMode;
     size_t msgIdx;
     std::vector<Saved_Message> msgList;
     std::vector<Saved_Message> eepromMsgList;

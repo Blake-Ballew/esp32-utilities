@@ -7,14 +7,11 @@ Home_Window::Home_Window(OLED_Window *parent) : OLED_Window(parent)
 
 Home_Window::Home_Window() : OLED_Window()
 {
-#if DEBUG == 1
-    Serial.println("DOES PRINTING EVEN WORK HERE??????????????");
-#endif
     homeContent = new Home_Content(display);
     trackingContent = new Tracking_Content(display);
     receivedMessagesContent = new Received_Messages_Content(display, false, false);
     savedMessagesContent = new Saved_Messages_Content();
-    savedLocationsContent = new Saved_Locations_Content(display);
+    savedLocationsContent = new Saved_Locations_Content(true, true);
 
     receivedMessagesState = new Received_Messages_State(receivedMessagesContent);
     homeState = new Home_State(homeContent);
@@ -42,6 +39,9 @@ Home_Window::Home_Window() : OLED_Window()
     receivedMessagesState->setAdjacentState(ENC_UP, homeState);
     receivedMessagesState->setAdjacentState(BUTTON_1, trackingState);
     receivedMessagesState->setAdjacentState(BUTTON_4, selectLocationState);
+
+    selectLocationState->setAdjacentState(BUTTON_4, selectMessageState);
+    selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
 
     System_Utils::monitorSystemHealth(nullptr);
 }
@@ -224,8 +224,13 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         Serial.println("Detecting return from select location state");
 #endif
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
+        
         if (doc != nullptr && doc->containsKey("isCurrLocation"))
         {
+            #if DEBUG == 1
+            Serial.println("data is not null and contains key");
+            #endif
+
             if ((*doc)["isCurrLocation"] == true)
             {
 #if DEBUG == 1
@@ -259,7 +264,8 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         if (!useCurrLocation)
         {
             transferData.serializedData = new DynamicJsonDocument(128);
-            (*transferData.serializedData)["message"] = locName;
+            (*transferData.serializedData).createNestedArray("additionalMsgList");
+            (*transferData.serializedData)["additionalMsgList"].add(locName);
         }
 
         newState = selectMessageState;

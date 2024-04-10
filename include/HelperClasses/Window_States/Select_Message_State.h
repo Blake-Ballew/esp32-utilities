@@ -28,8 +28,10 @@ public:
         msgContent = content;
         renderContent = msgContent;
 
-        assignInput(BUTTON_3, ACTION_BACK, "Back");
+        assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
         assignInput(BUTTON_4, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Send");
+
+        msgContent->setSelectMsgPrompt();
     }
 
     Select_Message_State()
@@ -84,72 +86,29 @@ public:
                 transferData.serializedData = doc;
             }
         }
+
+        msgContent->clearAdditionalMessages();
+
+        LED_Manager::clearRing();
     }
 
     void processInput(uint8_t inputID)
     {
-        /* if (inputID == BUTTON_4)
+        switch (inputID)
         {
-            if (sendCurrentLocation)
-            {
-                Navigation_Manager::updateGPS();
-                auto location = Navigation_Manager::getLocation();
-                lat = location.lat();
-                lon = location.lng();
-            }
-
-            Message_Ping *message = new Message_Ping(
-                Navigation_Manager::getTime().value(),
-                Navigation_Manager::getDate().value(),
-                userID,
-                Network_Manager::userID,
-                Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
-                0,
-                Settings_Manager::settings["User"]["Theme Red"]["cfgVal"].as<uint8_t>(),
-                Settings_Manager::settings["User"]["Theme Green"]["cfgVal"].as<uint8_t>(),
-                Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"].as<uint8_t>(),
-                lat,
-                lon,
-                msgContent->getCurrentMessage());
-
-            uint8_t returnCode;
-
-            if (sendDirect)
-            {
-                returnCode = Network_Manager::queueMessageToUser(userID, message);
-            }
-            else
-            {
-                returnCode = Network_Manager::queueBroadcastMessage(message);
-            }
-            OLED_Content::clearContentArea();
-
-            switch (returnCode)
-            {
-            case RETURN_CODE_UNABLE_TO_QUEUE:
-                display->setCursor(OLED_Content::centerTextHorizontal(UNABLE_TO_QUEUE), OLED_Content::centerTextVertical());
-                display->print(UNABLE_TO_QUEUE);
-                break;
-            case RH_ROUTER_ERROR_NONE:
-                display->setCursor(OLED_Content::centerTextHorizontal(MESSAGE_SENT), OLED_Content::centerTextVertical());
-                display->print(MESSAGE_SENT);
-                break;
-            case RH_ROUTER_ERROR_NO_ROUTE:
-                display->setCursor(OLED_Content::centerTextHorizontal(NO_ROUTE), OLED_Content::centerTextVertical());
-                display->print(NO_ROUTE);
-                break;
-            case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
-                display->setCursor(OLED_Content::centerTextHorizontal(DELIVERY_FAILED), OLED_Content::centerTextVertical());
-                display->print(DELIVERY_FAILED);
-                break;
-            default:
-                break;
-            }
-
-            display->display();
-
-            vTaskDelay(pdMS_TO_TICKS(3000));
-    }*/
+        case ENC_UP:
+        {
+            msgContent->encUp();
+        }
+        break;
+        case ENC_DOWN:
+        {
+            msgContent->encDown();
+        }
+        break;
+        default:
+            break;
+        }
     }
 
 private:
