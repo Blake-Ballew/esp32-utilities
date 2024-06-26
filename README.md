@@ -33,6 +33,7 @@ The Navigation Manager interfaces with a UART GPS module and a QMC5883L Compass 
 ## Roadmap
 
 - This code was originally written for the [Celestial Wayfinder](https://github.com/Blake-Ballew/Celestial-Wayfinder) project. These projects will become more decoupled as more work is done on each.
+- Update code to use C++20 modules.
 - System Utils
   - OTA firmware update support.
   - Support for managing Queues, Stream Buffers, and more FreeRTOS components.
