@@ -22,3 +22,10 @@ The LED Manager is responsible for controlling WS2812B LEDs on the device. It en
 
 ## Application Specific Features
 
+### LoRa Network Manager
+
+The LoRa Network Manager (currently known as Network Manager) interfaces with a LoRa chip over a SPI connection, enabling devices to form a mesh network. This module facilitates the sending of Message_Base objects, which are serialized to MessagePack for efficient transmission. Upon receiving messages, the module triggers their corresponding InputID, which is then passed to the Display Manager's queue. This seamless integration allows for effective communication and coordination within the mesh network.
+
+### Navigation Manager
+
+The Navigation Manager interfaces with a UART GPS module and a QMC5883L Compass module over I2C, providing essential navigation capabilities. It accepts GPS coordinates and utilizes the device's current location and compass heading to create an LED compass with the help of the LED Manager. This LED compass visually guides users towards specified coordinates.
