@@ -29,3 +29,18 @@ The LoRa Network Manager (currently known as Network Manager) interfaces with a 
 ### Navigation Manager
 
 The Navigation Manager interfaces with a UART GPS module and a QMC5883L Compass module over I2C, providing essential navigation capabilities. It accepts GPS coordinates and utilizes the device's current location and compass heading to create an LED compass with the help of the LED Manager. This LED compass visually guides users towards specified coordinates.
+
+## Roadmap
+
+- This code was originally written for the [Celestial Wayfinder](https://github.com/Blake-Ballew/Celestial-Wayfinder) project. These projects will become more decoupled as more work is done on each.
+- System Utils
+  - OTA firmware update support.
+  - Support for managing Queues, Stream Buffers, and more FreeRTOS components.
+- LoRa Network Manager
+  - Support for gRPC-like function calls using MessagePack.
+- Filesystem Manager
+  - Better structure of settings file.
+    - Organized by module.
+    - Update settings without requiring a reboot.
+- Display Manager
+  - Creation of menus with more interactive components using Window States.
