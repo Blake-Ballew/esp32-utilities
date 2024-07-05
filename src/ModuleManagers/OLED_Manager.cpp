@@ -2,34 +2,45 @@
 
 TickType_t OLED_Manager::lastButtonPressTick = 0;
 
-OLED_Manager *OLED_Manager::instance = NULL;
+// OLED_Manager *OLED_Manager::instance = NULL;
 OLED_Window *OLED_Manager::currentWindow = NULL;
 OLED_Window *OLED_Manager::rootWindow = NULL;
 std::map<uint32_t, callbackPointer> OLED_Manager::callbackMap;
 std::map<uint8_t, inputCallbackPointer> OLED_Manager::inputCallbackMap;
 std::unordered_map<size_t, uint8_t> OLED_Manager::inputMap;
 Adafruit_SSD1306 OLED_Manager::display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
+int OLED_Manager::refreshTimerID;
+
+uint8_t OLED_Manager::displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
+StaticQueue_t OLED_Manager::displayCommandQueueBuffer;
+QueueHandle_t OLED_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &OLED_Manager::displayCommandQueueBuffer);
 
 void OLED_Manager::init()
 {
-    OLED_Manager::instance = new OLED_Manager();
+    // OLED_Manager::instance = new OLED_Manager();
     OLED_Window::display = &display;
+    Window_State::display = &display;
+    OLED_Content::display = &display;
+    OLED_Content::displayCommandQueue = OLED_Manager::displayCommandQueue;
     // display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
     display.clearDisplay();
-#if DEBUG == 1
-    Serial.print("OLED_Manager::display height: ");
-    Serial.println(display.height());
-    Serial.print("OLED_Manager::display width: ");
-    Serial.println(display.width());
-#endif
+
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
     display.display();
+
+    // Register refresh timer
+    OLED_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, OLED_Manager::refreshTimerCallback);
+    if (OLED_Manager::refreshTimerID == -1)
+    {
+        Serial.println("OLED_Manager::init: Failed to register refresh timer");
+    }
+    OLED_Content::setTimerID(OLED_Manager::refreshTimerID);
+
     OLED_Manager::initializeCallbacks();
     OLED_Manager::generateHomeWindow(0);
-    // esp_event_handler_register(loop_handle, EVENT_BUTTON_IO, ESP_EVENT_ANY_ID, OLED_Manager::processButtonPressEvent, NULL);
 }
 
 OLED_Window *OLED_Manager::attachNewWindow()
@@ -65,157 +76,122 @@ void OLED_Manager::attachNewWindow(OLED_Window *window)
     }
 }
 
-void OLED_Manager::processButtonPressEvent(void *taskParams)
+void OLED_Manager::processCommandQueue(void *taskParams)
 {
-    uint32_t notification;
     while (true)
     {
-        xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification, portMAX_DELAY);
-        if (notification != 0 && (xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
+        // xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification, portMAX_DELAY);
+        DisplayCommandQueueItem displayCommand;
+        auto queueItemReceived = xQueueReceive(displayCommandQueue, &displayCommand, portMAX_DELAY);
+        if (queueItemReceived == pdTRUE)
         {
-#if DEBUG == 1
-            Serial.println("OLED_Manager::processButtonPressEvent");
-            Serial.print("id: 0x");
-            Serial.println(notification, HEX);
-#endif
-            disableInterrupts();
-
-            auto inputs = getInputsFromNotification(notification);
-
-            for (auto input : inputs)
+            switch (displayCommand.commandType)
             {
-                // Get callback data from the current window state if it exists
-                CallbackData *callbackData = OLED_Manager::currentWindow->getCallbackDataByInputID(input);
-
-                // Pulse LED if it exists
-                LED_Manager::pulseButton(input);
-
-                // Pass input to current window
-                if (currentWindow != nullptr)
+            case CommandType::INPUT_COMMAND:
+            {
+                if ((xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
                 {
-                    currentWindow->execBtnCallback(input);
+                    uint8_t input = displayCommand.commandData.inputCommand.inputID;
+                    disableInterrupts();
+
+                    // Clear queue after disabling interrupts to debounce
+                    xQueueReset(displayCommandQueue);
+
+                    CallbackData *cbPtr = OLED_Manager::currentWindow->getCallbackDataByInputID(input);
+                    CallbackData callbackData;
+
+                    if (cbPtr != nullptr)
+                    {
+                        callbackData = CallbackData(*cbPtr);
+                    }
+
+                    // Pulse LED if it exists
+                    LED_Manager::pulseButton(input);
+
+                    // Pass input to current window
+                    if (currentWindow != nullptr)
+                    {
+                        currentWindow->execBtnCallback(input);
+                    }
+
+                    // Process input callback
+                    processInputCallback(input);
+
+                    // If callback data exists, execute callback
+                    if (cbPtr != nullptr)
+                    {
+                        processEventCallback(callbackData.callbackID, input);
+                    }
+
+                    currentWindow->drawWindow();
+
+                    lastButtonPressTick = xTaskGetTickCount();
+                    enableInterrupts();
                 }
 
-                // Process input callback
-                processInputCallback(input);
-
-                // If callback data exists, execute callback
-                if (callbackData != nullptr)
-                {
-                    processEventCallback(callbackData->callbackID, input);
-                }
+                break;
             }
 
-            /*             if (OLED_Manager::currentWindow != NULL)
-                        {
-                            uint32_t callbackID = 0;
-                            uint8_t inputID = 0;
+            case CommandType::CALLBACK_COMMAND:
+            {
+                disableInterrupts();
+                processEventCallback(displayCommand.commandData.callbackCommand.resourceID, 0);
+                enableInterrupts();
+                currentWindow->drawWindow();
+                break;
+            }
+            }
 
-                            if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_1))
-                            {
-
-                                if (OLED_Manager::currentWindow->btn1CallbackID != 0)
-                                {
-                                    callbackID = OLED_Manager::currentWindow->btn1CallbackID;
-                                    inputID = BUTTON_1;
-                                    LED_Manager::pulseButton(1);
-                                    // processEventCallback(OLED_Manager::currentWindow->btn1CallbackID, NULL);
-                                    //  OLED_Manager::callbackMap[OLED_Manager::currentWindow->btn1CallbackID](event_data);
-                                }
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_2))
-                            {
-                                if (OLED_Manager::currentWindow->btn2CallbackID != 0)
-                                {
-                                    callbackID = OLED_Manager::currentWindow->btn2CallbackID;
-                                    inputID = 2;
-                                    LED_Manager::pulseButton(2);
-                                    // processEventCallback(OLED_Manager::currentWindow->btn2CallbackID, NULL);
-                                }
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_3))
-                            {
-                                if (OLED_Manager::currentWindow->btn3CallbackID != 0)
-                                {
-                                    callbackID = OLED_Manager::currentWindow->btn3CallbackID;
-                                    inputID = 3;
-                                    LED_Manager::pulseButton(3);
-                                    // processEventCallback(OLED_Manager::currentWindow->btn3CallbackID, NULL);
-                                }
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_BUTTON_4))
-                            {
-                                if (OLED_Manager::currentWindow->btn4CallbackID != 0)
-                                {
-                                    callbackID = OLED_Manager::currentWindow->btn4CallbackID;
-                                    inputID = 4;
-                                    LED_Manager::pulseButton(4);
-                                    // processEventCallback(OLED_Manager::currentWindow->btn4CallbackID, NULL);
-                                }
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_ENCODER_UP))
-                            {
-                                OLED_Manager::currentWindow->encUp();
-                                LED_Manager::pulseButton(6);
-                                inputID = 5;
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_ENCODER_DOWN))
-                            {
-                                OLED_Manager::currentWindow->encDown();
-                                LED_Manager::pulseButton(7);
-                                inputID = 6;
-                            }
-                            else if (notification & BIT_SHIFT((uint8_t)EVENT_MESSAGE_RECEIVED))
-                            {
-                                if (OLED_Manager::currentWindow != nullptr && OLED_Manager::currentWindow->content != nullptr)
-                                {
-                                    if (OLED_Manager::currentWindow->content->type == ContentType::LORA_TEST)
-                                    {
-                                        LoRa_Test_Content *c = (LoRa_Test_Content *)OLED_Manager::currentWindow->content;
-                                        c->updateMessages();
-                                    }
-                                    else if (currentWindow->content->type == ContentType::STATUS)
-                                    {
-                                        Received_Messages_Content *c = (Received_Messages_Content *)currentWindow->content;
-                                        c->updateMessages();
-                                    }
-                                }
-                                if (System_Utils::silentMode == false)
-                                {
-                                    LED_Manager::buzzerNotification();
-                                }
-                            }
-
-                            // If old callback system isn't used, check new system
-                            if (callbackID == 0)
-                            {
-                                CallbackData *callbackData = OLED_Manager::currentWindow->getCallbackDataByInputID(inputID);
-                                if (callbackData != nullptr)
-                                {
-                                    callbackID = callbackData->callbackID;
-                                }
-                            }
-
-                            if (callbackID != 0)
-                            {
-                                OLED_Manager::currentWindow->execBtnCallback(inputID);
-                                if (callbackID < 0xF0000000)
-                                {
-                                    processEventCallback(callbackID, inputID);
-                                }
-                                else if (callbackID == ACTION_SWITCH_WINDOW_STATE)
-                                {
-                                    OLED_Manager::currentWindow->switchWindowState(inputID);
-                                }
-                            } */
-
-            currentWindow->drawWindow();
-
-            // reset notification
-            notification = 0;
-            lastButtonPressTick = xTaskGetTickCount();
-            enableInterrupts();
+            // System_Utils::sendDisplayContents(&display);
+            Serial.println();
+            
         }
+
+        /*         if (notification != 0 && (xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
+                {
+        #if DEBUG == 1
+                    Serial.println("OLED_Manager::processButtonPressEvent");
+                    Serial.print("id: 0x");
+                    Serial.println(notification, HEX);
+        #endif
+                    disableInterrupts();
+
+                    // Clear queue after disabling interrupts to debounce
+                    xQueueReset(displayCommandQueue);
+
+                    auto inputs = getInputsFromNotification(notification);
+
+                    for (auto input : inputs)
+                    {
+                        // Get callback data from the current window state if it exists
+                        CallbackData *callbackData = OLED_Manager::currentWindow->getCallbackDataByInputID(input);
+
+                        // Pulse LED if it exists
+                        LED_Manager::pulseButton(input);
+
+                        // Pass input to current window
+                        if (currentWindow != nullptr)
+                        {
+                            currentWindow->execBtnCallback(input);
+                        }
+
+                        // Process input callback
+                        processInputCallback(input);
+
+                        // If callback data exists, execute callback
+                        if (callbackData != nullptr)
+                        {
+                            processEventCallback(callbackData->callbackID, input);
+                        }
+                    }
+
+                    currentWindow->drawWindow();
+
+                    // reset notification
+                    notification = 0;
+                    lastButtonPressTick = xTaskGetTickCount();
+                    enableInterrupts();
+        }*/
     }
 }
 
@@ -245,6 +221,7 @@ void OLED_Manager::initializeCallbacks()
     registerCallback(ACTION_CALL_FUNCTIONAL_WINDOW_STATE, callFunctionalWindowState);
     registerCallback(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, returnFromFunctionWindowState);
     registerCallback(ACTION_SWITCH_WINDOW_STATE, switchWindowState);
+    registerCallback(ACTION_SAVE_LOCATION_WINDOW, openSaveLocationWindow);
 
     registerInputCallback(MESSAGE_RECEIVED, processMessageReceived);
 #if DEBUG == 1
@@ -265,13 +242,13 @@ std::vector<uint8_t> OLED_Manager::getInputsFromNotification(uint32_t notificati
     return inputs;
 }
 
-void OLED_Manager::callFunctionWindowState(uint8_t inputID)
-{
-    if (currentWindow != nullptr)
-    {
-        currentWindow->callFunctionState(inputID);
-    }
-}
+// void OLED_Manager::callFunctionWindowState(uint8_t inputID)
+// {
+//     if (currentWindow != nullptr)
+//     {
+//         currentWindow->callFunctionState(inputID);
+//     }
+// }
 
 void OLED_Manager::returnFromFunctionWindowState(uint8_t inputID)
 {
@@ -355,11 +332,11 @@ void OLED_Manager::goBack(uint8_t inputID)
 
 void OLED_Manager::select(uint8_t inputID)
 {
-    if (OLED_Manager::currentWindow->content != NULL)
+    if (currentWindow->currentState != nullptr && currentWindow->currentState->renderContent != nullptr)
     {
-        if (OLED_Manager::currentWindow->currentState->renderContent->type == ContentType::LIST)
+        if (currentWindow->currentState->renderContent->type == ContentType::LIST)
         {
-            OLED_Content_List *list = (OLED_Content_List *)currentWindow->content;
+            OLED_Content_List *list = (OLED_Content_List *)currentWindow->currentState->renderContent;
 #if DEBUG == 1
             Serial.print("OLED_Manager::select found resourceID: ");
             Serial.println(list->getCurrentNode()->resourceID);
@@ -417,7 +394,7 @@ void OLED_Manager::generatePingWindowBroadcast(void *arg)
 
 void OLED_Manager::generateSettingsWindow(uint8_t inputID)
 {
-    OLED_Settings_Window *newWindow = new OLED_Settings_Window(currentWindow);
+    Settings_Window *newWindow = new Settings_Window(currentWindow);
     OLED_Manager::attachNewWindow(newWindow);
     // newWindow->drawWindow();
 }
@@ -432,26 +409,42 @@ void OLED_Manager::generateStatusesWindow(uint8_t inputID)
 
 void OLED_Manager::generateMenuWindow(uint8_t inputID)
 {
-    OLED_Window *newWindow = OLED_Manager::attachNewWindow();
-    Select_Content_List_State *state = new Select_Content_List_State();
-    newWindow->currentState = state;
+    Menu_Window *menuWindow = new Menu_Window(currentWindow);
 
-    state->assignInput(BUTTON_3, ACTION_BACK, "Back");
-    state->assignInput(BUTTON_4, ACTION_SELECT, "Select");
+    menuWindow->addMenuItem("Messages", ACTION_GENERATE_STATUSES_WINDOW);
+    menuWindow->addMenuItem("Saved Messages", ACTION_OPEN_SAVED_MESSAGES_WINDOW);
+    menuWindow->addMenuItem("Settings", ACTION_GENERATE_SETTINGS_WINDOW);
+    menuWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
+    menuWindow->addMenuItem("Compass", ACTION_GENERATE_COMPASS_WINDOW);
+    menuWindow->addMenuItem("GPS", ACTION_GENERATE_GPS_WINDOW);
+    // menuWindow->addMenuItem("LoRa Test", ACTION_GENERATE_LORA_TEST_WINDOW);
+    menuWindow->addMenuItem("Flash Settings", ACTION_FLASH_DEFAULT_SETTINGS);
+    menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
+    menuWindow->addMenuItem("Shutdown Device", ACTION_SHUTDOWN_DEVICE);
 
-    OLED_Content_List *list = new OLED_Content_List(&display);
-    state->renderContent = list;
+    OLED_Manager::attachNewWindow(menuWindow);
 
-    list->addNode(new Content_Node(ACTION_GENERATE_STATUSES_WINDOW, "Messages", 8));
-    list->addNode(new Content_Node(ACTION_OPEN_SAVED_MESSAGES_WINDOW, "Saved Messages", 15));
-    list->addNode(new Content_Node(ACTION_GENERATE_SETTINGS_WINDOW, "Settings", 8));
-    list->addNode(new Content_Node(ACTION_TOGGLE_FLASHLIGHT, "Flashlight", 10));
-    list->addNode(new Content_Node(ACTION_GENERATE_COMPASS_WINDOW, "Compass", 7));
-    list->addNode(new Content_Node(ACTION_GENERATE_GPS_WINDOW, "GPS", 3));
-    // list->addNode(new Content_Node(ACTION_GENERATE_LORA_TEST_WINDOW, "LoRa Test", 9));
-    list->addNode(new Content_Node(ACTION_FLASH_DEFAULT_SETTINGS, "Flash Settings", 15));
-    list->addNode(new Content_Node(ACTION_REBOOT_DEVICE, "Reboot Device", 14));
-    list->addNode(new Content_Node(ACTION_SHUTDOWN_DEVICE, "Shutdown Device", 15));
+
+    // OLED_Window *newWindow = OLED_Manager::attachNewWindow();
+    // Select_Content_List_State *state = new Select_Content_List_State();
+    // newWindow->currentState = state;
+
+    // state->assignInput(BUTTON_3, ACTION_BACK, "Back");
+    // state->assignInput(BUTTON_4, ACTION_SELECT, "Select");
+
+    // OLED_Content_List *list = new OLED_Content_List(&display);
+    // state->renderContent = list;
+
+    // list->addNode(new Content_Node(ACTION_GENERATE_STATUSES_WINDOW, "Messages", 8));
+    // list->addNode(new Content_Node(ACTION_OPEN_SAVED_MESSAGES_WINDOW, "Saved Messages", 15));
+    // list->addNode(new Content_Node(ACTION_GENERATE_SETTINGS_WINDOW, "Settings", 8));
+    // list->addNode(new Content_Node(ACTION_TOGGLE_FLASHLIGHT, "Flashlight", 10));
+    // list->addNode(new Content_Node(ACTION_GENERATE_COMPASS_WINDOW, "Compass", 7));
+    // list->addNode(new Content_Node(ACTION_GENERATE_GPS_WINDOW, "GPS", 3));
+    // // list->addNode(new Content_Node(ACTION_GENERATE_LORA_TEST_WINDOW, "LoRa Test", 9));
+    // list->addNode(new Content_Node(ACTION_FLASH_DEFAULT_SETTINGS, "Flash Settings", 15));
+    // list->addNode(new Content_Node(ACTION_REBOOT_DEVICE, "Reboot Device", 14));
+    // list->addNode(new Content_Node(ACTION_SHUTDOWN_DEVICE, "Shutdown Device", 15));
 
     currentWindow->drawWindow();
 }
@@ -520,23 +513,16 @@ void OLED_Manager::toggleSilentMode(uint8_t inputID)
 
 void OLED_Manager::quickActionMenu(uint8_t inputID)
 {
-    OLED_Window *newWindow = OLED_Manager::attachNewWindow();
+    Menu_Window *newWindow = new Menu_Window(currentWindow);
 
-    Window_State *state = new Window_State();
-    newWindow->currentState = state;
+    newWindow->addMenuItem("All Messages", ACTION_GENERATE_STATUSES_WINDOW);
+    newWindow->addMenuItem("Save Current Location", ACTION_SAVE_LOCATION_WINDOW);
+    newWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
+    newWindow->addMenuItem("Silent Mode", ACTION_TOGGLE_SILENT_MODE);
+    newWindow->addMenuItem("Shutdown", ACTION_SHUTDOWN_DEVICE);
+    newWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
 
-    state->assignInput(BUTTON_3, ACTION_BACK, "Back");
-    state->assignInput(BUTTON_4, ACTION_SELECT, "Select");
-
-    OLED_Content_List *list = new OLED_Content_List(&display);
-
-    state->renderContent = list;
-
-    list->addNode(new Content_Node(ACTION_GENERATE_STATUSES_WINDOW, "All Messages", 12));
-    list->addNode(new Content_Node(ACTION_TOGGLE_FLASHLIGHT, "Flashlight", 10));
-    list->addNode(new Content_Node(ACTION_TOGGLE_SILENT_MODE, "Silent Mode", 11));
-    list->addNode(new Content_Node(ACTION_SHUTDOWN_DEVICE, "Shutdown", 8));
-    list->addNode(new Content_Node(ACTION_REBOOT_DEVICE, "Reboot Device", 13));
+    OLED_Manager::attachNewWindow(newWindow);
 
     currentWindow->drawWindow();
 }
@@ -565,7 +551,7 @@ void OLED_Manager::switchWindowState(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
-        currentWindow->currentState->processInput(inputID);
+        // currentWindow->currentState->processInput(inputID);
         currentWindow->switchWindowState(inputID);
     }
 }
@@ -574,7 +560,7 @@ void OLED_Manager::callFunctionalWindowState(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
-        currentWindow->currentState->processInput(inputID);
+        // currentWindow->currentState->processInput(inputID);
         currentWindow->callFunctionState(inputID);
     }
 }
@@ -585,4 +571,12 @@ void OLED_Manager::processMessageReceived()
     {
         LED_Manager::buzzerNotification();
     }
+}
+
+
+void OLED_Manager::openSaveLocationWindow(uint8_t inputID)
+{
+    Save_Location_Window *window = new Save_Location_Window(currentWindow);
+    OLED_Manager::attachNewWindow(window);
+    window->drawWindow();
 }

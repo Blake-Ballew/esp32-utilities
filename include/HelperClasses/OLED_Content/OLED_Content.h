@@ -5,7 +5,40 @@
 #include <Adafruit_SSD1306.h>
 #include <map>
 #include "globalDefines.h"
+#include "System_Utils.h"
 
+enum CommandType
+{
+    INPUT_COMMAND = 0,
+    CALLBACK_COMMAND
+};
+
+enum CommandSource
+{
+    USER_INPUT = 0,
+    WINDOW
+};
+
+struct DisplayCommandQueueItem
+{
+    CommandType commandType;
+    CommandSource source;
+
+    union
+    {
+        struct
+        {
+            uint8_t inputID;
+        } inputCommand;
+
+        struct
+        {
+            uint32_t resourceID;
+        } callbackCommand;
+    } commandData;
+};
+
+// TODO: Get rid of this
 enum class ContentType
 {
     NONE,
@@ -34,6 +67,18 @@ struct CallbackData
 {
     uint32_t callbackID;
     char displayText[BUTTON_TEXT_MAX + 1];
+
+    CallbackData()
+    {
+        callbackID = ACTION_NONE;
+        displayText[0] = '\0';
+    }
+
+    CallbackData(const CallbackData &data)
+    {
+        callbackID = data.callbackID;
+        strcpy(displayText, data.displayText);
+    }
 };
 
 // Abstract class for OLED content
@@ -42,6 +87,7 @@ class OLED_Content
 public:
     ContentType type = ContentType::NONE;
     static Adafruit_SSD1306 *display;
+    static QueueHandle_t displayCommandQueue;
 
     // map inputID to callback struct
     std::map<uint8_t, CallbackData> buttonCallbacks;
@@ -104,7 +150,12 @@ public:
         }
         return len;
     }
+
+    static void setTimerID(int timerID) { OLED_Content::refreshTimerID = timerID; }
     virtual ~OLED_Content() {}
+
+protected:
+    static int refreshTimerID;
 };
 
 class Content_Node
@@ -124,7 +175,6 @@ public:
 class OLED_Content_List : public OLED_Content
 {
 public:
-    Content_Node *getCurrentNode();
 
     OLED_Content_List();
     OLED_Content_List(Adafruit_SSD1306 *display);
@@ -132,6 +182,7 @@ public:
 
     void addNode(Content_Node *node);
     void removeNode(Content_Node *node);
+    Content_Node *getCurrentNode();
 
     void encUp();
     void encDown();

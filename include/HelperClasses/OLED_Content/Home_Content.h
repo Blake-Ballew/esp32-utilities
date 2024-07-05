@@ -11,6 +11,7 @@ class Home_Content : public OLED_Content
 public:
     const static uint8_t HOME_CONTENT_MAIN = 1;
     const static uint8_t HOME_CONTENT_MESSAGES = 2;
+    const int HOME_CONTENT_TIMER_PERIOD = 60000;
 
     uint8_t contentMode;
 

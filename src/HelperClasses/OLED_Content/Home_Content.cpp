@@ -7,9 +7,8 @@ Home_Content::Home_Content(Adafruit_SSD1306 *display)
     this->type = ContentType::HOME;
     this->display = display;
     this->contentMode = 1;
-    thisInstance = this;
-    timer = xTimerCreate("Home_Content_Timer", pdMS_TO_TICKS(60000), pdTRUE, (void *)0, Home_Content::timerCallback);
-    xTimerStart(this->timer, 0);
+    System_Utils::changeTimerPeriod(refreshTimerID, HOME_CONTENT_TIMER_PERIOD);
+    System_Utils::startTimer(refreshTimerID);
 }
 
 Home_Content::~Home_Content()
@@ -79,12 +78,19 @@ void Home_Content::printContent()
 
 void Home_Content::stop()
 {
-    xTimerStop(this->timer, 0);
+#if DEBUG == 1
+    Serial.println("Stopping Home Content");
+#endif
+    System_Utils::stopTimer(refreshTimerID);
 }
 
 void Home_Content::start()
 {
-    xTimerStart(this->timer, 0);
+#if DEBUG == 1
+    Serial.println("Starting Home Content");
+#endif
+    System_Utils::changeTimerPeriod(OLED_Content::refreshTimerID, HOME_CONTENT_TIMER_PERIOD);
+    System_Utils::startTimer(OLED_Content::refreshTimerID);
 }
 
 void Home_Content::timerCallback(TimerHandle_t xTimer)

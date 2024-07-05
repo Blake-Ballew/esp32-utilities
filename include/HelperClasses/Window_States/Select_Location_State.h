@@ -35,6 +35,7 @@ public:
 #if DEBUG == 1
         Serial.println("Select_Location_State::enterState");
 #endif
+        locationsContent->loadLocations();
         Window_State::enterState(transferData);
     }
 

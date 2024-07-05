@@ -42,8 +42,6 @@ Home_Window::Home_Window() : OLED_Window()
 
     selectLocationState->setAdjacentState(BUTTON_4, selectMessageState);
     selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
-
-    System_Utils::monitorSystemHealth(nullptr);
 }
 
 // void Home_Window::Pause()
@@ -224,12 +222,12 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         Serial.println("Detecting return from select location state");
 #endif
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
-        
+
         if (doc != nullptr && doc->containsKey("isCurrLocation"))
         {
-            #if DEBUG == 1
+#if DEBUG == 1
             Serial.println("data is not null and contains key");
-            #endif
+#endif
 
             if ((*doc)["isCurrLocation"] == true)
             {
@@ -312,6 +310,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             display->display();
             clearMessageInfo();
             vTaskDelay(2000 / portTICK_PERIOD_MS);
+            newState = homeState;
         }
     }
     // ***************** End mid-transfer logic *****************

@@ -21,7 +21,7 @@ struct State_Transfer_Data
 class Window_State
 {
 public:
-    static Adafruit_SSD1306 *display;
+    inline static Adafruit_SSD1306 *display = nullptr;
 
     OLED_Content *renderContent = nullptr;
 
@@ -82,10 +82,6 @@ public:
 #endif
         if (renderContent != nullptr)
             renderContent->printContent();
-
-#if DEBUG == 1
-        Serial.println("Window_State::displayState end");
-#endif
     }
 
     void assignInput(uint8_t inputID, uint32_t callbackID, const char *displayText)
@@ -94,6 +90,11 @@ public:
         callback.callbackID = callbackID;
         strncpy(callback.displayText, displayText, BUTTON_TEXT_MAX);
         callback.displayText[min(strlen(displayText), (size_t)BUTTON_TEXT_MAX)] = '\0';
+        buttonCallbacks[inputID] = callback;
+    }
+
+    void assignInput(uint8_t inputID, CallbackData &callback)
+    {
         buttonCallbacks[inputID] = callback;
     }
 

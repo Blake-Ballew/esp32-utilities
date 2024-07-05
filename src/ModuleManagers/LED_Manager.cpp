@@ -131,11 +131,6 @@ void LED_Manager::pulseButton(uint8_t buttonNumber)
 {
     size_t ledIdx;
 
-#if DEBUG == 1
-    Serial.print("Pulsing button ");
-    Serial.println(buttonNumber);
-#endif
-
     if (Button_Flash::ticksRemaining > 0)
     {
         return;
@@ -167,11 +162,6 @@ void LED_Manager::pulseButton(uint8_t buttonNumber)
     default:
         return;
     }
-
-#if DEBUG == 1
-    Serial.print("Pulsing led ");
-    Serial.println(ledIdx);
-#endif
 
     Button_Flash::init(ledIdx, r, g, b);
     xTimerStart(patternTimer, 0);

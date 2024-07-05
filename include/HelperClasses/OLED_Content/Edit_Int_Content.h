@@ -5,9 +5,8 @@
 class Edit_Int_Content : public OLED_Content
 {
 public:
-    Edit_Int_Content(Adafruit_SSD1306 *disp)
+    Edit_Int_Content()
     {
-        display = disp;
         type = ContentType::EDIT_INT;
     }
 
@@ -108,11 +107,31 @@ public:
 
     void editUnsignedInt(uint32_t intToEdit, uint32_t min, uint32_t max, size_t incrementAmt = 1)
     {
+        #if DEBUG == 1
+        Serial.printf("Edit_Int_Content::editUnsignedInt: intToEdit: %u, min: %u, max: %u, incrementAmt: %u\n", intToEdit, min, max, incrementAmt);
+        #endif
+        
+
         isSigned = false;
+        #if DEBUG == 1
+        Serial.println("Edit_Int_Content::editUnsignedInt: after isSigned");
+        #endif
         unsignedInt = intToEdit;
+        #if DEBUG == 1
+        Serial.println("Edit_Int_Content::editUnsignedInt: after unsignedInt");
+        #endif
         this->incrementAmt = incrementAmt;
+        #if DEBUG == 1
+        Serial.println("Edit_Int_Content::editUnsignedInt: after incrementAmt");
+        #endif
         unsignedMin = min;
+        #if DEBUG == 1
+        Serial.println("Edit_Int_Content::editUnsignedInt: after unsignedMin");
+        #endif
         unsignedMax = max;
+        #if DEBUG == 1
+        Serial.println("Edit_Int_Content::editUnsignedInt: end");
+        #endif
     }
 
     int32_t getSignedInt()

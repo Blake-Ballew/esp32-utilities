@@ -267,7 +267,7 @@ bool Settings_Manager::writeCoordsToSerial()
     return true;
 }
 
-bool Settings_Manager::addCoordinate(const char *name, float lat, float lon)
+bool Settings_Manager::addCoordinate(const char *name, double lat, double lon)
 {
     if (savedCoordinates["Coords"].as<JsonArray>().size() >= maxCoords)
     {
@@ -280,6 +280,8 @@ bool Settings_Manager::addCoordinate(const char *name, float lat, float lon)
     coord["n"] = name;
     coord["la"] = lat;
     coord["lo"] = lon;
+
+    writeCoordsToEEPROM();
     return true;
 }
 
@@ -517,4 +519,71 @@ void Settings_Manager::flashSettings()
     msgDoc.clear();
     doc.clear();
 #endif
+}
+
+JsonVariantType Settings_Manager::getVariantType(ArduinoJson::JsonVariant variant)
+{
+    if (variant.isNull())
+    {
+        return JSON_VARIANT_TYPE_NULL;
+    }
+    else if (variant.is<bool>())
+    {
+        return JSON_VARIANT_TYPE_BOOLEAN;
+    }
+    else if (variant.is<int>())
+    {
+        return JSON_VARIANT_TYPE_INTEGER;
+    }
+    else if (variant.is<float>())
+    {
+        return JSON_VARIANT_TYPE_FLOAT;
+    }
+    else if (variant.is<const char *>())
+    {
+        return JSON_VARIANT_TYPE_STRING;
+    }
+    else if (variant.is<ArduinoJson::JsonArray>())
+    {
+        return JSON_VARIANT_TYPE_ARRAY;
+    }
+    else if (variant.is<ArduinoJson::JsonObject>())
+    {
+        ArduinoJson::JsonObject obj = variant.as<ArduinoJson::JsonObject>();
+        if (obj.containsKey("cfgType") &&
+            obj.containsKey("cfgVal") &&
+            obj.containsKey("dftVal"))
+        {
+            switch (obj["cfgType"].as<uint8_t>())
+            {
+            case (uint8_t)JSON_VARIANT_CONFIGURABLE_STRING:
+                if (obj.containsKey("maxLen"))
+                    return JSON_VARIANT_CONFIGURABLE_STRING;
+            case (uint8_t)JSON_VARIANT_CONFIGURABLE_INTEGER:
+                if (obj.containsKey("maxVal") &&
+                    obj.containsKey("minVal") &&
+                    obj.containsKey("incVal") &&
+                    obj.containsKey("signed"))
+                    return JSON_VARIANT_CONFIGURABLE_INTEGER;
+            case (uint8_t)JSON_VARIANT_CONFIGURABLE_FLOAT:
+                if (obj.containsKey("minVal") &&
+                    obj.containsKey("maxVal") &&
+                    obj.containsKey("incVal"))
+                    return JSON_VARIANT_CONFIGURABLE_FLOAT;
+            case (uint8_t)JSON_VARIANT_CONFIGURABLE_BOOL:
+                return JSON_VARIANT_CONFIGURABLE_BOOL;
+            case (uint8_t)JSON_VARIANT_CONFIGURABLE_ENUM:
+                if (obj.containsKey("vals") &&
+                    obj.containsKey("valTxt"))
+                    return JSON_VARIANT_CONFIGURABLE_ENUM;
+            default:
+                return JSON_VARIANT_TYPE_OBJECT;
+            }
+        }
+        return JSON_VARIANT_TYPE_OBJECT;
+    }
+    else
+    {
+        return JSON_VARIANT_TYPE_NULL;
+    }
 }

@@ -9,6 +9,7 @@
 
 extern TaskHandle_t inputTaskHandle;
 extern TaskHandle_t radioReadTaskHandle;
+extern QueueHandle_t displayCommandQueue;
 
 extern ESP32Encoder *inputEncoder;
 

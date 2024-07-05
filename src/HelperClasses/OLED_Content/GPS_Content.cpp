@@ -1,8 +1,7 @@
 #include "GPS_Content.h"
 
-GPS_Content::GPS_Content(Adafruit_SSD1306 *disp)
+GPS_Content::GPS_Content()
 {
-    display = disp;
 }
 
 GPS_Content::~GPS_Content()

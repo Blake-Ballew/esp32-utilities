@@ -5,9 +5,8 @@
 class Edit_Float_Content : public OLED_Content
 {
 public:
-    Edit_Float_Content(Adafruit_SSD1306 *disp)
+    Edit_Float_Content()
     {
-        display = disp;
         type = ContentType::EDIT_FLOAT;
     }
 
@@ -57,6 +56,9 @@ public:
 
     void editFloat(double floatToEdit, double min, double max, double incrementAmt = 0.1f)
     {
+        #if DEBUG == 1
+        Serial.println("Edit_Float_Content::editFloat()");
+        #endif 
         this->floatToEdit = floatToEdit;
         this->incrementAmt = incrementAmt;
         this->min = min;

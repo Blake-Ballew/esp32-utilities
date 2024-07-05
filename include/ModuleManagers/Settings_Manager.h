@@ -7,6 +7,29 @@
 // #include <FS.h>
 #include <SPIFFS.h>
 
+enum JsonVariantType
+{
+    JSON_VARIANT_TYPE_NULL = 0,
+    JSON_VARIANT_TYPE_BOOLEAN,
+    JSON_VARIANT_TYPE_INTEGER,
+    JSON_VARIANT_TYPE_FLOAT,
+    JSON_VARIANT_TYPE_STRING,
+    JSON_VARIANT_TYPE_ARRAY,
+    JSON_VARIANT_TYPE_OBJECT,
+    JSON_VARIANT_CONFIGURABLE_BOOL,
+    JSON_VARIANT_CONFIGURABLE_INTEGER,
+    JSON_VARIANT_CONFIGURABLE_FLOAT,
+    JSON_VARIANT_CONFIGURABLE_STRING,
+    JSON_VARIANT_CONFIGURABLE_ENUM,
+};
+
+struct JsonVariantStackNode
+{
+    ArduinoJson::JsonVariant variant; // the variant
+    JsonVariantType type;             // the type of the variant
+    size_t idx;                       // the index of the variant in the array or object
+};
+
 class Settings_Manager
 {
 public:
@@ -16,6 +39,9 @@ public:
     // static EepromStream eepromStream;
 
     static void init();
+
+    // Iterating through settings
+    static JsonVariantType getVariantType(ArduinoJson::JsonVariant variant);
 
     // Saved Messages
     static bool readMessagesFromEEPROM();
@@ -34,7 +60,7 @@ public:
     static bool writeCoordsToEEPROM();
     static bool readCoordsFromSerial();
     static bool writeCoordsToSerial();
-    static bool addCoordinate(const char *name, float lat, float lon);
+    static bool addCoordinate(const char *name, double lat, double lon);
     static bool deleteCoordinate(size_t coordIdx);
     static size_t getNumCoords();
     static JsonArray::iterator getCoordIteratorBegin();

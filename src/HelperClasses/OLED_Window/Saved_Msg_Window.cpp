@@ -8,7 +8,7 @@ Saved_Msg_Window::Saved_Msg_Window(OLED_Window *parent) : OLED_Window(parent)
     this->assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, 4, "New Message", 11);
 
     this->msgContent = new Saved_Messages_Content();
-    this->editContent = new Edit_String_Content(this->display);
+    this->editContent = new Edit_String_Content();
     this->content = this->msgContent;
     this->saveList = false;
 }

@@ -8,7 +8,7 @@
 #include <vector>
 #include "EventDeclarations.h"
 #include "OLED_Window.h"
-#include "OLED_Settings_Window.h"
+#include "Settings_Window.h"
 #include "Compass_Window.h"
 #include "GPS_Window.h"
 #include "LoRa_Test_Window.h"
@@ -17,6 +17,8 @@
 #include "Home_Window.h"
 #include "SOS_Window.h"
 #include "Saved_Msg_Window.h"
+#include "Menu_Window.h"
+#include "Save_Location_Window.h"
 
 #include "Select_Content_List_State.h"
 
@@ -24,6 +26,7 @@
 // #include "esp_event_base.h"
 
 #define DEBOUNCE_DELAY 100
+#define DISPLAY_COMMAND_QUEUE_LENGTH 1
 
 using callbackPointer = void (*)(uint8_t);
 using inputCallbackPointer = void (*)();
@@ -31,7 +34,7 @@ using inputCallbackPointer = void (*)();
 class OLED_Manager
 {
 public:
-    static OLED_Manager *instance;
+    // static OLED_Manager *instance;
 
     static Adafruit_SSD1306 display;
 
@@ -47,8 +50,10 @@ public:
     static OLED_Window *attachNewWindow();
     static void attachNewWindow(OLED_Window *window);
 
+    static QueueHandle_t getDisplayCommandQueue() { return displayCommandQueue; }
+
     // Input handler using FreeRTOS task notifications.
-    static void processButtonPressEvent(void *taskParams);
+    static void processCommandQueue(void *taskParams);
     static void initializeCallbacks();
     static void processEventCallback(uint32_t resourceID, uint8_t inputID);
     static void processInputCallback(uint8_t inputID);
@@ -79,12 +84,28 @@ public:
     static void switchWindowState(uint8_t inputID);
     static void callFunctionalWindowState(uint8_t inputID);
     static void returnFromFunctionWindowState(uint8_t inputID);
-    static void callFunctionWindowState(uint8_t inputID);
+    static void openSaveLocationWindow(uint8_t inputID);
+    // static void callFunctionWindowState(uint8_t inputID);
 
     // Input callbacks
     static void processMessageReceived();
 
 private:
+    static StaticTimer_t refreshTimer;
+    static int refreshTimerID;
+
+    static void refreshTimerCallback(TimerHandle_t xTimer)
+    {
+        if (currentWindow != nullptr)
+        {
+            currentWindow->drawWindow();
+        }
+    }
+
     static TickType_t lastButtonPressTick;
     static std::vector<uint8_t> getInputsFromNotification(uint32_t notification);
+
+    static QueueHandle_t displayCommandQueue;
+    static StaticQueue_t displayCommandQueueBuffer;
+    static uint8_t displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
 };

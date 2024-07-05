@@ -13,9 +13,8 @@ struct Enum_Data
 class Edit_Enum_Content : public OLED_Content
 {
 public:
-    Edit_Enum_Content(Adafruit_SSD1306 *disp)
+    Edit_Enum_Content()
     {
-        display = disp;
         type = ContentType::EDIT_ENUM;
     }
 

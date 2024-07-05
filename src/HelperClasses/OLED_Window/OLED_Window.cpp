@@ -112,6 +112,10 @@ void OLED_Window::drawWindow()
             display->setCursor(OLED_WIDTH - (strlen(currentState->buttonCallbacks[BUTTON_4].displayText) * 6), OLED_HEIGHT - 8);
             display->print(currentState->buttonCallbacks[BUTTON_4].displayText);
         }
+
+        #if DEBUG == 1
+        Serial.println("Rendered intputs");
+        #endif
     }
 #if DEBUG == 1
     else
@@ -143,14 +147,28 @@ void OLED_Window::drawWindow()
     else
         display->display();
     */
-
+    #if DEBUG == 1
+    Serial.println("OLED_Window::drawWindow() before displayState()");
+    #endif
     if (currentState != nullptr)
     {
+        #if DEBUG == 1
+        Serial.println("OLED_Window::drawWindow() currentState is not null");
+        #endif
         currentState->displayState();
+    }
+    else
+    {
+        #if DEBUG == 1
+        Serial.println("OLED_Window::drawWindow() currentState is null");
+        #endif
+        display->display();
     }
 #if DEBUG == 1
     Serial.println("OLED_Window::drawWindow() finished");
 #endif
+
+    display->display();
 }
 
 OLED_Window *OLED_Window::getParentWindow()
@@ -160,38 +178,13 @@ OLED_Window *OLED_Window::getParentWindow()
 
 void OLED_Window::execBtnCallback(uint8_t inputID)
 {
-    CallbackData callback;
-
 #if DEBUG == 1
     Serial.println("OLED_Window::execBtnCallback()");
 #endif
 
     if (currentState != nullptr)
     {
-
-#if DEBUG == 1
-        Serial.println("Current state is not null");
-#endif
         currentState->processInput(inputID);
-        // if (currentState->buttonCallbacks.find(inputID) != currentState->buttonCallbacks.end())
-        // {
-        //     callback = currentState->buttonCallbacks[inputID];
-        //     if (callback.callbackID == ACTION_DEFER_CALLBACK_TO_CONTENT &&
-        //         currentState->renderContent != nullptr)
-        //     {
-        //         content->passButtonPress(inputID);
-        //     }
-        // }
-    }
-    else
-    {
-        if (content != nullptr)
-        {
-            if (content->buttonCallbacks.find(inputID) != content->buttonCallbacks.end())
-            {
-                callback = content->buttonCallbacks[inputID];
-            }
-        }
     }
 }
 

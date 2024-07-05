@@ -1,6 +1,8 @@
 #include "OLED_Content.h"
 
 Adafruit_SSD1306 *OLED_Content::display = nullptr;
+QueueHandle_t OLED_Content::displayCommandQueue;
+int OLED_Content::refreshTimerID;
 
 void OLED_Content::drawBatteryIcon(size_t x, size_t y)
 {

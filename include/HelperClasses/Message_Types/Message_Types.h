@@ -108,6 +108,21 @@ public:
         }
     }
 
+    static MessageType getMessageType(DynamicJsonDocument *doc)
+    {
+        if (doc == nullptr)
+            return (MessageType)0;
+            
+        if (doc->containsKey(MESSAGE_TYPE_KEY))
+        {
+            return (MessageType)(*doc)[MESSAGE_TYPE_KEY];
+        }
+        else
+        {
+            return (MessageType)0;
+        }
+    }
+
     virtual uint8_t *serialize(size_t &len)
     {
         ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;

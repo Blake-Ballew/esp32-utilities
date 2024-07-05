@@ -6,7 +6,7 @@
 class GPS_Content : public OLED_Content
 {
 public:
-    GPS_Content(Adafruit_SSD1306 *disp);
+    GPS_Content();
     ~GPS_Content();
 
     void printContent();

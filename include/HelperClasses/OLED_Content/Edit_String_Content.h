@@ -5,11 +5,9 @@
 class Edit_String_Content : public OLED_Content
 {
 public:
-    Edit_String_Content(Adafruit_SSD1306 *disp)
+    Edit_String_Content()
     {
-        display = disp;
         type = ContentType::EDIT_STRING;
-        thisInstance = this;
         currStr = nullptr;
     }
 
@@ -19,8 +17,6 @@ public:
         Serial.println("Edit_String_Content destructor");
 #endif
         stop();
-        thisInstance = nullptr;
-        xTimerStop(timer, 0);
         if (currStr != nullptr)
         {
             delete[] currStr;
@@ -29,6 +25,9 @@ public:
 
     void printContent()
     {
+#if DEBUG == 1
+        Serial.println("Edit_String_Content::printContent");
+#endif
         if (currStr == nullptr)
         {
             return;
@@ -85,23 +84,34 @@ public:
 
     void start()
     {
-        if (!xTimerIsTimerActive(timer))
-            xTimerStart(timer, 0);
+        System_Utils::changeTimerPeriod(refreshTimerID, timerPeriodMS);
+        System_Utils::startTimer(refreshTimerID);
     }
 
     void stop()
     {
-        if (xTimerIsTimerActive(timer))
-            xTimerStop(timer, 0);
+        System_Utils::stopTimer(refreshTimerID);
     }
 
     void setString(const char *str, size_t maxLen, size_t pos)
     {
+#if DEBUG == 1
+        Serial.printf("Edit_String_Content::setString(%s, %d, %d)\n", str, maxLen, pos);
+#endif
         if (currStr != nullptr)
         {
+#if DEBUG == 1
+            Serial.println("Edit_String_Content::setString - deleting old char[]");
+#endif
             delete[] currStr;
         }
+#if DEBUG == 1
+        Serial.println("Edit_String_Content::setString - new char[]: ");
+#endif
         currStr = new char[maxLen + 1];
+#if DEBUG == 1
+        Serial.println("Edit_String_Content::setString - copying memory ");
+#endif
         memcpy(currStr, str, maxLen);
         currStr[maxLen] = '\0';
         currStrLen = maxLen;
@@ -142,23 +152,13 @@ public:
     }
 
 private:
-    static void timerCallback(TimerHandle_t xTimer)
-    {
-        if (thisInstance == nullptr)
-        {
-            xTimerStop(timer, 0);
-            return;
-        }
-        thisInstance->printContent();
-    }
     const static char legalChars[];
 
     size_t cursorCharPos = 0;
     size_t cursorPos = 0;
     char *currStr;
     size_t currStrLen;
-    static Edit_String_Content *thisInstance;
-    static TimerHandle_t timer;
-    static StaticTimer_t timerBuffer;
+
+    const size_t timerPeriodMS = 500;
     bool displayCursor = false;
 };

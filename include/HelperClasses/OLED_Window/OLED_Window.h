@@ -58,7 +58,7 @@ public:
             content->encDown();
     }
 
-    CallbackData *getCallbackDataByInputID(uint8_t inputID)
+    virtual CallbackData *getCallbackDataByInputID(uint8_t inputID)
     {
         if (this->currentState == nullptr)
         {

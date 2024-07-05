@@ -157,14 +157,6 @@ public:
         return nullptr;
     }
 
-protected:
-    // In select mode, the end iterator is used to display current location
-    std::vector<Saved_Location> savedLocations;
-    std::vector<Saved_Location>::iterator locationIt;
-    size_t scrollIdx = 0;
-    bool showCurrentLocation;
-    bool promptSelection;
-
     void loadLocations()
     {
         savedLocations.clear();
@@ -192,4 +184,12 @@ protected:
             locationIdx++;
         }
     }
+
+protected:
+    // In select mode, the end iterator is used to display current location
+    std::vector<Saved_Location> savedLocations;
+    std::vector<Saved_Location>::iterator locationIt;
+    size_t scrollIdx = 0;
+    bool showCurrentLocation;
+    bool promptSelection;
 };
