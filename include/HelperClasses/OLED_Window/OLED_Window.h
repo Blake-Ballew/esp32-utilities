@@ -150,6 +150,31 @@ public:
         transferState(transferData);
     }
 
+    void callFunctionState(Window_State *nextState) 
+    {
+        if (currentState == nullptr)
+        {
+            return;
+        }
+
+        // Save current state
+        stateStack.push(currentState);
+
+        // Get next state
+        Window_State *prevState = currentState;
+        Window_State *newState = nextState;
+
+        // Setup transfer data
+        State_Transfer_Data transferData;
+        transferData.inputID = 0;
+        transferData.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
+        transferData.serializedData = nullptr;
+        transferData.oldState = prevState;
+        transferData.newState = newState;
+
+        OLED_Window::transferState(transferData);
+    }
+
     virtual void returnFromFunctionState(uint8_t inputID)
     {
 #if DEBUG == 1

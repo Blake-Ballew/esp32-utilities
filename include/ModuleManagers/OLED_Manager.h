@@ -20,6 +20,8 @@
 #include "Menu_Window.h"
 #include "Save_Location_Window.h"
 
+#include "Lock_State.h"
+
 #include "Select_Content_List_State.h"
 
 #include "globalDefines.h"
@@ -62,6 +64,11 @@ public:
     static void registerInput(uint32_t resourceID, uint8_t inputID);
     static void displayLowBatteryShutdownNotice();
 
+    // Enables the lock screen state. Setting timeoutMS above 0 will lock the screen after a specified time.
+    // Setting timeoutMS to 0 will only lock the screen when explicitly called.
+    static void enableLockScreen(size_t timeoutMS);
+    static void cbLockDevice(xTimerHandle xTimer);
+
     // Callbacks
     static void goBack(uint8_t inputID);
     static void select(uint8_t inputID);
@@ -85,6 +92,7 @@ public:
     static void callFunctionalWindowState(uint8_t inputID);
     static void returnFromFunctionWindowState(uint8_t inputID);
     static void openSaveLocationWindow(uint8_t inputID);
+    static void lockDevice(uint8_t inputID);
     // static void callFunctionWindowState(uint8_t inputID);
 
     // Input callbacks
@@ -103,7 +111,10 @@ private:
     }
 
     static TickType_t lastButtonPressTick;
-    static std::vector<uint8_t> getInputsFromNotification(uint32_t notification);
+    // static std::vector<uint8_t> getInputsFromNotification(uint32_t notification);
+
+    static int lockStateTimerID;
+    static Lock_State *lockState;
 
     static QueueHandle_t displayCommandQueue;
     static StaticQueue_t displayCommandQueueBuffer;

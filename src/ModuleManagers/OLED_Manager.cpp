@@ -11,6 +11,10 @@ std::unordered_map<size_t, uint8_t> OLED_Manager::inputMap;
 Adafruit_SSD1306 OLED_Manager::display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
 int OLED_Manager::refreshTimerID;
 
+Lock_State *OLED_Manager::lockState = nullptr;
+int OLED_Manager::lockTimerID = -1;
+
+
 uint8_t OLED_Manager::displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
 StaticQueue_t OLED_Manager::displayCommandQueueBuffer;
 QueueHandle_t OLED_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &OLED_Manager::displayCommandQueueBuffer);
@@ -229,18 +233,18 @@ void OLED_Manager::initializeCallbacks()
 #endif
 }
 
-std::vector<uint8_t> OLED_Manager::getInputsFromNotification(uint32_t notification)
-{
-    std::vector<uint8_t> inputs;
-    for (auto it : OLED_Manager::inputMap)
-    {
-        if (notification & it.first)
-        {
-            inputs.push_back(it.second);
-        }
-    }
-    return inputs;
-}
+// std::vector<uint8_t> OLED_Manager::getInputsFromNotification(uint32_t notification)
+// {
+//     std::vector<uint8_t> inputs;
+//     for (auto it : OLED_Manager::inputMap)
+//     {
+//         if (notification & it.first)
+//         {
+//             inputs.push_back(it.second);
+//         }
+//     }
+//     return inputs;
+// }
 
 // void OLED_Manager::callFunctionWindowState(uint8_t inputID)
 // {
@@ -579,4 +583,27 @@ void OLED_Manager::openSaveLocationWindow(uint8_t inputID)
     Save_Location_Window *window = new Save_Location_Window(currentWindow);
     OLED_Manager::attachNewWindow(window);
     window->drawWindow();
+}
+
+void OLED_Manager::enableLockScreen(size_t timeoutMS)
+{
+    if (timeoutMS > 0) 
+    {
+        lockStateTimerID = System_Utils::registerTimer("Lock Screen", timeoutMS, OLED_Manager::cbLockDevice);
+    }
+
+    lockState = new Lock_State();
+}
+
+void OLED_Manager::cbLockDevice(xTimerHandle xTimer)
+{
+    OLED_Manager::lockDevice(0);
+}
+
+void OLED_Manager::lockDevice(uint8_t inputID)
+{
+    if (currentWindow != nullptr)
+    {
+        currentWindow->callFunctionState(lockState)
+    }
 }
