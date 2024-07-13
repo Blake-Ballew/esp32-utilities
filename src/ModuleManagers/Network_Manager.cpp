@@ -18,8 +18,6 @@ Message_Base *Network_Manager::lastBroadcast;
 
 uint8_t Network_Manager::buffer[RH_MESH_MAX_MESSAGE_LEN];
 
-TaskHandle_t *Network_Manager::taskHandle = nullptr;
-
 uint8_t Network_Manager::nodeID;
 uint64_t Network_Manager::userID;
 uint8_t Network_Manager::numRetries = 1;
@@ -33,12 +31,11 @@ namespace
     const char *STATUSES PROGMEM = "Statuses";
 }
 
-bool Network_Manager::init(TaskHandle_t *taskHandle)
+bool Network_Manager::init()
 {
 #if DEBUG == 1
     Serial.println("Network Manager init");
 #endif
-    Network_Manager::taskHandle = taskHandle;
     float freq;
     RH_RF95::ModemConfigChoice modemConfig = RF95_MODEM_CONFIG;
 

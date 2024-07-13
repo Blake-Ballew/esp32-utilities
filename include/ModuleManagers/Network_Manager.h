@@ -69,8 +69,6 @@ public:
 
     static uint8_t buffer[RH_MESH_MAX_MESSAGE_LEN];
 
-    static TaskHandle_t *taskHandle;
-
     // Implement later. Software defined channel hopping. Only store mesh nodes on the same channel
     // static uint8_t channel;
 
@@ -80,7 +78,7 @@ public:
     // User ID. Will eventually be used as a public key
     static uint64_t userID;
 
-    static bool init(TaskHandle_t *taskHandle);
+    static bool init();
 
     static uint8_t sendBroadcastMessage(Message_Base *msg);
     static uint8_t sendMessageToUser(uint64_t user, Message_Base *msg);

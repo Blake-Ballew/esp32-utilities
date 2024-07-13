@@ -9,6 +9,7 @@
 #include "ArduinoJson.h"
 #include "ArduinoOTA.h"
 #include "driver/adc.h"
+#include "EventHandler.h"
 
 namespace 
 {
@@ -22,12 +23,6 @@ enum DebugCommand
 {
     DISPLAY_CONTENTS = 0,
     REGISTER_INPUT = 1,
-};
-
-struct InterruptCallbackSet
-{
-    void (*enableInterrupt)();
-    void (*disableInterrupt)();
 };
 
 class System_Utils
@@ -44,8 +39,8 @@ public:
     // Interrupt functionality
     // Register interrupt enable/disable functions with the system so they can be disabled when needed
     static void registerInterrupt(void (*enableInterrupt)(), void (*disableInterrupt)());
-    static void enableInterrupts();
-    static void disableInterrupts();
+    static void enableInterruptsInvoke();
+    static void disableInterruptsInvoke();
 
 
     // Timer functionality
@@ -119,9 +114,16 @@ public:
 
     static void sendDisplayContents(Adafruit_SSD1306 *display);
 
+    // Event Handler Getters
+    static EventHandler &getEnableInterrupts() { return enableInterrupts; }
+    static EventHandler &getDisableInterrupts() { return disableInterrupts; }
+    static EventHandler &getSystemShutdown() { return systemShutdown; }
+
 private:
-    // Interrupt functionality
-    static std::vector<InterruptCallbackSet> interruptCallbacks;
+    // Event Handlers
+    static EventHandler enableInterrupts;
+    static EventHandler disableInterrupts;
+    static EventHandler systemShutdown;
 
     // Timer functionality
     static std::unordered_map<int, TimerHandle_t> systemTimers;

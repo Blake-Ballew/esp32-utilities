@@ -2,8 +2,6 @@
 
 bool System_Utils::silentMode = true;
 
-std::vector<InterruptCallbackSet> System_Utils::interruptCallbacks;
-
 std::unordered_map<int, TimerHandle_t> System_Utils::systemTimers;
 int System_Utils::nextTimerID = 0;
 
@@ -15,6 +13,11 @@ int System_Utils::healthTimerID;
 Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
 bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
+
+// Event Handlers
+EventHandler System_Utils::enableInterrupts;
+EventHandler System_Utils::disableInterrupts;
+EventHandler System_Utils::systemShutdown;
 
 void System_Utils::init(Adafruit_SSD1306 *display)
 {
@@ -79,38 +82,21 @@ void System_Utils::shutdownBatteryWarning()
     digitalWrite(KEEP_ALIVE_PIN, LOW);
 }
 
-void System_Utils::registerInterrupt(void (*enableInterrupt)(), void (*disableInterrupt)())
-{
-    InterruptCallbackSet callbackSet = {enableInterrupt, disableInterrupt};
-    interruptCallbacks.push_back(callbackSet);
-}
 
-void System_Utils::enableInterrupts()
+void System_Utils::enableInterruptsInvoke()
 {
     #if DEBUG == 1
     Serial.println("Enabling interrupts");
     #endif
-    for (auto &callback : interruptCallbacks)
-    {
-        if (callback.enableInterrupt != nullptr)
-        {
-            callback.enableInterrupt();
-        }
-    }
+    enableInterrupts.Invoke();
 }
 
-void System_Utils::disableInterrupts()
+void System_Utils::disableInterruptsInvoke()
 {
     #if DEBUG == 1
     Serial.println("Disabling interrupts");
     #endif
-    for (auto &callback : interruptCallbacks)
-    {
-        if (callback.disableInterrupt != nullptr)
-        {
-            callback.disableInterrupt();
-        }
-    }
+    disableInterrupts.Invoke();
 }
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)

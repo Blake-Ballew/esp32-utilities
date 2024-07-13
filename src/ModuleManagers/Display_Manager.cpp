@@ -99,7 +99,7 @@ void Display_Manager::processCommandQueue(void *taskParams)
                 if ((xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
                 {
                     uint8_t input = displayCommand.commandData.inputCommand.inputID;
-                    System_Utils::disableInterrupts();
+                    System_Utils::disableInterruptsInvoke();
 
                     // Clear queue after disabling interrupts to debounce
                     xQueueReset(displayCommandQueue);
@@ -133,7 +133,7 @@ void Display_Manager::processCommandQueue(void *taskParams)
                     currentWindow->drawWindow();
 
                     lastButtonPressTick = xTaskGetTickCount();
-                    System_Utils::enableInterrupts();
+                    System_Utils::enableInterruptsInvoke();
                 }
 
                 break;
@@ -141,9 +141,9 @@ void Display_Manager::processCommandQueue(void *taskParams)
 
             case CommandType::CALLBACK_COMMAND:
             {
-                System_Utils::disableInterrupts();
+                System_Utils::disableInterruptsInvoke();
                 processEventCallback(displayCommand.commandData.callbackCommand.resourceID, 0);
-                System_Utils::enableInterrupts();
+                System_Utils::enableInterruptsInvoke();
                 currentWindow->drawWindow();
                 break;
             }
