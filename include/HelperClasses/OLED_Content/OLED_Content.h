@@ -6,37 +6,7 @@
 #include <map>
 #include "globalDefines.h"
 #include "System_Utils.h"
-
-enum CommandType
-{
-    INPUT_COMMAND = 0,
-    CALLBACK_COMMAND
-};
-
-enum CommandSource
-{
-    USER_INPUT = 0,
-    WINDOW
-};
-
-struct DisplayCommandQueueItem
-{
-    CommandType commandType;
-    CommandSource source;
-
-    union
-    {
-        struct
-        {
-            uint8_t inputID;
-        } inputCommand;
-
-        struct
-        {
-            uint32_t resourceID;
-        } callbackCommand;
-    } commandData;
-};
+#include "Display_Utils.h"
 
 // TODO: Get rid of this
 enum class ContentType
@@ -101,11 +71,10 @@ public:
 
     virtual void passButtonPress(uint8_t inputID) {}
 
+    // TODO: Confine these to home screen
     static void drawBatteryIcon(size_t x, size_t y);
     static void drawBatteryIcon(size_t x, size_t y, uint8_t percentage);
-
     static void drawMessageIcon(size_t x, size_t y);
-
     static void drawBellIcon(size_t x, size_t y, bool isSilent);
 
     static void clearContentArea() { display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK); }

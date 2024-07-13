@@ -19,6 +19,7 @@
 #include "Saved_Msg_Window.h"
 #include "Menu_Window.h"
 #include "Save_Location_Window.h"
+#include "OTA_Update_Window.h"
 
 #include "Lock_State.h"
 
@@ -33,10 +34,9 @@
 using callbackPointer = void (*)(uint8_t);
 using inputCallbackPointer = void (*)();
 
-class OLED_Manager
+class Display_Manager
 {
 public:
-    // static OLED_Manager *instance;
 
     static Adafruit_SSD1306 display;
 
@@ -45,7 +45,7 @@ public:
 
     static std::map<uint32_t, callbackPointer> callbackMap;
     static std::map<uint8_t, inputCallbackPointer> inputCallbackMap;
-    static std::unordered_map<size_t, uint8_t> inputMap;
+    // static std::unordered_map<size_t, uint8_t> inputMap;
 
     static void init();
 
@@ -61,7 +61,7 @@ public:
     static void processInputCallback(uint8_t inputID);
     static void registerCallback(uint32_t resourceID, callbackPointer callback);
     static void registerInputCallback(uint8_t inputID, inputCallbackPointer callback);
-    static void registerInput(uint32_t resourceID, uint8_t inputID);
+    // static void registerInput(uint32_t resourceID, uint8_t inputID);
     static void displayLowBatteryShutdownNotice();
 
     // Enables the lock screen state. Setting timeoutMS above 0 will lock the screen after a specified time.
@@ -93,6 +93,7 @@ public:
     static void returnFromFunctionWindowState(uint8_t inputID);
     static void openSaveLocationWindow(uint8_t inputID);
     static void lockDevice(uint8_t inputID);
+    static void openOTAWindow(uint8_t inputID);
     // static void callFunctionWindowState(uint8_t inputID);
 
     // Input callbacks

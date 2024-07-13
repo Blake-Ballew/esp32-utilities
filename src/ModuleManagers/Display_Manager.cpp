@@ -1,31 +1,34 @@
-#include "OLED_Manager.h"
+#include "Display_Manager.h"
 
-TickType_t OLED_Manager::lastButtonPressTick = 0;
+TickType_t Display_Manager::lastButtonPressTick = 0;
 
-// OLED_Manager *OLED_Manager::instance = NULL;
-OLED_Window *OLED_Manager::currentWindow = NULL;
-OLED_Window *OLED_Manager::rootWindow = NULL;
-std::map<uint32_t, callbackPointer> OLED_Manager::callbackMap;
-std::map<uint8_t, inputCallbackPointer> OLED_Manager::inputCallbackMap;
-std::unordered_map<size_t, uint8_t> OLED_Manager::inputMap;
-Adafruit_SSD1306 OLED_Manager::display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
-int OLED_Manager::refreshTimerID;
+// Display_Manager *Display_Manager::instance = NULL;
+OLED_Window *Display_Manager::currentWindow = NULL;
+OLED_Window *Display_Manager::rootWindow = NULL;
+std::map<uint32_t, callbackPointer> Display_Manager::callbackMap;
+std::map<uint8_t, inputCallbackPointer> Display_Manager::inputCallbackMap;
+// std::unordered_map<size_t, uint8_t> Display_Manager::inputMap;
+Adafruit_SSD1306 Display_Manager::display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
+int Display_Manager::refreshTimerID;
 
-Lock_State *OLED_Manager::lockState = nullptr;
-int OLED_Manager::lockTimerID = -1;
+Lock_State *Display_Manager::lockState = nullptr;
+int Display_Manager::lockStateTimerID = -1;
 
 
-uint8_t OLED_Manager::displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
-StaticQueue_t OLED_Manager::displayCommandQueueBuffer;
-QueueHandle_t OLED_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &OLED_Manager::displayCommandQueueBuffer);
+uint8_t Display_Manager::displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
+StaticQueue_t Display_Manager::displayCommandQueueBuffer;
+QueueHandle_t Display_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &Display_Manager::displayCommandQueueBuffer);
 
-void OLED_Manager::init()
+void Display_Manager::init()
 {
-    // OLED_Manager::instance = new OLED_Manager();
+    // Display_Manager::instance = new Display_Manager();
     OLED_Window::display = &display;
     Window_State::display = &display;
     OLED_Content::display = &display;
-    OLED_Content::displayCommandQueue = OLED_Manager::displayCommandQueue;
+    Display_Utils::setDisplay(&display);
+    Display_Utils::setDisplayDimensions(display.width(), display.height());
+    Display_Utils::setDisplayCommandQueue(displayCommandQueue);
+
     // display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
     display.clearDisplay();
@@ -36,18 +39,18 @@ void OLED_Manager::init()
     display.display();
 
     // Register refresh timer
-    OLED_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, OLED_Manager::refreshTimerCallback);
-    if (OLED_Manager::refreshTimerID == -1)
+    Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
+    if (Display_Manager::refreshTimerID == -1)
     {
-        Serial.println("OLED_Manager::init: Failed to register refresh timer");
+        Serial.println("Display_Manager::init: Failed to register refresh timer");
     }
-    OLED_Content::setTimerID(OLED_Manager::refreshTimerID);
+    OLED_Content::setTimerID(Display_Manager::refreshTimerID);
 
-    OLED_Manager::initializeCallbacks();
-    OLED_Manager::generateHomeWindow(0);
+    Display_Manager::initializeCallbacks();
+    Display_Manager::generateHomeWindow(0);
 }
 
-OLED_Window *OLED_Manager::attachNewWindow()
+OLED_Window *Display_Manager::attachNewWindow()
 {
     OLED_Window *newWindow;
     if (currentWindow == NULL)
@@ -65,7 +68,7 @@ OLED_Window *OLED_Manager::attachNewWindow()
     return newWindow;
 }
 
-void OLED_Manager::attachNewWindow(OLED_Window *window)
+void Display_Manager::attachNewWindow(OLED_Window *window)
 {
     if (currentWindow != nullptr)
         currentWindow->Pause();
@@ -80,7 +83,7 @@ void OLED_Manager::attachNewWindow(OLED_Window *window)
     }
 }
 
-void OLED_Manager::processCommandQueue(void *taskParams)
+void Display_Manager::processCommandQueue(void *taskParams)
 {
     while (true)
     {
@@ -96,12 +99,12 @@ void OLED_Manager::processCommandQueue(void *taskParams)
                 if ((xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
                 {
                     uint8_t input = displayCommand.commandData.inputCommand.inputID;
-                    disableInterrupts();
+                    System_Utils::disableInterrupts();
 
                     // Clear queue after disabling interrupts to debounce
                     xQueueReset(displayCommandQueue);
 
-                    CallbackData *cbPtr = OLED_Manager::currentWindow->getCallbackDataByInputID(input);
+                    CallbackData *cbPtr = Display_Manager::currentWindow->getCallbackDataByInputID(input);
                     CallbackData callbackData;
 
                     if (cbPtr != nullptr)
@@ -130,7 +133,7 @@ void OLED_Manager::processCommandQueue(void *taskParams)
                     currentWindow->drawWindow();
 
                     lastButtonPressTick = xTaskGetTickCount();
-                    enableInterrupts();
+                    System_Utils::enableInterrupts();
                 }
 
                 break;
@@ -138,9 +141,9 @@ void OLED_Manager::processCommandQueue(void *taskParams)
 
             case CommandType::CALLBACK_COMMAND:
             {
-                disableInterrupts();
+                System_Utils::disableInterrupts();
                 processEventCallback(displayCommand.commandData.callbackCommand.resourceID, 0);
-                enableInterrupts();
+                System_Utils::enableInterrupts();
                 currentWindow->drawWindow();
                 break;
             }
@@ -154,7 +157,7 @@ void OLED_Manager::processCommandQueue(void *taskParams)
         /*         if (notification != 0 && (xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
                 {
         #if DEBUG == 1
-                    Serial.println("OLED_Manager::processButtonPressEvent");
+                    Serial.println("Display_Manager::processButtonPressEvent");
                     Serial.print("id: 0x");
                     Serial.println(notification, HEX);
         #endif
@@ -168,7 +171,7 @@ void OLED_Manager::processCommandQueue(void *taskParams)
                     for (auto input : inputs)
                     {
                         // Get callback data from the current window state if it exists
-                        CallbackData *callbackData = OLED_Manager::currentWindow->getCallbackDataByInputID(input);
+                        CallbackData *callbackData = Display_Manager::currentWindow->getCallbackDataByInputID(input);
 
                         // Pulse LED if it exists
                         LED_Manager::pulseButton(input);
@@ -199,10 +202,10 @@ void OLED_Manager::processCommandQueue(void *taskParams)
     }
 }
 
-void OLED_Manager::initializeCallbacks()
+void Display_Manager::initializeCallbacks()
 {
 #if DEBUG == 1
-    Serial.println("OLED_Manager::initializeCallbacks");
+    Serial.println("Display_Manager::initializeCallbacks");
 #endif
     registerCallback(ACTION_BACK, goBack);
     registerCallback(ACTION_SELECT, select);
@@ -226,17 +229,18 @@ void OLED_Manager::initializeCallbacks()
     registerCallback(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, returnFromFunctionWindowState);
     registerCallback(ACTION_SWITCH_WINDOW_STATE, switchWindowState);
     registerCallback(ACTION_SAVE_LOCATION_WINDOW, openSaveLocationWindow);
+    registerCallback(ACTION_OPEN_OTA_WINDOW, openOTAWindow);
 
     registerInputCallback(MESSAGE_RECEIVED, processMessageReceived);
 #if DEBUG == 1
-    Serial.println("OLED_Manager::initializeCallbacks: done");
+    Serial.println("Display_Manager::initializeCallbacks: done");
 #endif
 }
 
-// std::vector<uint8_t> OLED_Manager::getInputsFromNotification(uint32_t notification)
+// std::vector<uint8_t> Display_Manager::getInputsFromNotification(uint32_t notification)
 // {
 //     std::vector<uint8_t> inputs;
-//     for (auto it : OLED_Manager::inputMap)
+//     for (auto it : Display_Manager::inputMap)
 //     {
 //         if (notification & it.first)
 //         {
@@ -246,7 +250,7 @@ void OLED_Manager::initializeCallbacks()
 //     return inputs;
 // }
 
-// void OLED_Manager::callFunctionWindowState(uint8_t inputID)
+// void Display_Manager::callFunctionWindowState(uint8_t inputID)
 // {
 //     if (currentWindow != nullptr)
 //     {
@@ -254,7 +258,7 @@ void OLED_Manager::initializeCallbacks()
 //     }
 // }
 
-void OLED_Manager::returnFromFunctionWindowState(uint8_t inputID)
+void Display_Manager::returnFromFunctionWindowState(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
@@ -262,46 +266,46 @@ void OLED_Manager::returnFromFunctionWindowState(uint8_t inputID)
     }
 }
 
-void OLED_Manager::processEventCallback(uint32_t resourceID, uint8_t inputID)
+void Display_Manager::processEventCallback(uint32_t resourceID, uint8_t inputID)
 {
 #if DEBUG == 1
-    Serial.println("OLED_Manager::processEventCallback");
+    Serial.println("Display_Manager::processEventCallback");
     Serial.print("resourceID: ");
     Serial.println(resourceID, HEX);
 #endif
 
-    if (OLED_Manager::callbackMap.find(resourceID) != OLED_Manager::callbackMap.end())
+    if (Display_Manager::callbackMap.find(resourceID) != Display_Manager::callbackMap.end())
     {
-        callbackPointer callback = OLED_Manager::callbackMap[resourceID];
+        callbackPointer callback = Display_Manager::callbackMap[resourceID];
         callback(inputID);
     }
 }
 
-void OLED_Manager::processInputCallback(uint8_t inputID)
+void Display_Manager::processInputCallback(uint8_t inputID)
 {
-    if (OLED_Manager::inputCallbackMap.find(inputID) != OLED_Manager::inputCallbackMap.end())
+    if (Display_Manager::inputCallbackMap.find(inputID) != Display_Manager::inputCallbackMap.end())
     {
-        inputCallbackPointer callback = OLED_Manager::inputCallbackMap[inputID];
+        inputCallbackPointer callback = Display_Manager::inputCallbackMap[inputID];
         callback();
     }
 }
 
-void OLED_Manager::registerCallback(uint32_t resourceID, callbackPointer callback)
+void Display_Manager::registerCallback(uint32_t resourceID, callbackPointer callback)
 {
-    OLED_Manager::callbackMap[resourceID] = callback;
+    Display_Manager::callbackMap[resourceID] = callback;
 }
 
-void OLED_Manager::registerInputCallback(uint8_t inputID, inputCallbackPointer callback)
+void Display_Manager::registerInputCallback(uint8_t inputID, inputCallbackPointer callback)
 {
-    OLED_Manager::inputCallbackMap[inputID] = callback;
+    Display_Manager::inputCallbackMap[inputID] = callback;
 }
 
-void OLED_Manager::registerInput(uint32_t resourceID, uint8_t inputID)
-{
-    OLED_Manager::inputMap[resourceID] = inputID;
-}
+// void Display_Manager::registerInput(uint32_t resourceID, uint8_t inputID)
+// {
+//     Display_Manager::inputMap[resourceID] = inputID;
+// }
 
-void OLED_Manager::displayLowBatteryShutdownNotice()
+void Display_Manager::displayLowBatteryShutdownNotice()
 {
     display.clearDisplay();
     display.setCursor(OLED_Content::centerTextHorizontal(11), OLED_Content::selectTextLine(2));
@@ -311,9 +315,9 @@ void OLED_Manager::displayLowBatteryShutdownNotice()
     display.display();
 }
 
-void OLED_Manager::goBack(uint8_t inputID)
+void Display_Manager::goBack(uint8_t inputID)
 {
-    if (OLED_Manager::currentWindow->getParentWindow() != NULL)
+    if (Display_Manager::currentWindow->getParentWindow() != NULL)
     {
         if (currentWindow->stateStack.size() > 0)
         {
@@ -321,20 +325,20 @@ void OLED_Manager::goBack(uint8_t inputID)
         }
         else
         {
-            OLED_Window *temp = OLED_Manager::currentWindow;
-            OLED_Manager::currentWindow = OLED_Manager::currentWindow->getParentWindow();
+            OLED_Window *temp = Display_Manager::currentWindow;
+            Display_Manager::currentWindow = Display_Manager::currentWindow->getParentWindow();
             delete temp;
-            if (OLED_Manager::currentWindow->isPaused)
+            if (Display_Manager::currentWindow->isPaused)
             {
-                OLED_Manager::currentWindow->Resume();
+                Display_Manager::currentWindow->Resume();
             }
-            OLED_Manager::currentWindow->drawWindow();
+            Display_Manager::currentWindow->drawWindow();
         }
         LED_Manager::clearRing();
     }
 }
 
-void OLED_Manager::select(uint8_t inputID)
+void Display_Manager::select(uint8_t inputID)
 {
     if (currentWindow->currentState != nullptr && currentWindow->currentState->renderContent != nullptr)
     {
@@ -342,7 +346,7 @@ void OLED_Manager::select(uint8_t inputID)
         {
             OLED_Content_List *list = (OLED_Content_List *)currentWindow->currentState->renderContent;
 #if DEBUG == 1
-            Serial.print("OLED_Manager::select found resourceID: ");
+            Serial.print("Display_Manager::select found resourceID: ");
             Serial.println(list->getCurrentNode()->resourceID);
 #endif
             processEventCallback(list->getCurrentNode()->resourceID, inputID);
@@ -350,30 +354,30 @@ void OLED_Manager::select(uint8_t inputID)
 #if DEBUG == 1
         else
         {
-            Serial.println("OLED_Manager::select: Content type is not list");
+            Serial.println("Display_Manager::select: Content type is not list");
         }
 #endif
     }
 }
 
-void OLED_Manager::generateHomeWindow(uint8_t inputID)
+void Display_Manager::generateHomeWindow(uint8_t inputID)
 {
 #if DEBUG == 1
-    Serial.println("OLED_Manager::generateHomeWindow");
+    Serial.println("Display_Manager::generateHomeWindow");
 #endif
     OLED_Window *newWindow = new Home_Window();
 #if DEBUG == 1
-    Serial.println("OLED_Manager::generateHomeWindow: created new window");
+    Serial.println("Display_Manager::generateHomeWindow: created new window");
 #endif
-    OLED_Manager::attachNewWindow(newWindow);
+    Display_Manager::attachNewWindow(newWindow);
 
 #if DEBUG == 1
-    Serial.println("OLED_Manager::generateHomeWindow: attached new window");
+    Serial.println("Display_Manager::generateHomeWindow: attached new window");
 #endif
     currentWindow->drawWindow();
 }
 
-void OLED_Manager::generatePingWindow(uint8_t inputID)
+void Display_Manager::generatePingWindow(uint8_t inputID)
 {
     Message_Base *msg;
 
@@ -381,37 +385,37 @@ void OLED_Manager::generatePingWindow(uint8_t inputID)
     {
         msg = ((Received_Messages_Content *)currentWindow->content)->getCurrentMessage();
         Ping_Window *w = new Ping_Window(currentWindow, msg);
-        OLED_Manager::attachNewWindow(w);
+        Display_Manager::attachNewWindow(w);
         w->drawWindow();
     }
 }
 /*
-void OLED_Manager::generatePingWindowBroadcast(void *arg)
+void Display_Manager::generatePingWindowBroadcast(void *arg)
 {
     if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::STATUS)
     {
         Ping_Window *w = new Ping_Window(currentWindow, nullptr);
-        OLED_Manager::attachNewWindow(w);
+        Display_Manager::attachNewWindow(w);
         w->drawWindow();
     }
 } */
 
-void OLED_Manager::generateSettingsWindow(uint8_t inputID)
+void Display_Manager::generateSettingsWindow(uint8_t inputID)
 {
     Settings_Window *newWindow = new Settings_Window(currentWindow);
-    OLED_Manager::attachNewWindow(newWindow);
+    Display_Manager::attachNewWindow(newWindow);
     // newWindow->drawWindow();
 }
 
-void OLED_Manager::generateStatusesWindow(uint8_t inputID)
+void Display_Manager::generateStatusesWindow(uint8_t inputID)
 {
     Statuses_Window *window = new Statuses_Window(currentWindow);
-    OLED_Manager::attachNewWindow(window);
+    Display_Manager::attachNewWindow(window);
 
     // window->drawWindow();
 }
 
-void OLED_Manager::generateMenuWindow(uint8_t inputID)
+void Display_Manager::generateMenuWindow(uint8_t inputID)
 {
     Menu_Window *menuWindow = new Menu_Window(currentWindow);
 
@@ -425,11 +429,12 @@ void OLED_Manager::generateMenuWindow(uint8_t inputID)
     menuWindow->addMenuItem("Flash Settings", ACTION_FLASH_DEFAULT_SETTINGS);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
     menuWindow->addMenuItem("Shutdown Device", ACTION_SHUTDOWN_DEVICE);
+    menuWindow->addMenuItem("OTA Update", ACTION_OPEN_OTA_WINDOW);
 
-    OLED_Manager::attachNewWindow(menuWindow);
+    Display_Manager::attachNewWindow(menuWindow);
 
 
-    // OLED_Window *newWindow = OLED_Manager::attachNewWindow();
+    // OLED_Window *newWindow = Display_Manager::attachNewWindow();
     // Select_Content_List_State *state = new Select_Content_List_State();
     // newWindow->currentState = state;
 
@@ -453,29 +458,29 @@ void OLED_Manager::generateMenuWindow(uint8_t inputID)
     currentWindow->drawWindow();
 }
 
-void OLED_Manager::generateCompassWindow(uint8_t inputID)
+void Display_Manager::generateCompassWindow(uint8_t inputID)
 {
     Compass_Window *window = new Compass_Window(currentWindow);
-    OLED_Manager::attachNewWindow(window);
+    Display_Manager::attachNewWindow(window);
 
     // window->drawWindow();
 }
 
-void OLED_Manager::generateGPSWindow(uint8_t inputID)
+void Display_Manager::generateGPSWindow(uint8_t inputID)
 {
     GPS_Window *window = new GPS_Window(currentWindow);
-    OLED_Manager::attachNewWindow(window);
+    Display_Manager::attachNewWindow(window);
 }
 
-void OLED_Manager::generateLoRaTestWindow(uint8_t inputID)
+void Display_Manager::generateLoRaTestWindow(uint8_t inputID)
 {
     OLED_Window *newWindow = new LoRa_Test_Window(currentWindow);
-    OLED_Manager::attachNewWindow(newWindow);
+    Display_Manager::attachNewWindow(newWindow);
 
     currentWindow->drawWindow();
 }
 
-void OLED_Manager::flashDefaultSettings(uint8_t inputID)
+void Display_Manager::flashDefaultSettings(uint8_t inputID)
 {
     display.clearDisplay();
     display.setCursor(OLED_Content::centerTextHorizontal(11), OLED_Content::centerTextVertical());
@@ -485,7 +490,7 @@ void OLED_Manager::flashDefaultSettings(uint8_t inputID)
     rebootDevice(inputID);
 }
 
-void OLED_Manager::rebootDevice(uint8_t inputID)
+void Display_Manager::rebootDevice(uint8_t inputID)
 {
     display.clearDisplay();
     display.setCursor(OLED_Content::centerTextHorizontal(12), OLED_Content::centerTextVertical());
@@ -495,12 +500,12 @@ void OLED_Manager::rebootDevice(uint8_t inputID)
     ESP.restart();
 }
 
-void OLED_Manager::toggleFlashlight(uint8_t inputID)
+void Display_Manager::toggleFlashlight(uint8_t inputID)
 {
     LED_Manager::toggleFlashlight();
 }
 
-void OLED_Manager::shutdownDevice(uint8_t inputID)
+void Display_Manager::shutdownDevice(uint8_t inputID)
 {
     display.clearDisplay();
     display.setCursor(OLED_Content::centerTextHorizontal(12), OLED_Content::centerTextVertical());
@@ -510,12 +515,12 @@ void OLED_Manager::shutdownDevice(uint8_t inputID)
     digitalWrite(KEEP_ALIVE_PIN, LOW);
 }
 
-void OLED_Manager::toggleSilentMode(uint8_t inputID)
+void Display_Manager::toggleSilentMode(uint8_t inputID)
 {
     System_Utils::silentMode = !System_Utils::silentMode;
 }
 
-void OLED_Manager::quickActionMenu(uint8_t inputID)
+void Display_Manager::quickActionMenu(uint8_t inputID)
 {
     Menu_Window *newWindow = new Menu_Window(currentWindow);
 
@@ -526,32 +531,32 @@ void OLED_Manager::quickActionMenu(uint8_t inputID)
     newWindow->addMenuItem("Shutdown", ACTION_SHUTDOWN_DEVICE);
     newWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
 
-    OLED_Manager::attachNewWindow(newWindow);
+    Display_Manager::attachNewWindow(newWindow);
 
     currentWindow->drawWindow();
 }
 
-void OLED_Manager::openSOS(uint8_t inputID)
+void Display_Manager::openSOS(uint8_t inputID)
 {
     if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::SOS)
     {
         return;
     }
     OLED_Window *sosWindow = new SOS_Window(currentWindow);
-    OLED_Manager::attachNewWindow(sosWindow);
+    Display_Manager::attachNewWindow(sosWindow);
     sosWindow->drawWindow();
 }
 
-void OLED_Manager::openSavedMsg(uint8_t inputID)
+void Display_Manager::openSavedMsg(uint8_t inputID)
 {
     OLED_Window *newWindow = new Saved_Msg_Window(currentWindow);
-    OLED_Manager::attachNewWindow(newWindow);
+    Display_Manager::attachNewWindow(newWindow);
 
     currentWindow->drawWindow();
     vTaskDelay(pdMS_TO_TICKS(200));
 }
 
-void OLED_Manager::switchWindowState(uint8_t inputID)
+void Display_Manager::switchWindowState(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
@@ -560,7 +565,7 @@ void OLED_Manager::switchWindowState(uint8_t inputID)
     }
 }
 
-void OLED_Manager::callFunctionalWindowState(uint8_t inputID)
+void Display_Manager::callFunctionalWindowState(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
@@ -569,7 +574,7 @@ void OLED_Manager::callFunctionalWindowState(uint8_t inputID)
     }
 }
 
-void OLED_Manager::processMessageReceived()
+void Display_Manager::processMessageReceived()
 {
     if (System_Utils::silentMode == false)
     {
@@ -578,32 +583,39 @@ void OLED_Manager::processMessageReceived()
 }
 
 
-void OLED_Manager::openSaveLocationWindow(uint8_t inputID)
+void Display_Manager::openSaveLocationWindow(uint8_t inputID)
 {
     Save_Location_Window *window = new Save_Location_Window(currentWindow);
-    OLED_Manager::attachNewWindow(window);
+    Display_Manager::attachNewWindow(window);
     window->drawWindow();
 }
 
-void OLED_Manager::enableLockScreen(size_t timeoutMS)
+void Display_Manager::enableLockScreen(size_t timeoutMS)
 {
     if (timeoutMS > 0) 
     {
-        lockStateTimerID = System_Utils::registerTimer("Lock Screen", timeoutMS, OLED_Manager::cbLockDevice);
+        lockStateTimerID = System_Utils::registerTimer("Lock Screen", timeoutMS, Display_Manager::cbLockDevice);
     }
 
     lockState = new Lock_State();
 }
 
-void OLED_Manager::cbLockDevice(xTimerHandle xTimer)
+void Display_Manager::cbLockDevice(xTimerHandle xTimer)
 {
-    OLED_Manager::lockDevice(0);
+    Display_Manager::lockDevice(0);
 }
 
-void OLED_Manager::lockDevice(uint8_t inputID)
+void Display_Manager::lockDevice(uint8_t inputID)
 {
     if (currentWindow != nullptr)
     {
-        currentWindow->callFunctionState(lockState)
+        currentWindow->callFunctionState(lockState);
     }
+}
+
+void Display_Manager::openOTAWindow(uint8_t inputID)
+{
+    OTA_Update_Window *window = new OTA_Update_Window(currentWindow);
+    Display_Manager::attachNewWindow(window);
+    window->drawWindow();
 }

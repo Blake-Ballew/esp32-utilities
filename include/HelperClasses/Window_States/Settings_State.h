@@ -100,21 +100,15 @@ public:
             else if (buttonCallbacks.find(BUTTON_3) != buttonCallbacks.end() &&
                      buttonCallbacks[BUTTON_3].callbackID == ACTION_DEFER_CALLBACK_TO_WINDOW && settingsContent->getVariantDepth() == 0)
             {
-                // send back command to display queue
-                DisplayCommandQueueItem command;
-                command.commandType = CommandType::CALLBACK_COMMAND;
-                command.source = CommandSource::WINDOW;
-                command.commandData.callbackCommand.resourceID = ACTION_BACK;
-
                 // save settings if any have changed
                 if (settingsSaved)
                 {
                     Settings_Manager::writeSettingsToEEPROM();
-                    command.commandData.callbackCommand.resourceID = ACTION_REBOOT_DEVICE;
+                    Display_Utils::sendCallbackCommand(ACTION_REBOOT_DEVICE);
                     settingsSaved = false;
                 }
 
-                xQueueSendToBack(OLED_Content::displayCommandQueue, &command, portMAX_DELAY);
+                Display_Utils::sendCallbackCommand(ACTION_BACK);
             }
             break;
         }

@@ -342,28 +342,31 @@ void Network_Manager::listenForMessages(void *taskParams)
                 bool rebroadcast = true;
 
                 // Lock Mutex
-                xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
+                auto semaphoreSuccess = xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
 
-                // Update message map
-                if (messages.find(msg->sender) != messages.end())
+                if (semaphoreSuccess == pdTRUE)
                 {
-                    if (messages.find(msg->sender)->second->msgID == msg->msgID)
+                    // Update message map
+                    if (messages.find(msg->sender) != messages.end())
                     {
-                        sendNotification = false;
-                        rebroadcast = false;
+                        if (messages.find(msg->sender)->second->msgID == msg->msgID)
+                        {
+                            sendNotification = false;
+                            rebroadcast = false;
+                        }
+                        delete messages[msg->sender];
                     }
-                    delete messages[msg->sender];
-                }
-                else
-                {
-                    lastMessageInsertDeleteTime = esp_timer_get_time();
-                    lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
-                }
+                    else
+                    {
+                        lastMessageInsertDeleteTime = esp_timer_get_time();
+                        lastUnreadMessageInsertDeleteTime = esp_timer_get_time();
+                    }
 
-                messages[msg->sender] = msg;
+                    messages[msg->sender] = msg;
 
-                // Unlock Mutex
-                xSemaphoreGive(messageAccessSemaphore);
+                    // Unlock Mutex
+                    xSemaphoreGive(messageAccessSemaphore);
+                }
 
                 // Check if message needs to bounce
                 if (msg->bouncesLeft > 0)
@@ -379,11 +382,10 @@ void Network_Manager::listenForMessages(void *taskParams)
                 {
                 }
 
-                // TODO: send interrupt to OLED_Manager to update screen
-                if (taskHandle != nullptr && sendNotification)
+                // TODO: send interrupt to Display_Manager to update screen
+                if (sendNotification)
                 {
-                    uint32_t notification = BIT_SHIFT((uint8_t)EVENT_MESSAGE_RECEIVED);
-                    xTaskNotify(*taskHandle, notification, eSetBits);
+                    Display_Utils::sendInputCommand(MESSAGE_RECEIVED);
                 }
             }
         }

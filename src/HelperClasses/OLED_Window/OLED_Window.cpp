@@ -86,7 +86,7 @@ void OLED_Window::drawWindow()
     if (currentState != nullptr)
     {
 #if DEBUG == 1
-        Serial.println("State is not null");
+        // Serial.println("State is not null");
 #endif
         if (currentState->buttonCallbacks.find(BUTTON_1) != currentState->buttonCallbacks.end())
         {
@@ -114,13 +114,13 @@ void OLED_Window::drawWindow()
         }
 
         #if DEBUG == 1
-        Serial.println("Rendered intputs");
+        // Serial.println("Rendered intputs");
         #endif
     }
 #if DEBUG == 1
     else
     {
-        Serial.println("State is null");
+        // Serial.println("State is null");
     }
 #endif
 
@@ -148,24 +148,24 @@ void OLED_Window::drawWindow()
         display->display();
     */
     #if DEBUG == 1
-    Serial.println("OLED_Window::drawWindow() before displayState()");
+    // Serial.println("OLED_Window::drawWindow() before displayState()");
     #endif
     if (currentState != nullptr)
     {
         #if DEBUG == 1
-        Serial.println("OLED_Window::drawWindow() currentState is not null");
+        // Serial.println("OLED_Window::drawWindow() currentState is not null");
         #endif
         currentState->displayState();
     }
     else
     {
         #if DEBUG == 1
-        Serial.println("OLED_Window::drawWindow() currentState is null");
+        // Serial.println("OLED_Window::drawWindow() currentState is null");
         #endif
         display->display();
     }
 #if DEBUG == 1
-    Serial.println("OLED_Window::drawWindow() finished");
+    // Serial.println("OLED_Window::drawWindow() finished");
 #endif
 
     display->display();
@@ -179,7 +179,7 @@ OLED_Window *OLED_Window::getParentWindow()
 void OLED_Window::execBtnCallback(uint8_t inputID)
 {
 #if DEBUG == 1
-    Serial.println("OLED_Window::execBtnCallback()");
+    // Serial.println("OLED_Window::execBtnCallback()");
 #endif
 
     if (currentState != nullptr)

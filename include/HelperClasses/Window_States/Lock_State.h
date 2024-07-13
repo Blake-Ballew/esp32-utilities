@@ -12,7 +12,7 @@ class Lock_State : public Window_State
 public:
     Lock_State()
     {
-        inputSequence = {BUTTON_3, BUTTON_4};1
+        inputSequence = {BUTTON_3, BUTTON_4};
         currentInput = inputSequence.begin();
     }
 
@@ -53,12 +53,7 @@ protected:
 
     void unlock() 
     {
-        DisplayCommandQueueItem queueItem;
-        queueItem.commandType = CommandType::CALLBACK_COMMAND;
-        queueItem.source = CommandSource::WINDOW;
-        queueItem.commandData.callbackCommand.resourceID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
-
-        xQueueSend(OLED_Content::displayCommandQueue, &queueItem, 0);
+        Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
     }
     
     std::vector<uint8_t>::iterator currentInput;

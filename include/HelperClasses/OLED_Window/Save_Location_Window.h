@@ -91,7 +91,6 @@ public:
             // Queue ACTION_BACK
             DisplayCommandQueueItem queueBackCmd;
             queueBackCmd.commandType = CommandType::CALLBACK_COMMAND;
-            queueBackCmd.source = CommandSource::WINDOW;
             queueBackCmd.commandData.callbackCommand.resourceID = ACTION_BACK;
 
             xQueueSend(displayCommandQueue, &queueBackCmd, pdMS_TO_TICKS(100));

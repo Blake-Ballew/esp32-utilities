@@ -13,6 +13,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "EventDeclarations.h"
+#include "Display_Utils.h"
 
 #define RH_DRIVER RH_RF95
 #define RFM95_CS 15

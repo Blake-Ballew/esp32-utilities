@@ -1,12 +1,20 @@
 #include "System_Utils.h"
 
 bool System_Utils::silentMode = true;
+
+std::vector<InterruptCallbackSet> System_Utils::interruptCallbacks;
+
 std::unordered_map<int, TimerHandle_t> System_Utils::systemTimers;
 int System_Utils::nextTimerID = 0;
+
+std::unordered_map<int, TaskHandle_t> System_Utils::systemTasks;
+int System_Utils::nextTaskID = 0;
+
 StaticTimer_t System_Utils::healthTimerBuffer;
 int System_Utils::healthTimerID;
 Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
-System_Utils::otaInitialized = false;
+bool System_Utils::otaInitialized = false;
+int System_Utils::otaTaskID = -1;
 
 void System_Utils::init(Adafruit_SSD1306 *display)
 {
@@ -15,6 +23,8 @@ void System_Utils::init(Adafruit_SSD1306 *display)
     startTimer(healthTimerID);
     monitorSystemHealth(nullptr);
 }
+
+// TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
@@ -67,6 +77,40 @@ void System_Utils::shutdownBatteryWarning()
     OLEDdisplay->display();
     // LED_Manager::ledShutdownAnimation();
     digitalWrite(KEEP_ALIVE_PIN, LOW);
+}
+
+void System_Utils::registerInterrupt(void (*enableInterrupt)(), void (*disableInterrupt)())
+{
+    InterruptCallbackSet callbackSet = {enableInterrupt, disableInterrupt};
+    interruptCallbacks.push_back(callbackSet);
+}
+
+void System_Utils::enableInterrupts()
+{
+    #if DEBUG == 1
+    Serial.println("Enabling interrupts");
+    #endif
+    for (auto &callback : interruptCallbacks)
+    {
+        if (callback.enableInterrupt != nullptr)
+        {
+            callback.enableInterrupt();
+        }
+    }
+}
+
+void System_Utils::disableInterrupts()
+{
+    #if DEBUG == 1
+    Serial.println("Disabling interrupts");
+    #endif
+    for (auto &callback : interruptCallbacks)
+    {
+        if (callback.disableInterrupt != nullptr)
+        {
+            callback.disableInterrupt();
+        }
+    }
 }
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)
@@ -187,11 +231,168 @@ void System_Utils::changeTimerPeriod(int timerID, size_t timerPeriodMS)
     }
 }
 
-void System_Utils::initializeOTA()
+// Task functionality
+
+int System_Utils::registerTask(
+    TaskFunction_t taskFunction, 
+    const char *taskName, 
+    uint32_t taskStackSize, 
+    void *taskParameters, 
+    UBaseType_t taskPriority)
 {
-    // TODO: Include different connection options
+    TaskHandle_t handle;
+    BaseType_t status = xTaskCreate(taskFunction, taskName, taskStackSize, taskParameters, taskPriority, &handle);
+
+    if (status == pdPASS)
+    {
+        // Add task to systemTasks
+        systemTasks[nextTaskID] = handle;
+        return nextTaskID++;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+int System_Utils::registerTask(
+    TaskFunction_t taskFunction, 
+    const char *taskName, 
+    uint32_t taskStackSize, 
+    void *taskParameters, 
+    UBaseType_t taskPriority, 
+    BaseType_t coreID)
+{
+    TaskHandle_t handle;
+    BaseType_t status = xTaskCreatePinnedToCore(taskFunction, taskName, taskStackSize, taskParameters, taskPriority, &handle, coreID);
+
+    if (status == pdPASS)
+    {
+        // Add task to systemTasks
+        systemTasks[nextTaskID] = handle;
+        return nextTaskID++;
+    }
+    else
+    {
+        return -1;
+    }
+    
+}
+
+int System_Utils::registerTask(
+    TaskFunction_t taskFunction, 
+    const char *taskName, 
+    uint32_t taskStackSize, 
+    void *taskParameters, 
+    UBaseType_t taskPriority, 
+    StackType_t &stackBuffer, 
+    StaticTask_t &taskBuffer)
+{
+    auto handle = xTaskCreateStatic(taskFunction, taskName, taskStackSize, taskParameters, taskPriority, &stackBuffer, &taskBuffer);
+
+    if (handle != nullptr)
+    {
+        // Add task to systemTasks
+        systemTasks[nextTaskID] = handle;
+        return nextTaskID++;
+    }
+    else
+    {
+        return -1;
+    }
+
+}
+
+int System_Utils::registerTask(
+    TaskFunction_t taskFunction, 
+    const char *taskName, 
+    uint32_t taskStackSize, 
+    void *taskParameters, 
+    UBaseType_t taskPriority, 
+    StackType_t &stackBuffer, 
+    StaticTask_t &taskBuffer, 
+    BaseType_t coreID)
+{
+    auto handle = xTaskCreateStaticPinnedToCore(taskFunction, taskName, taskStackSize, taskParameters, taskPriority, &stackBuffer, &taskBuffer, coreID);
+
+    if (handle != nullptr)
+    {
+        // Add task to systemTasks
+        systemTasks[nextTaskID] = handle;
+        return nextTaskID++;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+void System_Utils::suspendTask(int taskID)
+{
+    if (systemTasks.find(taskID) != systemTasks.end())
+    {
+        vTaskSuspend(systemTasks[taskID]);
+    }
+}
+
+void System_Utils::resumeTask(int taskID)
+{
+    if (systemTasks.find(taskID) != systemTasks.end())
+    {
+        vTaskResume(systemTasks[taskID]);
+    }
+}
+
+void System_Utils::deleteTask(int taskID)
+{
+    if (systemTasks.find(taskID) != systemTasks.end())
+    {
+        vTaskDelete(systemTasks[taskID]);
+        systemTasks.erase(taskID);
+    }
+}
+
+bool System_Utils::enableWiFi()
+{
+    adc_power_on();
+    WiFi.disconnect(false);  // Reconnect the network
+    WiFi.mode(WIFI_STA);    // Switch WiFi off
+ 
+    WiFi.begin("ESP32-OTA", "e65v41ev");
+ 
+    size_t timeoutCounter = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        if (timeoutCounter++ > 20)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void System_Utils::disableWiFi()
+{
+    adc_power_off();
+    WiFi.disconnect(true);  // Disconnect from the network
+    WiFi.mode(WIFI_OFF);    // Switch WiFi off
+}
+
+IPAddress System_Utils::getLocalIP()
+{
+    return WiFi.localIP();
+}
+
+bool System_Utils::initializeOTA()
+{
+    if (otaInitialized)
+    {
+        return false;
+    }
 
     ArduinoOTA.setHostname("ESP32-OTA");
+    ArduinoOTA.setPort(8266);
 
     ArduinoOTA
     .onStart([]() {
@@ -226,21 +427,34 @@ void System_Utils::initializeOTA()
       }
     });
 
-    ArduinoOTA.begin();
-
-    auto timerCode = registerTimer("OTA Timer", 1000, [](TimerHandle_t xTimer) {
-        ArduinoOTA.handle();
-    });
-
-    startTimer(timerCode);
+    otaTaskID = registerTask([](void *pvParameters) {
+        for (;;)
+        {
+            ArduinoOTA.handle();
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    }, "OTA Handler", 8192, nullptr, 1);
 
     otaInitialized = true;
+
+    return true;
+}
+
+void System_Utils::startOTA()
+{
+    if (!otaInitialized)
+    {
+        initializeOTA();
+    }
+
+    ArduinoOTA.begin();
+    resumeTask(otaTaskID);
 }
 
 void System_Utils::stopOTA()
 {
+    suspendTask(otaTaskID);
     ArduinoOTA.end();
-    otaInitialized = false;
 }
 
 void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
