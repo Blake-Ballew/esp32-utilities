@@ -10,7 +10,7 @@ int System_Utils::nextTaskID = 0;
 
 StaticTimer_t System_Utils::healthTimerBuffer;
 int System_Utils::healthTimerID;
-Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
+// Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
 bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
 
@@ -19,9 +19,8 @@ EventHandler System_Utils::enableInterrupts;
 EventHandler System_Utils::disableInterrupts;
 EventHandler System_Utils::systemShutdown;
 
-void System_Utils::init(Adafruit_SSD1306 *display)
+void System_Utils::init()
 {
-    System_Utils::OLEDdisplay = display;
     healthTimerID = registerTimer("System Health Monitor", 60000, monitorSystemHealth, healthTimerBuffer);
     startTimer(healthTimerID);
     monitorSystemHealth(nullptr);
@@ -72,14 +71,7 @@ void System_Utils::monitorSystemHealth(TimerHandle_t xTimer)
 
 void System_Utils::shutdownBatteryWarning()
 {
-    OLEDdisplay->clearDisplay();
-    OLEDdisplay->setCursor((OLED_WIDTH / 2) - (11 * 3), 8);
-    OLEDdisplay->println("Low Battery");
-    OLEDdisplay->setCursor((OLED_WIDTH / 2) - (13 * 3), 16);
-    OLEDdisplay->println("Shutting Down");
-    OLEDdisplay->display();
-    // LED_Manager::ledShutdownAnimation();
-    digitalWrite(KEEP_ALIVE_PIN, LOW);
+    systemShutdown.Invoke();
 }
 
 
@@ -97,6 +89,14 @@ void System_Utils::disableInterruptsInvoke()
     Serial.println("Disabling interrupts");
     #endif
     disableInterrupts.Invoke();
+}
+
+void System_Utils::systemShutdownInvoke()
+{
+    #if DEBUG == 1
+    Serial.println("Shutting down system");
+    #endif
+    systemShutdown.Invoke();
 }
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)

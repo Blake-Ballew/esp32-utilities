@@ -29,19 +29,12 @@ class System_Utils
 {
 public:
     static bool silentMode;
-    static Adafruit_SSD1306 *OLEDdisplay;
+    // static Adafruit_SSD1306 *OLEDdisplay;
 
-    static void init(Adafruit_SSD1306 *display);
+    static void init();
     static long getBatteryPercentage();
     static void monitorSystemHealth(TimerHandle_t xTimer);
     static void shutdownBatteryWarning();
-
-    // Interrupt functionality
-    // Register interrupt enable/disable functions with the system so they can be disabled when needed
-    static void registerInterrupt(void (*enableInterrupt)(), void (*disableInterrupt)());
-    static void enableInterruptsInvoke();
-    static void disableInterruptsInvoke();
-
 
     // Timer functionality
     static int registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback);
@@ -103,16 +96,19 @@ public:
     static IPAddress getLocalIP();
 
     // OTA Firmware Update
-
     static bool otaInitialized;
     static int otaTimerID;
     static bool initializeOTA();
     static void startOTA();
     static void stopOTA();
 
-    // Debug Companion
-
+    // Debug Companion Functionality
     static void sendDisplayContents(Adafruit_SSD1306 *display);
+
+    // Event Handler public invoke functions
+    static void enableInterruptsInvoke();
+    static void disableInterruptsInvoke();
+    static void systemShutdownInvoke();
 
     // Event Handler Getters
     static EventHandler &getEnableInterrupts() { return enableInterrupts; }
