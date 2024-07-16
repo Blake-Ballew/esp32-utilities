@@ -17,6 +17,11 @@ void Settings_Manager::init()
     readSettingsFromEEPROM();
     readMessagesFromEEPROM();
     readCoordsFromEEPROM();
+
+    Serial.println("SPIFFS Info:");
+    Serial.printf("Total Bytes: %u\n", SPIFFS.totalBytes());
+    Serial.printf("Used Bytes: %u\n", SPIFFS.usedBytes());
+    Serial.printf("Free Bytes: %u\n", SPIFFS.totalBytes() - SPIFFS.usedBytes());
     // #endif
 }
 

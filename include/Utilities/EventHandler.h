@@ -1,42 +1,22 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 
 // Generic event handler for callbacks with no arguments
 class EventHandler
 {
 public:
-    EventHandler() 
-    {
-        _callbacks.clear();
-    }
+    EventHandler();
 
     // += operator to add a callback
-    void operator+=(void (*callback)()) 
-    {
-        if (std::find(_callbacks.begin(), _callbacks.end(), callback) == _callbacks.end())
-        {
-            _callbacks.push_back(callback);
-        }
-    }
+    void operator+=(void (*callback)());
 
     // -= operator to remove callback
-    void operator-=(void (*callback)()) 
-    {
-        auto it = std::find(_callbacks.begin(), _callbacks.end(), callback);
-        if (it != _callbacks.end()) 
-        {
-            _callbacks.erase(it);
-        }
-    }
+    void operator-=(void (*callback)());
     
-    void Invoke() 
-    {
-        for (auto &callback : _callbacks) {
-            callback();
-        }
-    
-    }
+    void Invoke();
+
 protected:
     std::vector<void (*)()> _callbacks;
 };
@@ -46,37 +26,15 @@ template <typename... Args>
 class EventHandlerT
 {
 public:
-    EventHandlerT() 
-    {
-        _callbacks.clear();
-    }
+    EventHandlerT();
 
     // += operator to add a callback
-    void operator+=(void (*callback)(Args...)) 
-    {
-        if (std::find(_callbacks.begin(), _callbacks.end(), callback) == _callbacks.end())
-        {
-            _callbacks.push_back(callback);
-        }
-    }
+    void operator+=(void (*callback)(Args...));
 
     // -= operator to remove callback
-    void operator-=(void (*callback)(Args...)) 
-    {
-        auto it = std::find(_callbacks.begin(), _callbacks.end(), callback);
-        if (it != _callbacks.end()) 
-        {
-            _callbacks.erase(it);
-        }
-    }
+    void operator-=(void (*callback)(Args...));
     
-    void Invoke(Args... args) 
-    {
-        for (auto &callback : _callbacks) {
-            callback(args...);
-        }
-    
-    }
+    void Invoke(Args... args);
 
 protected:
     std::vector<void (*)(Args...)> _callbacks;
