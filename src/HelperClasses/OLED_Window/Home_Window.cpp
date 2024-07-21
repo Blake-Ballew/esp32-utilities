@@ -301,10 +301,10 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
                 returnCode = Network_Manager::queueBroadcastMessage(newMsg);
             }
 
-            OLED_Content::clearContentArea();
+            Display_Utils::clearContentArea();
             auto returnStr = Network_Manager::getReturnCodeString(returnCode);
 
-            display->setCursor(OLED_Content::centerTextHorizontal(returnStr), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(returnStr), Display_Utils::centerTextVertical());
             display->print(returnStr);
 
             display->display();

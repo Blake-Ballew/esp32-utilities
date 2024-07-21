@@ -11,6 +11,8 @@ std::map<uint8_t, inputCallbackPointer> Display_Manager::inputCallbackMap;
 Adafruit_SSD1306 Display_Manager::display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
 int Display_Manager::refreshTimerID;
 
+int Display_Manager::buttonFlashAnimationID = -1;
+
 Lock_State *Display_Manager::lockState = nullptr;
 int Display_Manager::lockStateTimerID = -1;
 
@@ -37,6 +39,10 @@ void Display_Manager::init()
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
     display.display();
+
+    // Initialize button flash animation
+    Button_Flash *flash = new Button_Flash();
+    buttonFlashAnimationID = LED_Utils::registerPattern(flash);
 
     // Register refresh timer
     Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
@@ -231,6 +237,10 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_SAVE_LOCATION_WINDOW, openSaveLocationWindow);
     registerCallback(ACTION_OPEN_OTA_WINDOW, openOTAWindow);
 
+    #ifdef USE_BLE
+    registerCallback(ACTION_INIT_BLE, initializeBle);
+    #endif
+
     registerInputCallback(MESSAGE_RECEIVED, processMessageReceived);
 #if DEBUG == 1
     Serial.println("Display_Manager::initializeCallbacks: done");
@@ -308,9 +318,9 @@ void Display_Manager::registerInputCallback(uint8_t inputID, inputCallbackPointe
 void Display_Manager::displayLowBatteryShutdownNotice()
 {
     display.clearDisplay();
-    display.setCursor(OLED_Content::centerTextHorizontal(11), OLED_Content::selectTextLine(2));
+    display.setCursor(Display_Utils::centerTextHorizontal(11), Display_Utils::selectTextLine(2));
     display.println("Low Battery");
-    display.setCursor(OLED_Content::centerTextHorizontal(13), OLED_Content::selectTextLine(3));
+    display.setCursor(Display_Utils::centerTextHorizontal(13), Display_Utils::selectTextLine(3));
     display.println("Shutting Down");
     display.display();
 }
@@ -429,6 +439,11 @@ void Display_Manager::generateMenuWindow(uint8_t inputID)
     menuWindow->addMenuItem("Flash Settings", ACTION_FLASH_DEFAULT_SETTINGS);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
     menuWindow->addMenuItem("Shutdown Device", ACTION_SHUTDOWN_DEVICE);
+
+    #ifdef USE_BLE
+    menuWindow->addMenuItem("Init Bluetooth", ACTION_INIT_BLE);
+    #endif
+    
     menuWindow->addMenuItem("OTA Update", ACTION_OPEN_OTA_WINDOW);
 
     Display_Manager::attachNewWindow(menuWindow);
@@ -483,7 +498,7 @@ void Display_Manager::generateLoRaTestWindow(uint8_t inputID)
 void Display_Manager::flashDefaultSettings(uint8_t inputID)
 {
     display.clearDisplay();
-    display.setCursor(OLED_Content::centerTextHorizontal(11), OLED_Content::centerTextVertical());
+    display.setCursor(Display_Utils::centerTextHorizontal(11), Display_Utils::centerTextVertical());
     display.println("Flashing...");
     display.display();
     Settings_Manager::flashSettings();
@@ -493,7 +508,7 @@ void Display_Manager::flashDefaultSettings(uint8_t inputID)
 void Display_Manager::rebootDevice(uint8_t inputID)
 {
     display.clearDisplay();
-    display.setCursor(OLED_Content::centerTextHorizontal(12), OLED_Content::centerTextVertical());
+    display.setCursor(Display_Utils::centerTextHorizontal(12), Display_Utils::centerTextVertical());
     display.println("Rebooting...");
     display.display();
     delay(3000);
@@ -508,7 +523,7 @@ void Display_Manager::toggleFlashlight(uint8_t inputID)
 void Display_Manager::shutdownDevice(uint8_t inputID)
 {
     display.clearDisplay();
-    display.setCursor(OLED_Content::centerTextHorizontal(12), OLED_Content::centerTextVertical());
+    display.setCursor(Display_Utils::centerTextHorizontal(12), Display_Utils::centerTextVertical());
     display.println("Shutting down...");
     display.display();
     LED_Manager::ledShutdownAnimation();
@@ -619,3 +634,10 @@ void Display_Manager::openOTAWindow(uint8_t inputID)
     Display_Manager::attachNewWindow(window);
     window->drawWindow();
 }
+
+#ifdef USE_BLE
+void Display_Manager::initializeBle(uint8_t inputID)
+{
+    System_Utils::initBluetooth();
+}
+#endif

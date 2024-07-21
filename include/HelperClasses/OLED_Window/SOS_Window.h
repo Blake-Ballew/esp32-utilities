@@ -1,7 +1,7 @@
 #pragma once
 
 #include "OLED_Window.h"
-#include "SOS_Content.h"
+#include "Repeat_Message_Content.h"
 
 class SOS_Window : public OLED_Window
 {
@@ -14,5 +14,5 @@ public:
     void Resume();
 
 private:
-    SOS_Content *sosContent;
+    Repeat_Message_Content *sosContent;
 };

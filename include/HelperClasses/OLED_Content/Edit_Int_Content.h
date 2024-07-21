@@ -69,7 +69,7 @@ public:
 
         if (isSigned)
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getIntLength(signedInt)), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getIntLength(signedInt)), Display_Utils::centerTextVertical());
 #if DEBUG == 1
             Serial.print("signedInt: ");
             Serial.println(signedInt);
@@ -82,7 +82,7 @@ public:
         }
         else
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getUintLength(unsignedInt)), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getUintLength(unsignedInt)), Display_Utils::centerTextVertical());
 #if DEBUG == 1
             Serial.print("unsignedInt: ");
             Serial.println(unsignedInt);

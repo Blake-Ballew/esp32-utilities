@@ -61,7 +61,7 @@ public:
 
             if (!coords.isValid()) 
             {
-                display->setCursor(OLED_Content::centerTextHorizontal("GPS Unavailable!"), OLED_Content::centerTextVertical());
+                display->setCursor(Display_Utils::centerTextHorizontal("GPS Unavailable!"), Display_Utils::centerTextVertical());
                 display->print("GPS Unavailable!");
                 display->display();
                 delete newString;
@@ -73,12 +73,12 @@ public:
 
                 if (success) 
                 {
-                    display->setCursor(OLED_Content::centerTextHorizontal("Location Saved!"), OLED_Content::centerTextVertical());
+                    display->setCursor(Display_Utils::centerTextHorizontal("Location Saved!"), Display_Utils::centerTextVertical());
                     display->print("Location Saved!");
                 }
                 else
                 {
-                    display->setCursor(OLED_Content::centerTextHorizontal("Locations Full!"), OLED_Content::centerTextVertical());
+                    display->setCursor(Display_Utils::centerTextHorizontal("Locations Full!"), Display_Utils::centerTextVertical());
                     display->print("Locations Full!");
                 }
             }

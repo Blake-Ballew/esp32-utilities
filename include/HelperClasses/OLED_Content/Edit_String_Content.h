@@ -37,7 +37,7 @@ public:
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
         // Print string
-        display->setCursor(OLED_Content::centerTextHorizontal(cursorPos + 1), OLED_Content::selectTextLine(3));
+        display->setCursor(Display_Utils::centerTextHorizontal(cursorPos + 1), Display_Utils::selectTextLine(3));
         display->print(currStr);
         if (displayCursor)
         {
@@ -51,7 +51,7 @@ public:
         displayCursor = !displayCursor;
 
         // print max length and current length
-        display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getUintLength(currStrLen) + OLED_Content::getUintLength(cursorPos) + 3), OLED_Content::selectTextLine(2));
+        display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getUintLength(currStrLen) + Display_Utils::getUintLength(cursorPos) + 3), Display_Utils::selectTextLine(2));
         display->printf("(%d/%d)", cursorPos, currStrLen);
 
         display->display();

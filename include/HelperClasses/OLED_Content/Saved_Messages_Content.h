@@ -68,15 +68,15 @@ public:
 
         // Print message
         if (promptMode == promptNumSavedMsges) {
-            display->setCursor(OLED_Content::centerTextHorizontal(18), OLED_Content::selectTextLine(2));
+            display->setCursor(Display_Utils::centerTextHorizontal(18), Display_Utils::selectTextLine(2));
             display->printf("Total saved %d/%d", msgList.size(), Settings_Manager::maxMsges);   
         }
         else if (promptMode == promptSelectMode) {
-            display->setCursor(OLED_Content::centerTextHorizontal("Select a message"), OLED_Content::selectTextLine(2));
+            display->setCursor(Display_Utils::centerTextHorizontal("Select a message"), Display_Utils::selectTextLine(2));
             display->print("Select a message");
         }
         
-        display->setCursor(OLED_Content::centerTextHorizontal(msgList[msgIdx].msg), OLED_Content::selectTextLine(3));
+        display->setCursor(Display_Utils::centerTextHorizontal(msgList[msgIdx].msg), Display_Utils::selectTextLine(3));
         display->print(msgList[msgIdx].msg);
 
         LED_Manager::displayScrollWheel(msgIdx, msgList.size());

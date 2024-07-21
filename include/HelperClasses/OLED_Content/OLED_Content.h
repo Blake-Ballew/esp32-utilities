@@ -77,48 +77,48 @@ public:
     static void drawMessageIcon(size_t x, size_t y);
     static void drawBellIcon(size_t x, size_t y, bool isSilent);
 
-    static void clearContentArea() { display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK); }
-    static uint16_t centerTextVertical() { return (OLED_HEIGHT / 2) - 4; }
-    static uint16_t selectTextLine(uint8_t line) { return (line - 1) * 8; }
-    static uint16_t centerTextHorizontal(size_t textSize) { return (OLED_WIDTH / 2) - (textSize * 3); }
-    static uint16_t centerTextHorizontal(const char *text) { return centerTextHorizontal(strlen(text)); }
-    static uint16_t alignTextLeft(size_t distanceFrom = 0) { return distanceFrom * 6; }
-    static uint16_t alignTextRight(size_t textSize) { return OLED_WIDTH - (textSize * 6); }
-    static uint16_t alignTextRight(const char *text) { return alignTextRight(strlen(text)); }
-    static size_t getIntLength(int64_t num)
-    {
-        size_t len = 0;
-        if (num == 0)
-        {
-            return 1;
-        }
-        if (num < 0)
-        {
-            len++;
-            num *= -1;
-        }
-        while (num > 0)
-        {
-            len++;
-            num /= 10;
-        }
-        return len;
-    }
+    // static void clearContentArea() { display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK); }
+    // static uint16_t centerTextVertical() { return (OLED_HEIGHT / 2) - 4; }
+    // static uint16_t selectTextLine(uint8_t line) { return (line - 1) * 8; }
+    // static uint16_t centerTextHorizontal(size_t textSize) { return (OLED_WIDTH / 2) - (textSize * 3); }
+    // static uint16_t centerTextHorizontal(const char *text) { return centerTextHorizontal(strlen(text)); }
+    // static uint16_t alignTextLeft(size_t distanceFrom = 0) { return distanceFrom * 6; }
+    // static uint16_t alignTextRight(size_t textSize) { return OLED_WIDTH - (textSize * 6); }
+    // static uint16_t alignTextRight(const char *text) { return alignTextRight(strlen(text)); }
+    // static size_t getIntLength(int64_t num)
+    // {
+    //     size_t len = 0;
+    //     if (num == 0)
+    //     {
+    //         return 1;
+    //     }
+    //     if (num < 0)
+    //     {
+    //         len++;
+    //         num *= -1;
+    //     }
+    //     while (num > 0)
+    //     {
+    //         len++;
+    //         num /= 10;
+    //     }
+    //     return len;
+    // }
 
-    static size_t getUintLength(uint64_t num)
-    {
-        size_t len = 0;
-        if (num == 0)
-        {
-            return 1;
-        }
-        while (num > 0)
-        {
-            len++;
-            num /= 10;
-        }
-        return len;
-    }
+    // static size_t getUintLength(uint64_t num)
+    // {
+    //     size_t len = 0;
+    //     if (num == 0)
+    //     {
+    //         return 1;
+    //     }
+    //     while (num > 0)
+    //     {
+    //         len++;
+    //         num /= 10;
+    //     }
+    //     return len;
+    // }
 
     static void setTimerID(int timerID) { OLED_Content::refreshTimerID = timerID; }
     virtual ~OLED_Content() {}

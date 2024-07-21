@@ -6,22 +6,17 @@
 #include "LED_Manager.h"
 #include "Message_Types.h"
 
-#define SOS_CONTENT_TIMER_TICK 17
-#define SOS_CONTENT_TICKS_PER_MESSAGE 1800
+#define Repeat_Message_Content_TIMER_TICK 17
+#define Repeat_Message_Content_TICKS_PER_MESSAGE 1800
 
-namespace
-{
-    const char *SOS_CONTENT_MESSAGE PROGMEM = "SOS";
-    const char *OK_CONTENT_MESSAGE PROGMEM = "OK";
-}
-
-class SOS_Content : OLED_Content
+class Repeat_Message_Content : OLED_Content
 {
 public:
     bool confirmed;
 
-    SOS_Content(Adafruit_SSD1306 *disp);
-    ~SOS_Content();
+    // newMsgID is used to generate a new message ID with each broadcast
+    Repeat_Message_Content(bool newMsgID);
+    ~Repeat_Message_Content();
 
     void printContent();
     static void updateDisplay(TimerHandle_t timer);
@@ -39,10 +34,5 @@ private:
     void sendSOS();
     void sendOkay();
 
-    static size_t currentTick;
     uint32_t msgID;
-
-    static SOS_Content *thisInstance;
-    static StaticTimer_t updateTimerBuffer;
-    static TimerHandle_t updateTimer;
 };

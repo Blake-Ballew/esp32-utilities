@@ -105,7 +105,7 @@ public:
         Serial.println(text);
         Serial.println("Setting cursor");
         #endif
-        display->setCursor(OLED_Content::centerTextHorizontal(text), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(text), Display_Utils::centerTextVertical());
         #if DEBUG == 1
         Serial.println("Printing text");
         #endif
@@ -117,9 +117,9 @@ public:
 
         if (menuItems.size() > 1) 
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(1), OLED_Content::selectTextLine(1));
+            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(1));
             display->print("^");
-            display->setCursor(OLED_Content::centerTextHorizontal(1), OLED_Content::selectTextLine(4));
+            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(4));
             display->print("v");
         }
     }

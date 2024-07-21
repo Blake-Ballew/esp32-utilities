@@ -130,9 +130,9 @@ void OLED_Content_List::printContent()
     display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
     display->setCursor((OLED_WIDTH / 2) - ((strlen(current->nodeText) * 6 / 2)), (OLED_HEIGHT / 2) - 4);
     display->println(current->nodeText);
-    display->setCursor(OLED_Content::centerTextHorizontal(1), OLED_Content::selectTextLine(1));
+    display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(1));
     display->print("^");
-    display->setCursor(OLED_Content::centerTextHorizontal(1), OLED_Content::selectTextLine(4));
+    display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(4));
     display->print("v");
 
     display->display();

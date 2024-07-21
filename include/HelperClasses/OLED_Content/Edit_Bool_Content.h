@@ -36,12 +36,12 @@ public:
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
         if (editBool)
         {
-            display->setCursor(OLED_Content::centerTextVertical(), OLED_Content::centerTextHorizontal(4));
+            display->setCursor(Display_Utils::centerTextVertical(), Display_Utils::centerTextHorizontal(4));
             display->print("True");
         }
         else
         {
-            display->setCursor(OLED_Content::centerTextVertical(), OLED_Content::centerTextHorizontal(5));
+            display->setCursor(Display_Utils::centerTextVertical(), Display_Utils::centerTextHorizontal(5));
             display->print("False");
         }
         display->display();

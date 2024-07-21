@@ -2,21 +2,77 @@
 
 #include <FastLED.h>
 #include "globalDefines.h"
+#include "LED_Pattern_Interface.h"
+#include <unordered_map>
 
-class Button_Flash
+// Called when an input with an LED is pressed. LED turns on and fades away over the course of the animation length
+class Button_Flash : LED_Pattern_Interface
 {
 public:
-    static CRGB *leds;
-    static size_t animationTicks;
-    static size_t ticksRemaining;
+    Button_Flash()
+    {
+        r = 0;
+        g = 0;
+        b = 0;
 
-    static void init(size_t ledIdx, uint8_t r, uint8_t g, uint8_t b);
-    static void update();
+        animationTicks = 15;
+    }
 
-private:
-    static uint8_t r;
-    static uint8_t g;
-    static uint8_t b;
+    void configurePattern(JsonObject &config)
+    {
+        if (config.containsKey("inputID"))
+        {
+            inputID = config["inputID"];
+        }
+        if (config.containsKey("inputIdLedPins"))
+        {
+            inputIdLedPins.clear();
 
-    static size_t ledIdx;
+            auto inputIdLedPinsConfig = config["inputIdLedPins"].as<JsonArray>();
+            for (auto kvp : inputIdLedPinsConfig)
+            {
+                auto kvpObj = kvp.as<JsonObject>();
+                inputIdLedPins[kvpObj["inputId"]] = kvpObj["ledPin"];
+            }
+        }
+    }
+
+    bool iterateFrame()
+    {
+        if (inputIdLedPins.find(inputID) != inputIdLedPins.end())
+        {
+            // Determine brightness this frame
+            float brightness = 1.0 - (float)currTick / (float)animationTicks;
+            if (inputIdLedPins[inputID] < numLeds) 
+            {
+                leds[inputIdLedPins[inputID]] = CRGB(r * brightness, g * brightness, b * brightness);
+            }
+        }
+        else 
+        {
+            resetPattern();
+            return true;
+        }
+
+        currTick++;
+
+        if (currTick == animationTicks)
+        {
+            if (inputIdLedPins[inputID] < numLeds) 
+            {
+                leds[inputIdLedPins[inputID]] = CRGB(0, 0, 0);
+            }
+
+            resetPattern();
+            return true;
+        } 
+        else
+        {
+            return false;
+        }
+    }
+
+protected:
+    std::unordered_map<uint8_t, uint8_t> inputIdLedPins;
+    uint8_t inputID;
 };

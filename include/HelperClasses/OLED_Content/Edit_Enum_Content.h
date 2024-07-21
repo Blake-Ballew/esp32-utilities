@@ -60,12 +60,12 @@ public:
         if (enumText == NULL)
         {
             uint32_t enumValue = valueArray[selectedValueIndex].as<uint32_t>();
-            display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getUintLength(enumValue)), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getUintLength(enumValue)), Display_Utils::centerTextVertical());
             display->print(enumValue);
             display->display();
             return;
         }
-        display->setCursor(OLED_Content::centerTextHorizontal(enumText), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(enumText), Display_Utils::centerTextVertical());
         display->print(enumText);
         display->display();
     }

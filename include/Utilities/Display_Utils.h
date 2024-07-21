@@ -80,6 +80,12 @@ public:
     // Returns the number of characters in an unsigned integer
     static size_t getUintLength(uint64_t num);
 
+    // Enables the refresh timer
+    static void enableRefreshTimer(size_t timerPeriodMS = 0);
+
+    // Disables the refresh timer
+    static void disableRefreshTimer();
+
 
     // Command Queue Functions
 

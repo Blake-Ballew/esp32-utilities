@@ -6,6 +6,8 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include "Button_Flash.h"
+#include "LED_Utils.h"
 #include "EventDeclarations.h"
 #include "OLED_Window.h"
 #include "Settings_Window.h"
@@ -94,6 +96,10 @@ public:
     static void openSaveLocationWindow(uint8_t inputID);
     static void lockDevice(uint8_t inputID);
     static void openOTAWindow(uint8_t inputID);
+
+    #ifdef USE_BLE
+    static void initializeBle(uint8_t inputID);
+    #endif
     // static void callFunctionWindowState(uint8_t inputID);
 
     // Input callbacks
@@ -102,6 +108,8 @@ public:
 private:
     static StaticTimer_t refreshTimer;
     static int refreshTimerID;
+
+    static int buttonFlashAnimationID;
 
     static void refreshTimerCallback(TimerHandle_t xTimer)
     {

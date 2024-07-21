@@ -8,6 +8,11 @@ int System_Utils::nextTimerID = 0;
 std::unordered_map<int, TaskHandle_t> System_Utils::systemTasks;
 int System_Utils::nextTaskID = 0;
 
+std::unordered_map<int, QueueHandle_t> System_Utils::systemQueues;
+int System_Utils::nextQueueID = 0;
+
+std::unordered_map<uint8_t, bool> System_Utils::adcUsers;
+
 StaticTimer_t System_Utils::healthTimerBuffer;
 int System_Utils::healthTimerID;
 // Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
@@ -18,6 +23,7 @@ int System_Utils::otaTaskID = -1;
 EventHandler System_Utils::enableInterrupts;
 EventHandler System_Utils::disableInterrupts;
 EventHandler System_Utils::systemShutdown;
+EventHandlerT<uint8_t> System_Utils::inputRaised;
 
 void System_Utils::init()
 {
@@ -217,6 +223,79 @@ void System_Utils::changeTimerPeriod(int timerID, size_t timerPeriodMS)
     }
 }
 
+// Queue functionality
+
+int System_Utils::registerQueue(size_t queueLength, size_t itemSize)
+{
+    QueueHandle_t handle = xQueueCreate(queueLength, itemSize);
+
+    if (handle != nullptr)
+    {
+        systemQueues[nextQueueID] = handle;
+        return nextQueueID++;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+int System_Utils::registerQueue(size_t queueLength, size_t itemSize, uint8_t *queueBuffer, StaticQueue_t &queueBuffer)
+{
+    QueueHandle_t handle = xQueueCreateStatic(queueLength, itemSize, queueBuffer, &queueBuffer);
+
+    if (handle != nullptr)
+    {
+        systemQueues[nextQueueID] = handle;
+        return nextQueueID++;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+QueueHandle_t System_Utils::getQueue(int queueID)
+{
+    if (systemQueues.find(queueID) != systemQueues.end())
+    {
+        return systemQueues[queueID];
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+void System_Utils::deleteQueue(int queueID)
+{
+    if (systemQueues.find(queueID) != systemQueues.end())
+    {
+        vQueueDelete(systemQueues[queueID]);
+        systemQueues.erase(queueID);
+    }
+}
+
+void System_Utils::resetQueue(int queueID)
+{
+    if (systemQueues.find(queueID) != systemQueues.end())
+    {
+        xQueueReset(systemQueues[queueID]);
+    }
+}
+
+bool System_Utils::sendToQueue(int queueID, void *item, size_t timeoutMS)
+{
+    if (systemQueues.find(queueID) != systemQueues.end())
+    {
+        return xQueueSend(systemQueues[queueID], item, pdMS_TO_TICKS(timeoutMS)) == pdPASS;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 // Task functionality
 
 int System_Utils::registerTask(
@@ -340,7 +419,7 @@ void System_Utils::deleteTask(int taskID)
 
 bool System_Utils::enableWiFi()
 {
-    adc_power_on();
+    enableRadio(ADC_WIFI);
     WiFi.disconnect(false);  // Reconnect the network
     WiFi.mode(WIFI_STA);    // Switch WiFi off
  
@@ -358,9 +437,77 @@ bool System_Utils::enableWiFi()
     return true;
 }
 
+#ifdef USE_BLE
+
+void System_Utils::initBluetooth()
+{
+    #if DEBUG == 1
+    Serial.println("Initializing Bluetooth");
+    #endif
+    esp_err_t ret;
+
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    ret = esp_bt_controller_init(&bt_cfg);
+
+
+    ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    ret = esp_bluedroid_init();
+    ret = esp_bluedroid_enable();
+
+
+    #if DEBUG == 1
+    Serial.println("Registering event handlers");
+    #endif
+
+    ret = esp_ble_gatts_register_callback(gattsEventHandler);
+    ret = esp_ble_gap_register_callback(gapEventHandler);
+
+    
+
+    #if DEBUG == 1
+    Serial.println("Bluetooth initialized");
+    #endif
+}
+
+void System_Utils::gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+{
+    #if DEBUG == 1
+    Serial.print("GAP Event: ");
+    Serial.println(event);
+    #endif
+}
+
+void System_Utils::gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
+{
+    #if DEBUG == 1
+    Serial.print("GATTS Event: ");
+    Serial.println(event);
+    #endif
+}
+
+#endif
+
+// void System_Utils::enableBluetooth()
+// {
+//     enableRadio(ADC_BT);
+//     esp_bt_controller_enable(ESP_BT_MODE_BTDM);
+// }
+
+// void System_Utils::disableBluetooth()
+// {
+//     disableRadio(ADC_BT);
+//     esp_bt_controller_disable();
+// }
+
+// void System_Utils::addCharacteristic(BLECharacteristic &characteristic)
+// {
+//     pService->addCharacteristic(&characteristic);
+//     bleCharacteristics.push_back(&characteristic);
+// }
+
 void System_Utils::disableWiFi()
 {
-    adc_power_off();
+    disableRadio(ADC_WIFI);
     WiFi.disconnect(true);  // Disconnect from the network
     WiFi.mode(WIFI_OFF);    // Switch WiFi off
 }
@@ -368,6 +515,24 @@ void System_Utils::disableWiFi()
 IPAddress System_Utils::getLocalIP()
 {
     return WiFi.localIP();
+}
+
+void System_Utils::enableRadio(uint8_t adcUser)
+{
+    if (adcUsers.find(adcUser) != adcUsers.end() && !adcUsers[adcUser])
+    {
+        adcUsers[adcUser] = true;
+        adc_power_acquire();
+    }
+}
+
+void System_Utils::disableRadio(uint8_t adcUser)
+{
+    if (adcUsers.find(adcUser) != adcUsers.end() && adcUsers[adcUser])
+    {
+        adcUsers[adcUser] = false;
+        adc_power_release();
+    }
 }
 
 bool System_Utils::initializeOTA()

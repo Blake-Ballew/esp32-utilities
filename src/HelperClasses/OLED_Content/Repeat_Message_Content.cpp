@@ -1,42 +1,34 @@
-#include "SOS_Content.h"
+#include "Repeat_Message_Content.h"
 
-size_t SOS_Content::currentTick = 0;
+size_t Repeat_Message_Content::currentTick = 0;
 
-SOS_Content *SOS_Content::thisInstance = nullptr;
-StaticTimer_t SOS_Content::updateTimerBuffer;
-TimerHandle_t SOS_Content::updateTimer = xTimerCreateStatic("SOSUpdate", pdMS_TO_TICKS(SOS_CONTENT_TIMER_TICK), pdTRUE, (void *)0, updateDisplay, &updateTimerBuffer);
-
-SOS_Content::SOS_Content(Adafruit_SSD1306 *disp)
+Repeat_Message_Content::Repeat_Message_Content(bool newMsgID)
 {
-    confirmed = false;
-    display = disp;
-    type = ContentType::SOS;
 }
 
-SOS_Content::~SOS_Content()
+Repeat_Message_Content::~Repeat_Message_Content()
 {
-    thisInstance = nullptr;
 }
 
-void SOS_Content::printContent()
+void Repeat_Message_Content::printContent()
 {
 #if DEBUG == 1
-    // Serial.println("SOS_Content::printContent()");
-    // Serial.printf("SOS_Content::printContent(): confirmed: %d\n", confirmed);
-    // Serial.printf("SOS_Content::printContent(): currentTick: %d\n", currentTick);
+    // Serial.println("Repeat_Message_Content::printContent()");
+    // Serial.printf("Repeat_Message_Content::printContent(): confirmed: %d\n", confirmed);
+    // Serial.printf("Repeat_Message_Content::printContent(): currentTick: %d\n", currentTick);
 #endif
-    OLED_Content::clearContentArea();
+    Display_Utils::clearContentArea();
     if (!confirmed)
     {
-        OLED_Content::clearContentArea();
-        display->setCursor(OLED_Content::centerTextHorizontal("Send SOS?"), OLED_Content::centerTextVertical());
+        Display_Utils::clearContentArea();
+        display->setCursor(Display_Utils::centerTextHorizontal("Send SOS?"), Display_Utils::centerTextVertical());
         display->print("Send SOS?");
         display->display();
         return;
     }
     else
     {
-        display->setCursor(OLED_Content::centerTextHorizontal(14), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(14), Display_Utils::centerTextVertical());
         display->print("Sending SOS");
         for (int i = 0; i < ((currentTick / 60) % 3) + 1; i++)
         {
@@ -47,16 +39,12 @@ void SOS_Content::printContent()
     }
 }
 
-void SOS_Content::Pause()
+void Repeat_Message_Content::Pause()
 {
-    if (thisInstance == nullptr)
-    {
-        return;
-    }
-    xTimerStop(updateTimer, 0);
+    Display_Utils::enableRefreshTimer();
 }
 
-void SOS_Content::Resume()
+void Repeat_Message_Content::Resume()
 {
     if (thisInstance == nullptr)
     {
@@ -65,16 +53,16 @@ void SOS_Content::Resume()
     xTimerStart(updateTimer, 0);
 }
 
-void SOS_Content::confirmSOS()
+void Repeat_Message_Content::confirmSOS()
 {
     confirmed = true;
     thisInstance = this;
-    currentTick = SOS_CONTENT_TICKS_PER_MESSAGE;
+    currentTick = Repeat_Message_Content_TICKS_PER_MESSAGE;
     xTimerStart(updateTimer, 0);
     msgID = esp_random();
 }
 
-void SOS_Content::unconfirmSOS()
+void Repeat_Message_Content::unconfirmSOS()
 {
     confirmed = false;
     thisInstance = nullptr;
@@ -82,7 +70,7 @@ void SOS_Content::unconfirmSOS()
     sendOkay();
 }
 
-void SOS_Content::updateDisplay(TimerHandle_t timer)
+void Repeat_Message_Content::updateDisplay(TimerHandle_t timer)
 {
     if (thisInstance == nullptr)
     {
@@ -92,14 +80,14 @@ void SOS_Content::updateDisplay(TimerHandle_t timer)
 
     thisInstance->printContent();
     currentTick++;
-    if (currentTick >= SOS_CONTENT_TICKS_PER_MESSAGE)
+    if (currentTick >= Repeat_Message_Content_TICKS_PER_MESSAGE)
     {
         thisInstance->sendSOS();
         currentTick = 0;
     }
 }
 
-void SOS_Content::sendSOS()
+void Repeat_Message_Content::sendSOS()
 {
     if (!confirmed)
     {
@@ -131,13 +119,13 @@ void SOS_Content::sendSOS()
     double lng = FAKE_GPS_LON;
 #endif
 
-    const char *status = SOS_CONTENT_MESSAGE;
+    const char *status = Repeat_Message_Content_MESSAGE;
     Message_Ping *msgPing = new Message_Ping(time, date, 0, sender, senderName, msgID, R, G, B, lat, lng, status);
 
     uint8_t returnCode = Network_Manager::queueMessage(msgPing);
 }
 
-void SOS_Content::sendOkay()
+void Repeat_Message_Content::sendOkay()
 {
     if (confirmed)
     {

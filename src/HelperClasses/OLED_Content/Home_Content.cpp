@@ -37,39 +37,39 @@ void Home_Content::printContent()
 
         if (Settings_Manager::settings["Device"]["24HTime"].as<bool>())
         {
-            display->setCursor(OLED_Content::alignTextRight(5), OLED_Content::selectTextLine(2));
+            display->setCursor(OLED_Content::alignTextRight(5), Display_Utils::selectTextLine(2));
             display->printf("%02d:%02d", hour, time.minute());
         }
         else
         {
-            display->setCursor(OLED_Content::alignTextRight(8), OLED_Content::selectTextLine(2));
+            display->setCursor(OLED_Content::alignTextRight(8), Display_Utils::selectTextLine(2));
             display->printf("%02d:%02d %s", hour % 12, time.minute(), hour < 12 ? "AM" : "PM");
         }
     }
     else
     {
-        display->setCursor(OLED_Content::alignTextRight(6), OLED_Content::selectTextLine(2));
+        display->setCursor(OLED_Content::alignTextRight(6), Display_Utils::selectTextLine(2));
         display->printf("No GPS");
     }
 
-    OLED_Content::drawBatteryIcon(OLED_Content::alignTextLeft(0), OLED_Content::selectTextLine(2), System_Utils::getBatteryPercentage());
+    OLED_Content::drawBatteryIcon(OLED_Content::alignTextLeft(0), Display_Utils::selectTextLine(2), System_Utils::getBatteryPercentage());
 
     size_t unreadMsgs = Network_Manager::getNumUnreadMessages();
 
-    /*display->setCursor(OLED_Content::alignTextLeft(), OLED_Content::selectTextLine(3));
+    /*display->setCursor(OLED_Content::alignTextLeft(), Display_Utils::selectTextLine(3));
     display->printf("Unread: %d", unreadMsgs);*/
 
-    OLED_Content::drawBellIcon(OLED_Content::alignTextLeft(3), OLED_Content::selectTextLine(2), System_Utils::silentMode);
+    OLED_Content::drawBellIcon(OLED_Content::alignTextLeft(3), Display_Utils::selectTextLine(2), System_Utils::silentMode);
 
-    OLED_Content::drawMessageIcon(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(2));
-    display->setCursor(OLED_Content::alignTextLeft(8), OLED_Content::selectTextLine(2));
+    OLED_Content::drawMessageIcon(OLED_Content::alignTextLeft(6), Display_Utils::selectTextLine(2));
+    display->setCursor(OLED_Content::alignTextLeft(8), Display_Utils::selectTextLine(2));
     display->printf(":%d", unreadMsgs);
 
     if (unreadMsgs > 0)
     {
         display->drawLine(OLED_WIDTH / 2, OLED_HEIGHT - 1, (OLED_WIDTH / 2) - 3, OLED_HEIGHT - 3, WHITE);
         display->drawLine((OLED_WIDTH / 2) + 1, OLED_HEIGHT - 1, (OLED_WIDTH / 2) + 4, OLED_HEIGHT - 3, WHITE);
-        display->setCursor(OLED_Content::alignTextLeft(6), OLED_Content::selectTextLine(4));
+        display->setCursor(OLED_Content::alignTextLeft(6), Display_Utils::selectTextLine(4));
         display->print("Msgs");
     }
 

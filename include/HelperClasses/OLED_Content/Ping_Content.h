@@ -65,7 +65,7 @@ public:
         Serial.print("Status desc: ");
         Serial.println(statusDesc);
 #endif
-        display->setCursor(OLED_Content::centerTextHorizontal(statusDesc), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(statusDesc), Display_Utils::centerTextVertical());
         display->print(statusDesc);
         display->display();
 
@@ -141,7 +141,7 @@ public:
         bool isBroadcast = msg == nullptr;
 
         display->clearDisplay();
-        display->setCursor(OLED_Content::centerTextHorizontal(10), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(10), Display_Utils::centerTextVertical());
         display->print("Sending...");
         display->display();
         LED_Manager::clearRing();
@@ -169,7 +169,7 @@ public:
         switch (returnCode)
         {
         case RH_ROUTER_ERROR_NONE:
-            display->setCursor(OLED_Content::centerTextHorizontal(MESSAGE_SENT), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(MESSAGE_SENT), Display_Utils::centerTextVertical());
             display->print(MESSAGE_SENT);
 
             if (isBroadcast)
@@ -188,15 +188,15 @@ public:
             }
             break;
         case RH_ROUTER_ERROR_NO_ROUTE:
-            display->setCursor(OLED_Content::centerTextHorizontal(NO_ROUTE), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(NO_ROUTE), Display_Utils::centerTextVertical());
             display->print(NO_ROUTE);
             break;
         case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
-            display->setCursor(OLED_Content::centerTextHorizontal(DELIVERY_FAILED), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(DELIVERY_FAILED), Display_Utils::centerTextVertical());
             display->print(DELIVERY_FAILED);
             break;
         case RETURN_CODE_UNABLE_TO_QUEUE:
-            display->setCursor(OLED_Content::centerTextHorizontal(UNABLE_TO_QUEUE), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(UNABLE_TO_QUEUE), Display_Utils::centerTextVertical());
             display->print(UNABLE_TO_QUEUE);
             break;
         default:

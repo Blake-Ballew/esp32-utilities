@@ -64,16 +64,16 @@ public:
 
     void displayState()
     {
-        OLED_Content::clearContentArea();
+        Display_Utils::clearContentArea();
 
         if (state)
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(4), OLED_Content::selectTextLine(3));
+            display->setCursor(Display_Utils::centerTextHorizontal(4), Display_Utils::selectTextLine(3));
             display->print("True");
         }
         else
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(5), OLED_Content::selectTextLine(3));
+            display->setCursor(Display_Utils::centerTextHorizontal(5), Display_Utils::selectTextLine(3));
             display->print("False");
         }
 

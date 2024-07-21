@@ -1,29 +1,42 @@
 #include "LED_Manager.h"
 
-CRGB LED_Manager::leds[NUM_LEDS];
+CRGB *LED_Manager::leds = nullptr;
 bool LED_Manager::flashlightOn = false;
 
 uint8_t LED_Manager::r = 0;
 uint8_t LED_Manager::g = 0;
 uint8_t LED_Manager::b = 255;
 
+int LED_Manager::patternTimerID = -1;
 TimerHandle_t LED_Manager::patternTimer;
 StaticTimer_t LED_Manager::patternTimerBuffer;
 
-void LED_Manager::init()
+void LED_Manager::init(size_t numLeds)
 {
+    leds = new CRGB[numLeds];
+    LED_Utils::setLeds(leds, numLeds);
+
     FastLED.addLeds<LED_TYPE, LED_PIN, LED_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(255);
     FastLED.clear();
     FastLED.show();
 
-    Button_Flash::leds = leds;
+    patternTimerID = System_Utils::registerTimer("LED Timer", LED_MS_PER_FRAME, ledTimerCallback);
+    LED_Utils::setPatternTimerID(patternTimerID);
+    LED_Utils::setTickRate(LED_MS_PER_FRAME);
 
     r = Settings_Manager::settings["User"]["Theme Red"]["cfgVal"] | 0;
     g = Settings_Manager::settings["User"]["Theme Green"]["cfgVal"] | 0;
     b = Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"] | 255;
 
-    patternTimer = xTimerCreateStatic("Pattern Timer", 17, true, NULL, updatePattern, &patternTimerBuffer);
+    LED_Utils::setThemeColor(r, g, b);
+
+    // patternTimer = xTimerCreateStatic("Pattern Timer", 17, true, NULL, updatePattern, &patternTimerBuffer);
+}
+
+void LED_Manager::ledTimerCallback(TimerHandle_t xTimer)
+{
+    LED_Utils::iteratePatterns();
 }
 
 void LED_Manager::pointNorth(int Azimuth)

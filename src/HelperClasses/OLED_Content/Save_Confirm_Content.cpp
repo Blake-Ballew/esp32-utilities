@@ -26,8 +26,8 @@ Save_Confirm_Content::~Save_Confirm_Content()
 
 void Save_Confirm_Content::printContent()
 {
-    OLED_Content::clearContentArea();
-    display->setCursor(OLED_Content::centerTextHorizontal(5), OLED_Content::centerTextVertical());
+    Display_Utils::clearContentArea();
+    display->setCursor(Display_Utils::centerTextHorizontal(5), Display_Utils::centerTextVertical());
     display->print("Save?");
     display->display();
 }

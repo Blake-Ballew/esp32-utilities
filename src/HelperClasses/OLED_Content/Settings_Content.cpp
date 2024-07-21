@@ -35,7 +35,7 @@ void Settings_Content::printContent()
         ArduinoJson::JsonObject::iterator it = currentNode.variant.as<ArduinoJson::JsonObject>().begin();
         it += currentNode.idx;
         size_t textLength = it->key().size();
-        this->display->setCursor(OLED_Content::centerTextHorizontal(it->key().c_str()), 8);
+        this->display->setCursor(Display_Utils::centerTextHorizontal(it->key().c_str()), 8);
         this->display->print(it->key().c_str());
         printVariantValue(it->value());
         break;
@@ -219,56 +219,56 @@ void Settings_Content::printVariantValue(ArduinoJson::JsonVariant variant)
     switch (variantType)
     {
     case JSON_VARIANT_TYPE_ARRAY:
-        display->setCursor(OLED_Content::centerTextHorizontal(9), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(9), 16);
         display->print("[ . . . ]");
         break;
     case JSON_VARIANT_TYPE_OBJECT:
-        display->setCursor(OLED_Content::centerTextHorizontal(9), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(9), 16);
         display->print("{ . . . }");
         break;
     case JSON_VARIANT_TYPE_BOOLEAN:
 
         if (variant.as<bool>())
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(4), 16);
+            display->setCursor(Display_Utils::centerTextHorizontal(4), 16);
             display->print("true");
         }
         else
         {
-            display->setCursor(OLED_Content::centerTextHorizontal(5), 16);
+            display->setCursor(Display_Utils::centerTextHorizontal(5), 16);
             display->print("false");
         }
         break;
     case JSON_VARIANT_TYPE_INTEGER:
     {
         int num = variant.as<int>();
-        display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getIntLength(num)), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getIntLength(num)), 16);
         display->print(variant.as<int>());
         break;
     }
     case JSON_VARIANT_TYPE_FLOAT:
     {
         double num = variant.as<double>();
-        display->setCursor(OLED_Content::centerTextHorizontal(5), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(5), 16);
         display->print(num, 6);
         break;
     }
     case JSON_VARIANT_TYPE_STRING:
     {
-        display->setCursor(OLED_Content::centerTextHorizontal(variant.as<const char *>()), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(variant.as<const char *>()), 16);
         display->print(variant.as<const char *>());
         break;
     }
     case JSON_VARIANT_CONFIGURABLE_ENUM:
     {
         const char *str = variant["valTxt"][variant["cfgVal"].as<uint8_t>()].as<const char *>();
-        display->setCursor(OLED_Content::centerTextHorizontal(str), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(str), 16);
         display->print(str);
         break;
     }
     case JSON_VARIANT_CONFIGURABLE_STRING:
     {
-        display->setCursor(OLED_Content::centerTextHorizontal(variant["cfgVal"].as<const char *>()), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(variant["cfgVal"].as<const char *>()), 16);
         display->print(variant["cfgVal"].as<const char *>());
         break;
     }
@@ -277,13 +277,13 @@ void Settings_Content::printVariantValue(ArduinoJson::JsonVariant variant)
         if (variant["signed"].as<bool>())
         {
             int32_t num = variant["cfgVal"].as<int32_t>();
-            display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getIntLength(num)), 16);
+            display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getIntLength(num)), 16);
             display->print(num);
         }
         else
         {
             uint32_t num = variant["cfgVal"].as<uint32_t>();
-            display->setCursor(OLED_Content::centerTextHorizontal(OLED_Content::getIntLength(num)), 16);
+            display->setCursor(Display_Utils::centerTextHorizontal(Display_Utils::getIntLength(num)), 16);
             display->print(num);
         }
         break;
@@ -291,7 +291,7 @@ void Settings_Content::printVariantValue(ArduinoJson::JsonVariant variant)
     case JSON_VARIANT_CONFIGURABLE_FLOAT:
     {
         double num = variant["cfgVal"].as<double>();
-        display->setCursor(OLED_Content::centerTextHorizontal(5), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(5), 16);
         display->print(num, 6);
         break;
     }

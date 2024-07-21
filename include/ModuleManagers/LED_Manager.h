@@ -4,8 +4,10 @@
 #include "globalDefines.h"
 #include "Button_Flash.h"
 #include "Settings_Manager.h"
+#include "LED_Utils.h"
 
 #define NUM_COMPASS_LEDS 16
+#define LED_MS_PER_FRAME 15
 
 /*
 LED Mappings:
@@ -23,8 +25,10 @@ LED Mappings:
 class LED_Manager
 {
 public:
-    static void init();
-    static CRGB leds[NUM_LEDS];
+    static void init(size_t numLeds);
+    static CRGB *leds;
+
+    static void ledTimerCallback(TimerHandle_t xTimer);
 
     static void pointNorth(int Azimuth);
     static void pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b);
@@ -42,6 +46,7 @@ public:
 
 private:
     static bool flashlightOn;
+    static int patternTimerID;
     static TimerHandle_t patternTimer;
     static StaticTimer_t patternTimerBuffer;
 

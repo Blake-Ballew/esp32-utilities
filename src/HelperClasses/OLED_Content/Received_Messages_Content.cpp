@@ -49,7 +49,7 @@ void Received_Messages_Content::encUp()
 
 void Received_Messages_Content::printContent()
 {
-    OLED_Content::clearContentArea();
+    Display_Utils::clearContentArea();
 
 #if DEBUG == 1
     Serial.println("Received_Messages_Content::printContent()");

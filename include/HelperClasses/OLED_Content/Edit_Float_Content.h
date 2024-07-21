@@ -41,7 +41,7 @@ public:
     {
         // Clear content area
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
-        display->setCursor(OLED_Content::centerTextHorizontal(6), OLED_Content::centerTextVertical());
+        display->setCursor(Display_Utils::centerTextHorizontal(6), Display_Utils::centerTextVertical());
         display->print(this->floatToEdit);
 #if DEBUG == 1
         Serial.print("Edit_Float_Content::printContent() - ");

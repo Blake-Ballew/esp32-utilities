@@ -88,14 +88,14 @@ public:
 #if DEBUG == 1
         Serial.println("Saved_Locations_Content::printContent()");
 #endif
-        OLED_Content::clearContentArea();
+        Display_Utils::clearContentArea();
 
         if (savedLocations.size() == 0)
         {
 #if DEBUG == 1
             Serial.println("No saved locations");
 #endif
-            display->setCursor(OLED_Content::centerTextHorizontal(noSavedLocations), OLED_Content::centerTextVertical());
+            display->setCursor(Display_Utils::centerTextHorizontal(noSavedLocations), Display_Utils::centerTextVertical());
             display->print(noSavedLocations);
         }
         else
@@ -110,16 +110,16 @@ public:
                 Serial.println("Printing a location");
 #endif
                 // Center location name on the screen
-                display->setCursor(OLED_Content::centerTextHorizontal(locationName), OLED_Content::centerTextVertical());
+                display->setCursor(Display_Utils::centerTextHorizontal(locationName), Display_Utils::centerTextVertical());
             }
             else
             {
 #if DEBUG == 1
                 Serial.println("Prompting for selection and printing a location");
 #endif
-                display->setCursor(OLED_Content::centerTextHorizontal(promptMessage), OLED_Content::selectTextLine(2));
+                display->setCursor(Display_Utils::centerTextHorizontal(promptMessage), Display_Utils::selectTextLine(2));
                 display->print(promptMessage);
-                display->setCursor(OLED_Content::centerTextHorizontal(locationName), OLED_Content::selectTextLine(3));
+                display->setCursor(Display_Utils::centerTextHorizontal(locationName), Display_Utils::selectTextLine(3));
                 display->print(locationName);
             }
 
@@ -139,8 +139,8 @@ public:
             Settings_Manager::deleteCoordinate(locationIt->idx);
             loadLocations();
             locationIt = savedLocations.begin();
-            OLED_Content::clearContentArea();
-            display->setCursor(OLED_Content::centerTextHorizontal("Location Deleted"), OLED_Content::centerTextVertical());
+            Display_Utils::clearContentArea();
+            display->setCursor(Display_Utils::centerTextHorizontal("Location Deleted"), Display_Utils::centerTextVertical());
             display->print("Location Deleted");
             display->display();
             vTaskDelay(2000 / portTICK_PERIOD_MS);

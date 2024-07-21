@@ -4,7 +4,7 @@ SOS_Window::SOS_Window(OLED_Window *parent) : OLED_Window(parent)
 {
     assignButton(ACTION_BACK, BUTTON_3, "Back", 4);
     assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Confirm", 7);
-    sosContent = new SOS_Content(display);
+    sosContent = new Repeat_Message_Content(display);
     content = (OLED_Content *)sosContent;
 }
 

@@ -41,8 +41,8 @@ void Saved_Msg_Window::execBtnCallback(uint8_t inputID)
         if (this->content->type == ContentType::SAVED_MSG)
         {
             msgContent->deleteMsg();
-            OLED_Content::clearContentArea();
-            display->setCursor(OLED_Content::centerTextHorizontal(15), OLED_Content::centerTextVertical());
+            Display_Utils::clearContentArea();
+            display->setCursor(Display_Utils::centerTextHorizontal(15), Display_Utils::centerTextVertical());
             display->print("Message Deleted");
             display->display();
             vTaskDelay(pdMS_TO_TICKS(1000));
@@ -60,8 +60,8 @@ void Saved_Msg_Window::execBtnCallback(uint8_t inputID)
 #endif
                 msgContent->saveMsg(newMsg, Settings_Manager::maxMsgLength);
                 editContent->clearString();
-                OLED_Content::clearContentArea();
-                display->setCursor(OLED_Content::centerTextHorizontal(13), OLED_Content::centerTextVertical());
+                Display_Utils::clearContentArea();
+                display->setCursor(Display_Utils::centerTextHorizontal(13), Display_Utils::centerTextVertical());
                 display->print("Message Saved");
                 display->display();
                 saveList = true;

@@ -35,7 +35,7 @@ public:
         currMsg->toString(statusTxt, STATUS_LENGTH);
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
-        display->setCursor(OLED_Content::centerTextHorizontal(statusTxt), 16);
+        display->setCursor(Display_Utils::centerTextHorizontal(statusTxt), 16);
         display->print(statusTxt);
 
         display->setCursor(0, 8);

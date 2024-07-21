@@ -116,6 +116,25 @@ size_t Display_Utils::getUintLength(uint64_t num)
     return len;
 }
 
+void Display_Utils::enableRefreshTimer(size_t timerPeriodMS)
+{
+    if (refreshTimerID == -1)
+        return;
+
+    if (timerPeriodMS > 0)
+        System_Utils::changeTimerPeriod(refreshTimerID, timerPeriodMS);
+
+    System_Utils::startTimer(refreshTimerID);
+}
+
+void Display_Utils::disableRefreshTimer()
+{
+    if (refreshTimerID == -1)
+        return;
+
+    System_Utils::stopTimer(refreshTimerID);
+}
+
 
 // Command Queue Functions
 
