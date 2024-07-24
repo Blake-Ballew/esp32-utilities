@@ -39,7 +39,12 @@ public:
     // Returns true if the last frame of the loop has played
     virtual bool iterateFrame() { return true; }
 
-    void setThemeColor(uint8_t r, uint8_t g, uint8_t b) {
+    // Every pattern should have a static member holding the registered pattern id
+    // This is so different modules can use the same pattern without re-registering it
+    virtual void setRegisteredPatternID(int patternID) = 0;
+    virtual int registeredPatternID() = 0;
+
+    static void setThemeColor(uint8_t r, uint8_t g, uint8_t b) {
         r = r;
         g = g;
         b = b;

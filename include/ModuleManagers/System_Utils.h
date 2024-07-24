@@ -71,7 +71,7 @@ public:
 
     // Queue functionality
     static int registerQueue(size_t queueLength, size_t itemSize);
-    static int registerQueue(size_t queueLength, size_t itemSize, uint8_t *queueBuffer, StaticQueue_t &queueBuffer);
+    static int registerQueue(size_t queueLength, size_t itemSize, uint8_t *queueData, StaticQueue_t &queueBuffer);
     static QueueHandle_t getQueue(int queueID);
     static void deleteQueue(int queueID);
     static void resetQueue(int queueID);
@@ -158,14 +158,12 @@ public:
     static EventHandler &getEnableInterrupts() { return enableInterrupts; }
     static EventHandler &getDisableInterrupts() { return disableInterrupts; }
     static EventHandler &getSystemShutdown() { return systemShutdown; }
-    static EventHandlerT<uint8_t> &getInputRaised() { return inputRaised; }
 
 private:
     // Event Handlers
     static EventHandler enableInterrupts;
     static EventHandler disableInterrupts;
     static EventHandler systemShutdown;
-    static EventHandlerT<uint8_t> inputRaised;
 
     // Timer functionality
     static std::unordered_map<int, TimerHandle_t> systemTimers;

@@ -2,6 +2,38 @@
 
 #include "Adafruit_GFX.h"
 #include "System_Utils.h"
+#include "EventHandler.h"
+
+enum TextAlignmentHorizontal
+{
+    ALIGN_LEFT = 0,
+    ALIGN_CENTER,
+    ALIGN_RIGHT
+};
+
+enum TextAlignmentVertical
+{
+    ALIGN_TOP = 0,
+    ALIGN_CENTER,
+    ALIGN_BOTTOM,
+    CONTENT_TOP,
+    CONTENT_BOTTOM,
+    TEXT_LINE
+};
+
+struct TextFormat 
+{
+    TextAlignmentHorizontal horizontalAlignment;
+    TextAlignmentVertical verticalAlignment;
+    uint8_t line;
+    int distanceFrom;
+};
+
+struct TextDrawData
+{
+    const char *text;
+    TextFormat format;
+};
 
 enum CommandType
 {
@@ -43,6 +75,9 @@ public:
     static size_t getDisplayHeight();
     static QueueHandle_t getDisplayCommandQueue();
 
+    // Event Handlers
+    static EventHandlerT<uint8_t> &getInputRaised() { return inputRaised; }
+
     // Graphics Helper Functions
 
     // Clears the content area. The content area is the area between the top and bottom text lines.
@@ -56,23 +91,26 @@ public:
     static uint16_t centerTextVertical();
 
     // Returns the X cursor position for centering text horizontally for text of length textSize
-    static uint16_t centerTextHorizontal(size_t textSize);
+    static uint16_t centerTextHorizontal(size_t textSize, int distanceFrom = 0);
 
     // Returns the X cursor position for centering text horizontally for using the length of the string
-    static uint16_t centerTextHorizontal(const char *text);
+    static uint16_t centerTextHorizontal(const char *text, int distanceFrom = 0);
 
     // Returns the Y cursor position for selecting a text line
     static uint16_t selectTextLine(uint8_t line);
 
+    // Prints a formatted string to the display
+    static void printFormattedText(const char *text, TextFormat &format);
+
     // Returns the X cursor position for aligning text to the left
     // distanceFrom is the spacing from the left edge of the display in characters
-    static uint16_t alignTextLeft(size_t distanceFrom = 0);
+    static uint16_t alignTextLeft(int distanceFrom = 0);
 
     // Returns the X cursor position for aligning text to the right using the length of the text
-    static uint16_t alignTextRight(size_t textSize);
+    static uint16_t alignTextRight(size_t textSize, int distanceFrom = 0);
 
     // Returns the X cursor position for aligning text to the right using the length of the string
-    static uint16_t alignTextRight(const char *text);
+    static uint16_t alignTextRight(const char *text, int distanceFrom = 0);
 
     // Returns the number of characters in an integer
     static size_t getIntLength(int64_t num);
@@ -104,4 +142,7 @@ protected:
     static int refreshTimerID;
 
     static QueueHandle_t displayCommandQueue;
+
+    // Event handlers
+    static EventHandlerT<uint8_t> inputRaised;
 };

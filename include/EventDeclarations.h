@@ -14,6 +14,7 @@ extern QueueHandle_t displayCommandQueue;
 extern ESP32Encoder *inputEncoder;
 
 #define BIT_SHIFT(x) (1 << x)
+#define DEBOUNCE_TIME 10
 
 // ESP_EVENT_DECLARE_BASE(EVENT_BUTTON_IO);
 

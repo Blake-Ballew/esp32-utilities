@@ -9,6 +9,8 @@ int Display_Utils::refreshTimerID = -1;
 
 QueueHandle_t Display_Utils::displayCommandQueue = nullptr;
 
+EventHandlerT<uint8_t> Display_Utils::inputRaised;
+
 // Setters
 void Display_Utils::setDisplay(Adafruit_GFX *display) 
 { 
@@ -61,23 +63,74 @@ void Display_Utils::printCenteredText(const char *text, bool clearDisplay)
 uint16_t Display_Utils::centerTextVertical() { return (displayHeight / 2) - 4; }
 
 // Returns the X cursor position for centering text horizontally for text of length textSize
-uint16_t Display_Utils::centerTextHorizontal(size_t textSize) { return (displayWidth / 2) - (textSize * 3); }
+uint16_t Display_Utils::centerTextHorizontal(size_t textSize, int distanceFrom) { return ((displayWidth / 2) - (textSize * 3)) + (distanceFrom * 6); }
 
 // Returns the X cursor position for centering text horizontally for using the length of the string
-uint16_t Display_Utils::centerTextHorizontal(const char *text) { return centerTextHorizontal(strlen(text)); }
+uint16_t Display_Utils::centerTextHorizontal(const char *text, int distanceFrom) { return centerTextHorizontal(strlen(text), distanceFrom); }
 
 // Returns the Y cursor position for selecting a text line
 uint16_t Display_Utils::selectTextLine(uint8_t line) { return (line - 1) * 8; }
 
+// Prints a formatted string to the display
+void Display_Utils::printFormattedText(const char *text, TextFormat &format) 
+{
+    uint16_t xPos, yPos;
+
+    switch (format.horizontalAlignment)
+    {
+    case ALIGN_LEFT:
+        xPos = alignTextLeft(format.distanceFrom);
+        break;
+    case ALIGN_RIGHT:
+        xPos = alignTextRight(text, format.distanceFrom);
+        break;
+    case ALIGN_CENTER:
+        xPos = centerTextHorizontal(text);
+        xPos += format.distanceFrom * 6;
+        break;
+    default:
+        xPos = 0;
+        break;
+    }
+
+    switch (format.verticalAlignment)
+    {
+    case ALIGN_TOP:
+        yPos = 0;
+        break;
+    case ALIGN_BOTTOM:
+        yPos = displayHeight - 8;
+        break;
+    case ALIGN_CENTER:
+        yPos = centerTextVertical();
+        break;
+    case CONTENT_TOP:
+        yPos = 8;
+        break;
+    case CONTENT_BOTTOM:
+        yPos = displayHeight - 16;
+        break;
+    case TEXT_LINE:
+        yPos = selectTextLine(format.line);
+        break;
+    default:
+        yPos = 0;
+        break;
+    }
+
+    display->setCursor(xPos, yPos);
+    display->print(text);
+}
+
 // Returns the X cursor position for aligning text to the left
 // distanceFrom is the spacing from the left edge of the display in characters
-uint16_t Display_Utils::alignTextLeft(size_t distanceFrom) { return distanceFrom * 6; }
+uint16_t Display_Utils::alignTextLeft(int distanceFrom) { return distanceFrom * 6; }
 
 // Returns the X cursor position for aligning text to the right using the length of the text
-uint16_t Display_Utils::alignTextRight(size_t textSize) { return displayWidth - (textSize * 6); }
+uint16_t Display_Utils::alignTextRight(size_t textSize, int distanceFrom) { return (displayWidth - (textSize * 6) - (distanceFrom * 6)); }
 
 // Returns the X cursor position for aligning text to the right using the length of the string
-uint16_t Display_Utils::alignTextRight(const char *text) { return alignTextRight(strlen(text)); }
+uint16_t Display_Utils::alignTextRight(const char *text, int distanceFrom) { return alignTextRight(strlen(text), distanceFrom); }
 
 // Returns the number of characters in an integer
 size_t Display_Utils::getIntLength(int64_t num)

@@ -19,7 +19,8 @@ int Display_Manager::lockStateTimerID = -1;
 
 uint8_t Display_Manager::displayCommandQueueStorage[DISPLAY_COMMAND_QUEUE_LENGTH * sizeof(DisplayCommandQueueItem)];
 StaticQueue_t Display_Manager::displayCommandQueueBuffer;
-QueueHandle_t Display_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &Display_Manager::displayCommandQueueBuffer);
+// QueueHandle_t Display_Manager::displayCommandQueue = xQueueCreateStatic(1, sizeof(DisplayCommandQueueItem), displayCommandQueueStorage, &Display_Manager::displayCommandQueueBuffer);
+QueueHandle_t Display_Manager::displayCommandQueue = nullptr;
 
 void Display_Manager::init()
 {
@@ -29,6 +30,22 @@ void Display_Manager::init()
     OLED_Content::display = &display;
     Display_Utils::setDisplay(&display);
     Display_Utils::setDisplayDimensions(display.width(), display.height());
+
+    auto displayCmdQueueID = System_Utils::registerQueue(
+        DISPLAY_COMMAND_QUEUE_LENGTH, 
+        sizeof(DisplayCommandQueueItem), 
+        displayCommandQueueStorage, 
+        displayCommandQueueBuffer);
+
+    if (displayCmdQueueID != -1) 
+    {
+        displayCommandQueue = System_Utils::getQueue(displayCmdQueueID);
+    } 
+    else
+    {
+        Serial.println("Unable to initialize display command queue");
+    }
+
     Display_Utils::setDisplayCommandQueue(displayCommandQueue);
 
     // display = Adafruit_SSD1306(OLED_WIDTH, OLED_HEIGHT, &Wire);
@@ -39,10 +56,6 @@ void Display_Manager::init()
     display.setTextColor(SSD1306_WHITE);
     display.setCursor(0, 0);
     display.display();
-
-    // Initialize button flash animation
-    Button_Flash *flash = new Button_Flash();
-    buttonFlashAnimationID = LED_Utils::registerPattern(flash);
 
     // Register refresh timer
     Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
@@ -118,8 +131,8 @@ void Display_Manager::processCommandQueue(void *taskParams)
                         callbackData = CallbackData(*cbPtr);
                     }
 
-                    // Pulse LED if it exists
-                    LED_Manager::pulseButton(input);
+                    // Pulse input LED if it exists
+                    Display_Utils::getInputRaised().Invoke(input);
 
                     // Pass input to current window
                     if (currentWindow != nullptr)

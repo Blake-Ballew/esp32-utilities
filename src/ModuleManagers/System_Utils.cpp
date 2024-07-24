@@ -23,7 +23,6 @@ int System_Utils::otaTaskID = -1;
 EventHandler System_Utils::enableInterrupts;
 EventHandler System_Utils::disableInterrupts;
 EventHandler System_Utils::systemShutdown;
-EventHandlerT<uint8_t> System_Utils::inputRaised;
 
 void System_Utils::init()
 {
@@ -240,9 +239,9 @@ int System_Utils::registerQueue(size_t queueLength, size_t itemSize)
     }
 }
 
-int System_Utils::registerQueue(size_t queueLength, size_t itemSize, uint8_t *queueBuffer, StaticQueue_t &queueBuffer)
+int System_Utils::registerQueue(size_t queueLength, size_t itemSize, uint8_t *queueData, StaticQueue_t &queueBuffer)
 {
-    QueueHandle_t handle = xQueueCreateStatic(queueLength, itemSize, queueBuffer, &queueBuffer);
+    QueueHandle_t handle = xQueueCreateStatic(queueLength, itemSize, queueData, &queueBuffer);
 
     if (handle != nullptr)
     {

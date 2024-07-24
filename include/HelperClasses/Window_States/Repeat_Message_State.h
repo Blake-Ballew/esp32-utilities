@@ -8,12 +8,12 @@
 class Repeat_Message_State : public Window_State
 {
 public:
-    Repeat_Message_State(Repeat_Message_Content *content)
+    Repeat_Message_State(Text_Display_Content *content)
     {
         message = nullptr;
         assignInput(BUTTON_3, ACTION_BACK, "Back");
-        repeatContent = content;
-        renderContent = repeatContent;
+        textContent = content;
+        renderContent = textContent;
     }
 
     ~Repeat_Message_State()
@@ -68,5 +68,5 @@ public:
     
 protected:
     Message_Base *message;
-    Repeat_Message_Content *repeatContent;
+    Text_Display_Content *textContent;
 };

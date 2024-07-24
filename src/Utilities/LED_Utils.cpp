@@ -6,7 +6,13 @@ int LED_Utils::nextPatternID = 0;
 
 int LED_Utils::registerPattern(LED_Pattern_Interface *pattern)
 {
+    if (pattern == nullptr)
+    {
+        return -1;
+    }
+
     registeredPatterns[nextPatternID] = {nextPatternID, pattern, 0};
+    pattern->setRegisteredPatternID(nextPatternID);
     return nextPatternID++;
 }
 
@@ -70,9 +76,9 @@ void LED_Utils::loopPattern(int patternID, int numLoops)
 
     registeredPatterns[patternID].loopsRemaining = numLoops;
 
-    if (numLoops != 0)
+    if (numLoops != 0 && !System_Utils::isTimerActive(patternTimerID))
     {
-        System_Utils::enableTimer(patternTimerID);
+        startPatternTimer();
     }
 }
 
@@ -87,11 +93,11 @@ void LED_Utils::setTickRate(size_t ms)
 
     if (patternTimerID != -1)
     {
-        System_Utils::setTimerInterval(patternTimerID, ms);
+        System_Utils::changeTimerPeriod(patternTimerID, ms);
     }
 }
 
-bool LED_Utils::iteratePatterns()
+void LED_Utils::iteratePatterns()
 {
     bool workToDo = false;
 
@@ -118,7 +124,10 @@ bool LED_Utils::iteratePatterns()
 
     FastLED.show();
 
-    return workToDo;
+    if (!workToDo)
+    {
+        stopPatternTimer();
+    }
 }
 
 void LED_Utils::iteratePattern(int patternID)
@@ -135,6 +144,16 @@ void LED_Utils::iteratePattern(int patternID)
 void LED_Utils::setPatternTimerID(int timerID)
 {
     patternTimerID = timerID;
+}
+
+void LED_Utils::startPatternTimer()
+{
+    System_Utils::startTimer(patternTimerID);
+}
+
+void LED_Utils::stopPatternTimer()
+{
+    System_Utils::stopTimer(patternTimerID);
 }
 
 void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)

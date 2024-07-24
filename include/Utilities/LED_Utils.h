@@ -56,6 +56,12 @@ public:
     // Sets the patternTimerID
     static void setPatternTimerID(int timerID);
 
+    // Starts the pattern timer
+    static void startPatternTimer();
+
+    // Stops the pattern timer
+    static void stopPatternTimer();
+
     // Sets the user's theme color
     // This is used by patterns that don't have their own color configuration
     static void setThemeColor(uint8_t r, uint8_t g, uint8_t b);

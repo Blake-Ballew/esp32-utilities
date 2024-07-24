@@ -5,6 +5,9 @@
 #include "Button_Flash.h"
 #include "Settings_Manager.h"
 #include "LED_Utils.h"
+#include "Display_Utils.h"
+#include <utility>
+#include <vector>
 
 #define NUM_COMPASS_LEDS 16
 #define LED_MS_PER_FRAME 15
@@ -30,6 +33,10 @@ public:
 
     static void ledTimerCallback(TimerHandle_t xTimer);
 
+    // Initialize button flash animation with a list of input ID to LED index pairs
+    static void initializeButtonFlashAnimation(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx);
+    static void inputButtonFlash(uint8_t inputID);
+
     static void pointNorth(int Azimuth);
     static void pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b);
     static void lightRing(uint8_t r, uint8_t g, uint8_t b);
@@ -49,6 +56,8 @@ private:
     static int patternTimerID;
     static TimerHandle_t patternTimer;
     static StaticTimer_t patternTimerBuffer;
+
+    static int buttonFlashPatternID;
 
     static uint8_t r, g, b;
 

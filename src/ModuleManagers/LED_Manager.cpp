@@ -7,6 +7,8 @@ uint8_t LED_Manager::r = 0;
 uint8_t LED_Manager::g = 0;
 uint8_t LED_Manager::b = 255;
 
+int LED_Manager::buttonFlashPatternID = -1;
+
 int LED_Manager::patternTimerID = -1;
 TimerHandle_t LED_Manager::patternTimer;
 StaticTimer_t LED_Manager::patternTimerBuffer;
@@ -37,6 +39,23 @@ void LED_Manager::init(size_t numLeds)
 void LED_Manager::ledTimerCallback(TimerHandle_t xTimer)
 {
     LED_Utils::iteratePatterns();
+}
+
+void LED_Manager::initializeButtonFlashAnimation(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
+{
+    auto btnFlash = new Button_Flash(inputIDLedIdx);
+
+    buttonFlashPatternID = LED_Utils::registerPattern(btnFlash);
+    Display_Utils::getInputRaised() += inputButtonFlash;
+}
+
+void LED_Manager::inputButtonFlash(uint8_t inputID)
+{
+    StaticJsonDocument<64> cfg;
+    cfg["inputID"] = inputID;
+
+    LED_Utils::configurePattern(buttonFlashPatternID, cfg);
+    LED_Utils::loopPattern(buttonFlashPatternID, 1);
 }
 
 void LED_Manager::pointNorth(int Azimuth)
