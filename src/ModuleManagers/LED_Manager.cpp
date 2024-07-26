@@ -41,8 +41,14 @@ void LED_Manager::ledTimerCallback(TimerHandle_t xTimer)
     LED_Utils::iteratePatterns();
 }
 
-void LED_Manager::initializeButtonFlashAnimation(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
+void LED_Manager::InitializeInputIdLedPins(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
 {
+    LED_Utils::setInputIdLedPins(inputIDLedIdx);
+}
+
+void LED_Manager::initializeButtonFlashAnimation()
+{
+    auto inputIDLedIdx = LED_Utils::InputIdLedPins();
     auto btnFlash = new Button_Flash(inputIDLedIdx);
 
     buttonFlashPatternID = LED_Utils::registerPattern(btnFlash);

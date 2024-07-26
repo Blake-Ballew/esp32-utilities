@@ -35,7 +35,6 @@ public:
 
     Window_State()
     {
-        // typeID = __COUNTER__;
     }
 
     // Window should handle destroying content classes
@@ -117,11 +116,5 @@ public:
         return nullptr;
     }
 
-    /* size_t getTypeID()
-    {
-        return typeID;
-    } */
-
 protected:
-    // size_t typeID = 0;
 };

@@ -18,10 +18,6 @@ public:
             inputIdLedPins[kvp.first] = kvp.second;
         }
 
-        r = 0;
-        g = 0;
-        b = 0;
-
         animationTicks = 15;
     }
 
@@ -66,6 +62,16 @@ public:
         {
             return false;
         }
+    }
+
+    void clearPattern()
+    {
+        if (inputIdLedPins.find(inputID) != inputIdLedPins.end())
+        {
+            leds[inputIdLedPins[inputID]] = CRGB(0, 0, 0);
+        }
+
+        resetPattern();
     }
 
     void setRegisteredPatternID(int patternID) { registeredPatternID = patternID; }

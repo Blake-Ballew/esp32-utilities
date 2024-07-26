@@ -8,7 +8,12 @@ class Ring_Pulse : public LED_Pattern
 public:
     Ring_Pulse() 
     {
+        rOverride = 0;
+        gOverride = 0;
+        bOverride = 0;
 
+        beginIdx = -1;
+        endIdx = -1;
     }
 
     void configurePattern(JsonObject &config)
@@ -41,6 +46,11 @@ public:
 
     bool iterateFrame()
     {
+        if (beginIdx == -1 || endIdx == -1)
+        {
+            return true;
+        }
+
         // Determine brightness this frame
         // First half of animation fades in, second half fades out
         float brightness = 1.0;
@@ -75,13 +85,28 @@ public:
         if (currTick == animationTicks)
         {
             // Reset the pattern
-            resetPattern();
+            resetPattern(); 
             return true;
         }
         else
         {
             return false;
         }
+    }
+
+    void clearPattern()
+    {
+        if (beginIdx == -1 || endIdx == -1)
+        {
+            return;
+        }
+
+        for (uint32_t i = beginIdx; i < endIdx; i++)
+        {
+            leds[i] = CRGB(0, 0, 0);
+        }
+
+        resetPattern();
     }
 
     void setRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
@@ -94,5 +119,5 @@ protected:
     uint8_t rOverride, gOverride, bOverride;
 
     // Beginning/end of the ring
-    uint32_t beginIdx, endIdx;
+    int beginIdx, endIdx;
 };

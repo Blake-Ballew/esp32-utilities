@@ -4,16 +4,36 @@
 #include "Window_State.h"
 #include "Network_Manager.h"
 #include "Repeat_Message_Content.h"
+#include "Ring_Pulse.h"
+#include "LED_Utils.h"
 
 class Repeat_Message_State : public Window_State
 {
 public:
-    Repeat_Message_State(Text_Display_Content *content)
+    Repeat_Message_State(Text_Display_Content *content,
+        int beginLedIdx, int endLedIdx)
     {
         message = nullptr;
         assignInput(BUTTON_3, ACTION_BACK, "Back");
         textContent = content;
         renderContent = textContent;
+
+        if (Ring_Pulse::registeredPatternID == -1) 
+        {
+            Ring_Pulse *pulse = new Ring_Pulse();
+            
+            ringPulseID = LED_Utils::registerPattern(pulse);
+        }
+        else 
+        {
+            ringPulseID = Ring_Pulse::registeredPatternID;
+        }
+
+        StaticJsonDocument<200> doc;
+        doc["beginIdx"] = beginLedIdx;
+        doc["endIdx"] = endLedIdx;
+
+        LED_Utils::configurePattern(ringPulseID, doc.as<JsonObject>());
     }
 
     ~Repeat_Message_State()
@@ -39,20 +59,22 @@ public:
                 message = nullptr;
             }
 
-            switch (messageType) {
-                case MessageType::MESSAGE_BASE: {
-                    message = new Message_Base();
-                    break;
-                }
-                case MessageType::MESSAGE_PING: {
-                    message = new Message_Ping();
-                    break;
-                }
-            }
-
-            if (message != nullptr)
+            if (messageType == MESSAGE_PING) 
             {
-                message->deserialize(*doc);
+                Message_Ping *ping = new Message_Ping();
+                ping->deserialize(doc);
+                message = ping;
+
+                uint8_t msgR = ping->color_R;
+                uint8_t msgG = ping->color_G;
+                uint8_t msgB = ping->color_B;
+
+                StaticJsonDocument<200> cfg;
+                cfg["rOverride"] = msgR;
+                cfg["gOverride"] = msgG;
+                cfg["bOverride"] = msgB;
+
+                LED_Utils::configurePattern(ringPulseID, cfg.as<JsonObject>());
             }
         }
     }
@@ -65,8 +87,20 @@ public:
             message = nullptr;
         }
     }
+
+    void PauseState()
+    {
+        LED_Utils::clearPattern(ringPulseID);
+    }
+
+    void ResumeState()
+    {
+        LED_Utils::loopPattern(ringPulseID, -1);
+    }
     
 protected:
     Message_Base *message;
     Text_Display_Content *textContent;
+
+    int ringPulseID;
 };

@@ -1,5 +1,7 @@
 #include "LED_Utils.h"
 
+std::unordered_map<uint8_t, uint8_t> LED_Utils::inputIdLedPins;
+
 std::unordered_map<int, LED_Pattern_Status> LED_Utils::registeredPatterns;
 int LED_Utils::patternTimerID = -1;
 int LED_Utils::nextPatternID = 0;
@@ -74,11 +76,64 @@ void LED_Utils::loopPattern(int patternID, int numLoops)
         return;
     }
 
+    // Ensure pattern is enabled
+    if (!registeredPatterns[patternID].enabled)
+    {
+        return;
+    }
+
     registeredPatterns[patternID].loopsRemaining = numLoops;
 
     if (numLoops != 0 && !System_Utils::isTimerActive(patternTimerID))
     {
         startPatternTimer();
+    }
+    else if (numLoops == 0)
+    {
+        for (auto &pattern : registeredPatterns)
+        {
+            if (pattern.second.loopsRemaining != 0)
+            {
+                return;
+            }
+        }
+
+        stopPatternTimer();
+    }
+}
+
+void LED_Utils::enablePattern(int patternID)
+{
+    if (registeredPatterns.find(patternID) == registeredPatterns.end())
+    {
+        return;
+    }
+
+    registeredPatterns[patternID].enabled = true;
+}
+
+void LED_Utils::disablePattern(int patternID)
+{
+    if (registeredPatterns.find(patternID) == registeredPatterns.end())
+    {
+        return;
+    }
+
+    registeredPatterns[patternID].enabled = false;
+}
+
+void LED_Utils::clearPattern(int patternID)
+{
+    if (registeredPatterns.find(patternID) == registeredPatterns.end())
+    {
+        return;
+    }
+
+    registeredPatterns[patternID].pattern->clearPattern();
+
+    if (registeredPatterns[patternID].loopsRemaining != 0)
+    {
+        loopPattern(patternID, 0);
     }
 }
 
@@ -103,7 +158,7 @@ void LED_Utils::iteratePatterns()
 
     for (auto &pattern : registeredPatterns)
     {
-        if (pattern.second.loopsRemaining == 0)
+        if (pattern.second.loopsRemaining == 0 || !pattern.second.enabled)
         {
             continue;
         }
@@ -137,6 +192,11 @@ void LED_Utils::iteratePattern(int patternID)
         return;
     }
 
+    if (!registeredPatterns[patternID].enabled)
+    {
+        return;
+    }
+
     registeredPatterns[patternID].pattern->iterateFrame();
     FastLED.show();
 }
@@ -159,4 +219,14 @@ void LED_Utils::stopPatternTimer()
 void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)
 {
     LED_Pattern_Interface::setThemeColor(r, g, b);
+}
+
+void LED_Utils::setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins)
+{
+    LED_Utils::inputIdLedPins = inputIdLedPins;
+}
+
+std::unordered_map<uint8_t, uint8_t> &LED_Utils::InputIdLedPins()
+{
+    return inputIdLedPins;
 }

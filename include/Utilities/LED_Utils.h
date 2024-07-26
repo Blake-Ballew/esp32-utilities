@@ -12,6 +12,7 @@ struct LED_Pattern_Status
     int animationID;
     LED_Pattern_Interface *pattern;
     int loopsRemaining;
+    bool enabled;
 };
 
 class LED_Utils
@@ -39,6 +40,15 @@ public:
     // Enables the pattern timer if it is not already running
     static void loopPattern(int patternID, int numLoops);
 
+    // Enables a pattern
+    static void enablePattern(int patternID);
+
+    // Disables a pattern
+    static void disablePattern(int patternID);
+
+    // Clears the given pattern's LEDs and stops it from looping
+    static void clearPattern(int patternID);
+
     // Sets the LED array to be used by the patterns
     static void setLeds(CRGB *leds, size_t numLeds);
 
@@ -65,8 +75,14 @@ public:
     // Sets the user's theme color
     // This is used by patterns that don't have their own color configuration
     static void setThemeColor(uint8_t r, uint8_t g, uint8_t b);
+
+    // Sets the InputID to LED index map
+    static void setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins);
+    static std::unordered_map<uint8_t, uint8_t> &InputIdLedPins();
     
 protected:
+    static std::unordered_map<uint8_t, uint8_t> inputIdLedPins;
+
     static std::unordered_map<int, LED_Pattern_Status> registeredPatterns;
     static int patternTimerID;
     static int nextPatternID;

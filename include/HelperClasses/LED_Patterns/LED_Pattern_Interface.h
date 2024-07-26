@@ -39,6 +39,9 @@ public:
     // Returns true if the last frame of the loop has played
     virtual bool iterateFrame() { return true; }
 
+    // Clears LEDs and resets the pattern
+    virtual void clearPattern() {}
+
     // Every pattern should have a static member holding the registered pattern id
     // This is so different modules can use the same pattern without re-registering it
     virtual void setRegisteredPatternID(int patternID) = 0;
