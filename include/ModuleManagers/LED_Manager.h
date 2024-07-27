@@ -34,7 +34,7 @@ public:
     static void ledTimerCallback(TimerHandle_t xTimer);
 
     // Initialize InputID to LED index mapping
-    static void InitializeInputIdLedPins(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx);
+    static void InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx);
 
     // Initialize button flash animation with a list of input ID to LED index pairs
     static void initializeButtonFlashAnimation();

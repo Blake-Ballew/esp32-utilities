@@ -7,6 +7,13 @@
 class LED_Pattern_Interface
 {
 public:
+    LED_Pattern_Interface() {
+        currTick = 0;
+        animationTicks = 0;
+        animationMS = 0;
+        startTime = 0;
+    }
+
     // Used to pass custom parameters to the pattern
     // This function will typically follow the pattern of:
     // if (config.containsKey("key")) { key = config["key"]; }
@@ -15,19 +22,22 @@ public:
     // Called to reset the pattern to its initial state
     void resetPattern() {
         currTick = 0;
+        startTime = 0;
     }
 
     void setAnimationLengthMS(size_t ms) {
         animationTicks = ms / msPerTick;
+        animationMS = ms;
     }
 
     void setAnimationLengthTicks(size_t ticks) {
         animationTicks = ticks;
+        animationMS = ticks * msPerTick;
     }
 
     static void setLeds(CRGB *leds, size_t numLeds) {
-        leds = leds;
-        numLeds = numLeds;
+        LED_Pattern_Interface::leds = leds;
+        LED_Pattern_Interface::numLeds = numLeds;
     }
 
     static void setTickRate(size_t ms) {
@@ -44,8 +54,7 @@ public:
 
     // Every pattern should have a static member holding the registered pattern id
     // This is so different modules can use the same pattern without re-registering it
-    virtual void setRegisteredPatternID(int patternID) = 0;
-    virtual int registeredPatternID() = 0;
+    virtual void SetRegisteredPatternID(int patternID) = 0;
 
     static void setThemeColor(uint8_t r, uint8_t g, uint8_t b) {
         r = r;
@@ -54,17 +63,21 @@ public:
     }
 
 protected:
-    static inline CRGB *leds = nullptr;
-    static inline size_t numLeds = 0;
-    static inline size_t msPerTick = 15;
-    static inline uint8_t r = 0;
-    static inline uint8_t g = 0;
-    static inline uint8_t b = 255;
+    static CRGB *leds;
+    static size_t numLeds;
+    static size_t msPerTick;
+    static uint8_t r;
+    static uint8_t g;
+    static uint8_t b;
 
-    // Total ticks in an animation loop
+    // Length of an animation loop
     size_t animationTicks;
+    size_t animationMS;
 
-    // Current tick in the animation loop
+    // Current progress of animation
     size_t currTick;
+    
+    // Timestamp an animation was started
+    size_t startTime;
 
 };

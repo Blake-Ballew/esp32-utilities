@@ -8,10 +8,10 @@
 // #include <utilities>
 
 // Called when an input with an LED is pressed. LED turns on and fades away over the course of the animation length
-class Button_Flash : LED_Pattern_Interface
+class Button_Flash : public LED_Pattern_Interface
 {
 public:
-    Button_Flash(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
+    Button_Flash(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)
     {
         for (auto kvp : inputIDLedIdx)
         {
@@ -27,14 +27,21 @@ public:
         {
             inputID = config["inputID"];
         }
+
+        clearPattern();
     }
 
     bool iterateFrame()
     {
+        if (startTime == 0) 
+        {
+            startTime = xTaskGetTickCount();
+        }
+
         if (inputIdLedPins.find(inputID) != inputIdLedPins.end())
         {
             // Determine brightness this frame
-            float brightness = 1.0 - (float)currTick / (float)animationTicks;
+            float brightness = 1.0 - (float)(xTaskGetTickCount() - startTime) / (float)animationMS;
             if (inputIdLedPins[inputID] < numLeds) 
             {
                 leds[inputIdLedPins[inputID]] = CRGB(r * brightness, g * brightness, b * brightness);
@@ -48,7 +55,7 @@ public:
 
         currTick++;
 
-        if (currTick == animationTicks)
+        if ((xTaskGetTickCount() - startTime) >= animationMS)
         {
             if (inputIdLedPins[inputID] < numLeds) 
             {
@@ -66,16 +73,19 @@ public:
 
     void clearPattern()
     {
-        if (inputIdLedPins.find(inputID) != inputIdLedPins.end())
+        for (auto kvp : inputIdLedPins)
         {
-            leds[inputIdLedPins[inputID]] = CRGB(0, 0, 0);
+            if (kvp.second < numLeds)
+            {
+                leds[kvp.second] = CRGB(0, 0, 0);
+            }
         }
 
         resetPattern();
     }
 
-    void setRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
-    int registeredPatternID() { return registeredPatternID; }
+    void SetRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
+    static int RegisteredPatternID() { return registeredPatternID; }
 
 protected:
     std::unordered_map<uint8_t, uint8_t> inputIdLedPins;

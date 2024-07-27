@@ -59,10 +59,16 @@ void Display_Manager::init()
 
     // Register refresh timer
     Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
+    #if DEBUG == 1
     if (Display_Manager::refreshTimerID == -1)
     {
         Serial.println("Display_Manager::init: Failed to register refresh timer");
     }
+    else
+    {
+        Serial.printf("Display_Manager::init: Registered refresh timer with ID %d\n", Display_Manager::refreshTimerID);
+    }
+    #endif
     OLED_Content::setTimerID(Display_Manager::refreshTimerID);
 
     Display_Manager::initializeCallbacks();
@@ -172,52 +178,6 @@ void Display_Manager::processCommandQueue(void *taskParams)
             Serial.println();
             
         }
-
-        /*         if (notification != 0 && (xTaskGetTickCount() - lastButtonPressTick) > DEBOUNCE_DELAY)
-                {
-        #if DEBUG == 1
-                    Serial.println("Display_Manager::processButtonPressEvent");
-                    Serial.print("id: 0x");
-                    Serial.println(notification, HEX);
-        #endif
-                    disableInterrupts();
-
-                    // Clear queue after disabling interrupts to debounce
-                    xQueueReset(displayCommandQueue);
-
-                    auto inputs = getInputsFromNotification(notification);
-
-                    for (auto input : inputs)
-                    {
-                        // Get callback data from the current window state if it exists
-                        CallbackData *callbackData = Display_Manager::currentWindow->getCallbackDataByInputID(input);
-
-                        // Pulse LED if it exists
-                        LED_Manager::pulseButton(input);
-
-                        // Pass input to current window
-                        if (currentWindow != nullptr)
-                        {
-                            currentWindow->execBtnCallback(input);
-                        }
-
-                        // Process input callback
-                        processInputCallback(input);
-
-                        // If callback data exists, execute callback
-                        if (callbackData != nullptr)
-                        {
-                            processEventCallback(callbackData->callbackID, input);
-                        }
-                    }
-
-                    currentWindow->drawWindow();
-
-                    // reset notification
-                    notification = 0;
-                    lastButtonPressTick = xTaskGetTickCount();
-                    enableInterrupts();
-        }*/
     }
 }
 
@@ -242,7 +202,6 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_SHUTDOWN_DEVICE, shutdownDevice);
     registerCallback(ACTION_TOGGLE_SILENT_MODE, toggleSilentMode);
     registerCallback(ACTION_GENERATE_QUICK_ACTION_MENU, quickActionMenu);
-    registerCallback(ACTION_SOS, openSOS);
     registerCallback(ACTION_OPEN_SAVED_MESSAGES_WINDOW, openSavedMsg);
     registerCallback(ACTION_CALL_FUNCTIONAL_WINDOW_STATE, callFunctionalWindowState);
     registerCallback(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, returnFromFunctionWindowState);
@@ -255,6 +214,7 @@ void Display_Manager::initializeCallbacks()
     #endif
 
     registerInputCallback(MESSAGE_RECEIVED, processMessageReceived);
+    registerInputCallback(BUTTON_SOS, openSOS);
 #if DEBUG == 1
     Serial.println("Display_Manager::initializeCallbacks: done");
 #endif
@@ -342,21 +302,15 @@ void Display_Manager::goBack(uint8_t inputID)
 {
     if (Display_Manager::currentWindow->getParentWindow() != NULL)
     {
-        if (currentWindow->stateStack.size() > 0)
+        OLED_Window *temp = Display_Manager::currentWindow;
+        Display_Manager::currentWindow = Display_Manager::currentWindow->getParentWindow();
+        delete temp;
+        if (Display_Manager::currentWindow->isPaused)
         {
-            currentWindow->returnFromFunctionState(inputID);
+            Display_Manager::currentWindow->Resume();
         }
-        else
-        {
-            OLED_Window *temp = Display_Manager::currentWindow;
-            Display_Manager::currentWindow = Display_Manager::currentWindow->getParentWindow();
-            delete temp;
-            if (Display_Manager::currentWindow->isPaused)
-            {
-                Display_Manager::currentWindow->Resume();
-            }
-            Display_Manager::currentWindow->drawWindow();
-        }
+        Display_Manager::currentWindow->drawWindow();
+        
         LED_Manager::clearRing();
     }
 }
@@ -369,16 +323,16 @@ void Display_Manager::select(uint8_t inputID)
         {
             OLED_Content_List *list = (OLED_Content_List *)currentWindow->currentState->renderContent;
 #if DEBUG == 1
-            Serial.print("Display_Manager::select found resourceID: ");
-            Serial.println(list->getCurrentNode()->resourceID);
+            // Serial.print("Display_Manager::select found resourceID: ");
+            // Serial.println(list->getCurrentNode()->resourceID);
 #endif
             processEventCallback(list->getCurrentNode()->resourceID, inputID);
         }
 #if DEBUG == 1
-        else
-        {
-            Serial.println("Display_Manager::select: Content type is not list");
-        }
+        // else
+        // {
+        //     Serial.println("Display_Manager::select: Content type is not list");
+        // }
 #endif
     }
 }
@@ -564,15 +518,49 @@ void Display_Manager::quickActionMenu(uint8_t inputID)
     currentWindow->drawWindow();
 }
 
-void Display_Manager::openSOS(uint8_t inputID)
+void Display_Manager::openSOS()
 {
-    if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::SOS)
-    {
-        return;
-    }
-    OLED_Window *sosWindow = new SOS_Window(currentWindow);
+    Lock_State *lock = new Lock_State();
+    lock->assignInput(BUTTON_3, ACTION_BACK, "Back");
+
+    std::vector<TextDrawData> textData;
+
+    TextDrawData data1;
+    data1.text = "Confirm SOS with";
+    data1.format.horizontalAlignment = TextAlignmentHorizontal::ALIGN_CENTER_HORIZONTAL;
+    data1.format.verticalAlignment = TextAlignmentVertical::TEXT_LINE;
+    data1.format.line = 2;
+    data1.format.distanceFrom = 0;
+    textData.push_back(data1);
+
+    TextDrawData data2;
+    data2.text = "button sequence";
+    data2.format.horizontalAlignment = TextAlignmentHorizontal::ALIGN_CENTER_HORIZONTAL;
+    data2.format.verticalAlignment = TextAlignmentVertical::TEXT_LINE;
+    data2.format.line = 3;
+    data2.format.distanceFrom = 0;
+    textData.push_back(data2);
+
+    Text_Display_Content *txtContent = new Text_Display_Content(textData);
+    lock->renderContent = txtContent;
+    
+    textData.clear();
+
+    TextDrawData data3;
+    data3.text = "Sending SOS...";
+    data3.format.horizontalAlignment = TextAlignmentHorizontal::ALIGN_CENTER_HORIZONTAL;
+    data3.format.verticalAlignment = TextAlignmentVertical::ALIGN_CENTER_VERTICAL;
+    data3.format.distanceFrom = 0;
+    textData.push_back(data3);
+
+    Text_Display_Content *txtContent2 = new Text_Display_Content(textData);
+
+    Repeat_Message_State *repeat = new Repeat_Message_State(txtContent2, 0, 15);
+    SOS_Window *sosWindow = new SOS_Window(currentWindow, repeat, lock);
+
     Display_Manager::attachNewWindow(sosWindow);
-    sosWindow->drawWindow();
+
+    currentWindow->drawWindow();
 }
 
 void Display_Manager::openSavedMsg(uint8_t inputID)

@@ -88,7 +88,6 @@ public:
     static void shutdownDevice(uint8_t inputID);
     static void toggleSilentMode(uint8_t inputID);
     static void quickActionMenu(uint8_t inputID);
-    static void openSOS(uint8_t inputID);
     static void openSavedMsg(uint8_t inputID);
     static void switchWindowState(uint8_t inputID);
     static void callFunctionalWindowState(uint8_t inputID);
@@ -104,6 +103,7 @@ public:
 
     // Input callbacks
     static void processMessageReceived();
+    static void openSOS();
 
 private:
     static StaticTimer_t refreshTimer;

@@ -58,7 +58,7 @@ public:
     // Timer function to iterate patterns. Updates FastLED at the end
     // Returns false if there is no more work to do and the timer can be stopped
     // Otherwise, returns true
-    static bool iteratePatterns();
+    static void iteratePatterns();
 
     // Function to iterate a single pattern once
     static void iteratePattern(int patternID);

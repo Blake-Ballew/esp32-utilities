@@ -84,7 +84,7 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
     case ALIGN_RIGHT:
         xPos = alignTextRight(text, format.distanceFrom);
         break;
-    case ALIGN_CENTER:
+    case ALIGN_CENTER_HORIZONTAL:
         xPos = centerTextHorizontal(text);
         xPos += format.distanceFrom * 6;
         break;
@@ -101,7 +101,7 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
     case ALIGN_BOTTOM:
         yPos = displayHeight - 8;
         break;
-    case ALIGN_CENTER:
+    case ALIGN_CENTER_VERTICAL:
         yPos = centerTextVertical();
         break;
     case CONTENT_TOP:
@@ -117,6 +117,10 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
         yPos = 0;
         break;
     }
+
+    #if DEBUG == 1
+        Serial.printf("Display_Utils::printFormattedText(): xPos: %d, yPos: %d\n", xPos, yPos);
+    #endif
 
     display->setCursor(xPos, yPos);
     display->print(text);

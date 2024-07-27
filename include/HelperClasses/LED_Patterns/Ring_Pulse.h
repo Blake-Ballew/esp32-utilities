@@ -1,9 +1,9 @@
 #pragma once
 
-#include "LED_Pattern.h"
+#include "LED_Pattern_Interface.h"
 
 // Fades in entire LED ring then fades out
-class Ring_Pulse : public LED_Pattern
+class Ring_Pulse : public LED_Pattern_Interface
 {
 public:
     Ring_Pulse() 
@@ -51,16 +51,23 @@ public:
             return true;
         }
 
+        if (startTime == 0) 
+        {
+            startTime = xTaskGetTickCount();
+        }
+
+        size_t currMS = xTaskGetTickCount() - startTime;
+
         // Determine brightness this frame
         // First half of animation fades in, second half fades out
         float brightness = 1.0;
-        if (currTick < animationTicks / 2)
+        if (currMS < animationMS / 2)
         {
-            brightness = (float)currTick / (float)(animationTicks / 2);
+            brightness = (float)currMS / (float)(animationMS / 2);
         }
         else
         {
-            brightness = 1.0 - (float)(currTick - (animationTicks / 2)) / (float)(animationTicks / 2);
+            brightness = 1.0 - (float)(currMS - (animationMS / 2)) / (float)(animationMS / 2);
         }
 
         // use override colors if set
@@ -80,9 +87,7 @@ public:
             leds[i] = color;
         }
 
-        currTick++;
-
-        if (currTick == animationTicks)
+        if (currMS >= animationMS)
         {
             // Reset the pattern
             resetPattern(); 
@@ -109,8 +114,8 @@ public:
         resetPattern();
     }
 
-    void setRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
-    int registeredPatternID() { return registeredPatternID; }
+    void SetRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
+    static int RegisteredPatternID() { return registeredPatternID; }
 
 protected:
     static int registeredPatternID;

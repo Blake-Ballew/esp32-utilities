@@ -1,11 +1,12 @@
 #pragma once
 
-#include "LED_Pattern.h"
+#include "LED_Pattern_Interface.h"
+#include <unordered_map>
 
-class Illuminate_Button : LED_Pattern_Interface
+class Illuminate_Button : public LED_Pattern_Interface
 {
 public:
-    Illuminate_Button(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
+    Illuminate_Button(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)
     {
         for (auto kvp : inputIDLedIdx)
         {
@@ -52,13 +53,14 @@ public:
         for (auto kvp : inputIdLedPins)
         {
             leds[kvp.second] = CRGB(0, 0, 0);
+            inputIdState[kvp.first] = false;
         }
 
         resetPattern();
     }
 
-    void setRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
-    int registeredPatternID() { return registeredPatternID; }
+    void SetRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
+    static int RegisteredPatternID() { return registeredPatternID; }
 
 protected:
     std::unordered_map<uint8_t, uint8_t> inputIdLedPins;

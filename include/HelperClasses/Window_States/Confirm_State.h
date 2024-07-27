@@ -18,12 +18,12 @@ public:
         // typeID = __COUNTER__;
         CallbackData noBtn;
         noBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
-        strncpy(noBtn.displayText, "No");
+        strncpy(noBtn.displayText, "No", 2);
         this->buttonCallbacks[BUTTON_3] = noBtn;
 
         CallbackData yesBtn;
         yesBtn.callbackID = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
-        strncpy(yesBtn.displayText, "Yes");
+        strncpy(yesBtn.displayText, "Yes", 3);
         this->buttonCallbacks[BUTTON_4] = yesBtn;
     }
 

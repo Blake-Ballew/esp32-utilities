@@ -13,8 +13,8 @@ int LED_Utils::registerPattern(LED_Pattern_Interface *pattern)
         return -1;
     }
 
-    registeredPatterns[nextPatternID] = {nextPatternID, pattern, 0};
-    pattern->setRegisteredPatternID(nextPatternID);
+    registeredPatterns[nextPatternID] = {nextPatternID, pattern, 0, false};
+    pattern->SetRegisteredPatternID(nextPatternID);
     return nextPatternID++;
 }
 
@@ -79,6 +79,9 @@ void LED_Utils::loopPattern(int patternID, int numLoops)
     // Ensure pattern is enabled
     if (!registeredPatterns[patternID].enabled)
     {
+        #if DEBUG == 1
+        Serial.println("Pattern not enabled");
+        #endif
         return;
     }
 
@@ -169,11 +172,11 @@ void LED_Utils::iteratePatterns()
             {
                 pattern.second.loopsRemaining--;
             }
+        }
 
-            if (pattern.second.loopsRemaining != 0)
-            {
-                workToDo = true;
-            }
+        if (pattern.second.loopsRemaining != 0)
+        {
+            workToDo = true;
         }
     }
 

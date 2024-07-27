@@ -10,8 +10,6 @@ uint8_t LED_Manager::b = 255;
 int LED_Manager::buttonFlashPatternID = -1;
 
 int LED_Manager::patternTimerID = -1;
-TimerHandle_t LED_Manager::patternTimer;
-StaticTimer_t LED_Manager::patternTimerBuffer;
 
 void LED_Manager::init(size_t numLeds)
 {
@@ -24,6 +22,10 @@ void LED_Manager::init(size_t numLeds)
     FastLED.show();
 
     patternTimerID = System_Utils::registerTimer("LED Timer", LED_MS_PER_FRAME, ledTimerCallback);
+    #if DEBUG == 1
+    Serial.print("Pattern Timer ID: ");
+    Serial.println(patternTimerID);
+    #endif
     LED_Utils::setPatternTimerID(patternTimerID);
     LED_Utils::setTickRate(LED_MS_PER_FRAME);
 
@@ -41,7 +43,7 @@ void LED_Manager::ledTimerCallback(TimerHandle_t xTimer)
     LED_Utils::iteratePatterns();
 }
 
-void LED_Manager::InitializeInputIdLedPins(std::vector<std::pair<uint8_t, uint8_t>> inputIDLedIdx)
+void LED_Manager::InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)
 {
     LED_Utils::setInputIdLedPins(inputIDLedIdx);
 }
@@ -52,15 +54,23 @@ void LED_Manager::initializeButtonFlashAnimation()
     auto btnFlash = new Button_Flash(inputIDLedIdx);
 
     buttonFlashPatternID = LED_Utils::registerPattern(btnFlash);
+    LED_Utils::enablePattern(buttonFlashPatternID);
+    LED_Utils::setAnimationLengthMS(buttonFlashPatternID, 300);
     Display_Utils::getInputRaised() += inputButtonFlash;
 }
 
 void LED_Manager::inputButtonFlash(uint8_t inputID)
 {
+    #if DEBUG == 1
+    Serial.print("Button flash input: ");
+    Serial.println(inputID);
+    #endif
     StaticJsonDocument<64> cfg;
     cfg["inputID"] = inputID;
 
-    LED_Utils::configurePattern(buttonFlashPatternID, cfg);
+    auto cfgObj = cfg.as<JsonObject>();
+
+    LED_Utils::configurePattern(buttonFlashPatternID, cfgObj);
     LED_Utils::loopPattern(buttonFlashPatternID, 1);
 }
 
@@ -165,45 +175,45 @@ void LED_Manager::ledShutdownAnimation()
     }
 }
 
-void LED_Manager::pulseButton(uint8_t buttonNumber)
-{
-    size_t ledIdx;
+// void LED_Manager::pulseButton(uint8_t buttonNumber)
+// {
+//     size_t ledIdx;
 
-    if (Button_Flash::ticksRemaining > 0)
-    {
-        return;
-    }
+//     if (Button_Flash::ticksRemaining > 0)
+//     {
+//         return;
+//     }
 
-    switch (buttonNumber)
-    {
-    case BUTTON_1:
-        ledIdx = 22;
-        break;
-    case BUTTON_2:
-        ledIdx = 19;
-        break;
-    case BUTTON_3:
-        ledIdx = 18;
-        break;
-    case BUTTON_4:
-        ledIdx = 17;
-        break;
-    case BUTTON_SOS: // SOS
-        ledIdx = 16;
-        break;
-    case ENC_UP: // Encoder up
-        ledIdx = 20;
-        break;
-    case ENC_DOWN: // Encoder down
-        ledIdx = 21;
-        break;
-    default:
-        return;
-    }
+//     switch (buttonNumber)
+//     {
+//     case BUTTON_1:
+//         ledIdx = 22;
+//         break;
+//     case BUTTON_2:
+//         ledIdx = 19;
+//         break;
+//     case BUTTON_3:
+//         ledIdx = 18;
+//         break;
+//     case BUTTON_4:
+//         ledIdx = 17;
+//         break;
+//     case BUTTON_SOS: // SOS
+//         ledIdx = 16;
+//         break;
+//     case ENC_UP: // Encoder up
+//         ledIdx = 20;
+//         break;
+//     case ENC_DOWN: // Encoder down
+//         ledIdx = 21;
+//         break;
+//     default:
+//         return;
+//     }
 
-    Button_Flash::init(ledIdx, r, g, b);
-    xTimerStart(patternTimer, 0);
-}
+//     Button_Flash::init(ledIdx, r, g, b);
+//     xTimerStart(patternTimer, 0);
+// }
 
 void LED_Manager::pulseCircle(uint8_t r, uint8_t g, uint8_t b, size_t tick)
 {
@@ -294,12 +304,12 @@ void LED_Manager::interpolateLEDsDegrees(double deg, double distanceAway, uint8_
     FastLED.show();
 }
 
-void LED_Manager::updatePattern(TimerHandle_t xTimer)
-{
-    Button_Flash::update();
+// void LED_Manager::updatePattern(TimerHandle_t xTimer)
+// {
+//     Button_Flash::update();
 
-    if (Button_Flash::ticksRemaining == 0)
-    {
-        xTimerStop(patternTimer, 0);
-    }
-}
+//     if (Button_Flash::ticksRemaining == 0)
+//     {
+//         xTimerStop(patternTimer, 0);
+//     }
+// }

@@ -2,16 +2,30 @@
 
 SOS_Window::SOS_Window(OLED_Window *parent, 
 Repeat_Message_State *repeat,
-Confirm_State *confirm) : OLED_Window(parent)
+Lock_State *lock) : OLED_Window(parent)
 {
     sosState = repeat;
-    confirmState = confirm;
+    lockState = lock;
     
     stateList.push_back(sosState);
-    stateList.push_back(confirmState);
+    stateList.push_back(lockState);
 
-    contentList.push_back(sosState->renderContent);
-    contentList.push_back(confirmState->renderContent);
+    if (sosState->renderContent != nullptr)
+        contentList.push_back(sosState->renderContent);
+    
+    if (lockState->renderContent != nullptr)
+        contentList.push_back(lockState->renderContent);
+
+    std::vector<uint8_t> inputList = {BUTTON_1, BUTTON_2, BUTTON_4};
+    lockState->assignInput(BUTTON_1, ACTION_DEFER_CALLBACK_TO_WINDOW);
+    lockState->assignInput(BUTTON_2, ACTION_DEFER_CALLBACK_TO_WINDOW);
+    lockState->assignInput(BUTTON_4, ACTION_DEFER_CALLBACK_TO_WINDOW);
+    lockState->initializeInputSequence(inputList);
+
+    setInitialState(lockState);
+
+    // Force lock state to return to SOS state
+    stateStack.push(sosState);
 }
 
 SOS_Window::~SOS_Window()
@@ -21,72 +35,41 @@ SOS_Window::~SOS_Window()
 
 void SOS_Window::execBtnCallback(uint8_t inputID)
 {
-// #if DEBUG == 1
-//     Serial.println("SOS_Window::execBtnCallback");
-//     Serial.printf("inputID: %d\n", inputID);
-// #endif
-//     uint32_t callbackID;
-//     switch (inputID)
-//     {
-//     case BUTTON_1:
-//         callbackID = btn1CallbackID;
-//         break;
-//     case BUTTON_2:
-//         callbackID = btn2CallbackID;
-//         break;
-//     case BUTTON_3:
-//     {
-//         callbackID = btn3CallbackID;
-//         if (callbackID == ACTION_DEFER_CALLBACK_TO_WINDOW)
-//         {
+    OLED_Window::execBtnCallback(inputID);
 
-//             assignButton(ACTION_BACK, BUTTON_3, "Back", 4);
-//             assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Confirm", 7);
-//             sosContent->unconfirmSOS();
-//             LED_Manager::clearRing();
-//         }
-//         else
-//         {
-
-//         }
-//     }
-//     break;
-//     case BUTTON_4:
-//     {
-//         callbackID = btn4CallbackID;
-//         if (sosContent->confirmed == false)
-//         {
-//             sosContent->confirmSOS();
-//             assignButton(ACTION_NONE, BUTTON_4, "\0", 1);
-//             assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_3, "Back", 4);
-//         }
-//         else
-//         {
-//         }
-//     }
-//     break;
-//     default:
-//         break;
-//     }
-
-//     switch (callbackID)
-//     {
-//     case ACTION_BACK:
-//     {
-//         LED_Manager::clearRing();
-//     }
-//     break;
-//     default:
-//         break;
-//     }
+    if (currentState == sosState && currentState->buttonCallbacks[inputID].callbackID == ACTION_BACK) 
+    {
+        // Send okay message
+    }
 }
 
 void SOS_Window::Pause()
 {
-    sosContent->Pause();
+    
 }
 
 void SOS_Window::Resume()
 {
-    sosContent->Pause();
+    
 }
+
+void SOS_Window::transferState(State_Transfer_Data &transferData)
+{
+    transferData.oldState->exitState(transferData);
+
+    // Child classes will process transfer data coming out of the old state if needed
+
+    transferData.newState->enterState(transferData);
+
+    // processStateChangeReturnCode(transferData.returnCode);
+
+    currentState = transferData.newState;
+
+    // Clean up
+    if (transferData.serializedData != nullptr)
+    {
+        delete transferData.serializedData;
+    }
+}
+
+

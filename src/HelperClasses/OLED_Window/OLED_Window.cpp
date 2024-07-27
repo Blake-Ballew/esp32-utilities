@@ -24,6 +24,7 @@ OLED_Window::OLED_Window(OLED_Window *parent)
     content = NULL;
 }
 
+// TODO: Get rid of this after refactoring all windows
 void OLED_Window::assignButton(uint32_t callbackID, int buttonNumber, const char *buttonText, uint8_t textLength)
 {
     if (textLength > BUTTON_TEXT_MAX)
@@ -171,6 +172,7 @@ void OLED_Window::drawWindow()
     display->display();
 }
 
+// TODO: Implement this in display manager
 OLED_Window *OLED_Window::getParentWindow()
 {
     return parentWindow;

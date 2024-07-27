@@ -7,14 +7,14 @@
 enum TextAlignmentHorizontal
 {
     ALIGN_LEFT = 0,
-    ALIGN_CENTER,
+    ALIGN_CENTER_HORIZONTAL,
     ALIGN_RIGHT
 };
 
 enum TextAlignmentVertical
 {
     ALIGN_TOP = 0,
-    ALIGN_CENTER,
+    ALIGN_CENTER_VERTICAL,
     ALIGN_BOTTOM,
     CONTENT_TOP,
     CONTENT_BOTTOM,
@@ -23,6 +23,14 @@ enum TextAlignmentVertical
 
 struct TextFormat 
 {
+    TextFormat() 
+    {
+        horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+        verticalAlignment = ALIGN_CENTER_VERTICAL;
+        line = 1;
+        distanceFrom = 0;
+    }
+
     TextAlignmentHorizontal horizontalAlignment;
     TextAlignmentVertical verticalAlignment;
     uint8_t line;

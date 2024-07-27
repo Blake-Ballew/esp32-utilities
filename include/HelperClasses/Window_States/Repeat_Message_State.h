@@ -4,21 +4,27 @@
 #include "Window_State.h"
 #include "Network_Manager.h"
 #include "Repeat_Message_Content.h"
+#include "Text_Display_Content.h"
 #include "Ring_Pulse.h"
 #include "LED_Utils.h"
+
+#define MESSAGE_REPEAT_INTERVAL_MS 15000
 
 class Repeat_Message_State : public Window_State
 {
 public:
     Repeat_Message_State(Text_Display_Content *content,
-        int beginLedIdx, int endLedIdx)
+        int beginLedIdx,
+        int endLedIdx,
+        bool newMsgID = false)
     {
+        this->newMsgID = newMsgID;
         message = nullptr;
         assignInput(BUTTON_3, ACTION_BACK, "Back");
         textContent = content;
         renderContent = textContent;
 
-        if (Ring_Pulse::registeredPatternID == -1) 
+        if (Ring_Pulse::RegisteredPatternID() == -1) 
         {
             Ring_Pulse *pulse = new Ring_Pulse();
             
@@ -26,14 +32,16 @@ public:
         }
         else 
         {
-            ringPulseID = Ring_Pulse::registeredPatternID;
+            ringPulseID = Ring_Pulse::RegisteredPatternID();
         }
 
         StaticJsonDocument<200> doc;
         doc["beginIdx"] = beginLedIdx;
         doc["endIdx"] = endLedIdx;
 
-        LED_Utils::configurePattern(ringPulseID, doc.as<JsonObject>());
+        auto cfgObj = doc.as<JsonObject>();
+
+        LED_Utils::configurePattern(ringPulseID, cfgObj);
     }
 
     ~Repeat_Message_State()
@@ -74,7 +82,14 @@ public:
                 cfg["gOverride"] = msgG;
                 cfg["bOverride"] = msgB;
 
-                LED_Utils::configurePattern(ringPulseID, cfg.as<JsonObject>());
+                auto cfgObj = cfg.as<JsonObject>();
+
+                LED_Utils::configurePattern(ringPulseID, cfgObj);
+            }
+
+            if (message != nullptr)
+            {
+                Display_Utils::enableRefreshTimer(MESSAGE_REPEAT_INTERVAL_MS);
             }
         }
     }
@@ -86,6 +101,8 @@ public:
             delete message;
             message = nullptr;
         }
+
+        Display_Utils::disableRefreshTimer();
     }
 
     void PauseState()
@@ -103,4 +120,5 @@ protected:
     Text_Display_Content *textContent;
 
     int ringPulseID;
+    bool newMsgID;
 };

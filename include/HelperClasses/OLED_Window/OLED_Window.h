@@ -177,12 +177,12 @@ public:
     virtual void returnFromFunctionState(uint8_t inputID)
     {
 #if DEBUG == 1
-        Serial.println("Returning from function state");
+        // Serial.println("Returning from function state");
 #endif
         if (stateStack.empty())
         {
 #if DEBUG == 1
-            Serial.println("State stack is empty");
+            // Serial.println("State stack is empty");
 #endif
             return;
         }
@@ -235,7 +235,7 @@ protected:
     virtual void transferState(State_Transfer_Data &transferData)
     {
 #if DEBUG == 1
-        Serial.println("OLED_Window::transferState()");
+        // Serial.println("OLED_Window::transferState()");
 #endif
 
         transferData.oldState->exitState(transferData);

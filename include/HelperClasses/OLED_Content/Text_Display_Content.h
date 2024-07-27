@@ -12,9 +12,16 @@ public:
 
     void printContent()
     {
+        #if DEBUG == 1
+            Serial.println("Text_Display_Content::printContent()");
+        #endif
         for (auto txt : textData)
         {
             Display_Utils::printFormattedText(txt.text, txt.format);
+            #if DEBUG == 1
+                Serial.print("Text_Display_Content::printContent(): ");
+                Serial.println(txt.text);
+            #endif
         }
         
         display->display();
