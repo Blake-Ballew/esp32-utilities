@@ -18,7 +18,7 @@ public:
     uint8_t sendBroadcast();
     void updateMessages();
 
-    Message_Base *getCurrentMessage();
+    MessageBase *getCurrentMessage();
 
 private:
     uint16_t msgIdx = 0;

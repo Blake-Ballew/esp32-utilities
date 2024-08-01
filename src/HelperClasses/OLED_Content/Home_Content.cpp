@@ -98,7 +98,7 @@ void Home_Content::timerCallback(TimerHandle_t xTimer)
     thisInstance->printContent();
 }
 
-Message_Base *Home_Content::getCurrentMessage()
+MessageBase *Home_Content::getCurrentMessage()
 {
     if (contentMode == HOME_CONTENT_MESSAGES)
     {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Message_Types.h>
+#include <MessagePing.h>
 // #include <UserID.h>
 #include <Settings_Manager.h>
 #include <globalDefines.h>
@@ -43,7 +43,7 @@ namespace
 
 struct MessageQueueItem
 {
-    Message_Base *msg;
+    MessageBase *msg;
     bool isBroadcast;
     uint64_t user;
     uint8_t *returnCode;
@@ -56,8 +56,8 @@ public:
     static RH_DRIVER driver;
     static RHHardwareSPI rf_spi;
 
-    static std::map<uint64_t, Message_Base *> messages;
-    static std::map<uint64_t, Message_Base *> messagesSent;
+    static std::map<uint64_t, MessageBase *> messages;
+    static std::map<uint64_t, MessageBase *> messagesSent;
 
     static QueueHandle_t messageQueue;
     static StaticQueue_t messageQueueBuffer;
@@ -65,7 +65,7 @@ public:
     static SemaphoreHandle_t messageAccessSemaphore;
     static StaticSemaphore_t messageAccessSemaphoreBuffer;
 
-    static Message_Base *lastBroadcast;
+    static MessageBase *lastBroadcast;
 
     static uint8_t buffer[RH_MESH_MAX_MESSAGE_LEN];
 
@@ -80,18 +80,18 @@ public:
 
     static bool init();
 
-    static uint8_t sendBroadcastMessage(Message_Base *msg);
-    static uint8_t sendMessageToUser(uint64_t user, Message_Base *msg);
-    static void rebroadcastMessage(Message_Base *msg);
+    static uint8_t sendBroadcastMessage(MessageBase *msg);
+    static uint8_t sendMessageToUser(uint64_t user, MessageBase *msg);
+    static void rebroadcastMessage(MessageBase *msg);
 
-    static uint8_t queueMessageToUser(uint64_t user, Message_Base *msg);
-    static uint8_t queueBroadcastMessage(Message_Base *msg);
-    static uint8_t queueMessage(Message_Base *msg);
+    static uint8_t queueMessageToUser(uint64_t user, MessageBase *msg);
+    static uint8_t queueBroadcastMessage(MessageBase *msg);
+    static uint8_t queueMessage(MessageBase *msg);
 
     static void listenForMessages(void *taskParams);
 
     static uint8_t findFreeNodeID();
-    static Message_Base *findMessageByIdx(uint16_t idx);
+    static MessageBase *findMessageByIdx(uint16_t idx);
 
     static ArduinoJson::JsonArray getStatusList();
 
@@ -108,12 +108,12 @@ public:
     static void deleteMessageEntry(uint64_t user);
 
     // Message Create/Update Entry
-    static void createUpdateMessageEntry(uint64_t user, Message_Base *msg);
+    static void createUpdateMessageEntry(uint64_t user, MessageBase *msg);
     static void markMessageAsRead(uint64_t user);
 
     // Message Get Entry
-    static Message_Base *getMessageEntry(uint64_t user);
-    static Message_Base *cloneMessageEntry(uint64_t user);
+    static MessageBase *getMessageEntry(uint64_t user);
+    static MessageBase *cloneMessageEntry(uint64_t user);
 
     // Get List of userIDs with messages in the respective map
     static ArduinoJson::DynamicJsonDocument *getMessages();

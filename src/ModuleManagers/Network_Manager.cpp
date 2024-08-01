@@ -11,10 +11,10 @@ uint8_t Network_Manager::messageDataBuffer[MESSAGE_QUEUE_MAX * sizeof(MessageQue
 SemaphoreHandle_t Network_Manager::messageAccessSemaphore;
 StaticSemaphore_t Network_Manager::messageAccessSemaphoreBuffer;
 
-std::map<uint64_t, Message_Base *> Network_Manager::messages;
-std::map<uint64_t, Message_Base *> Network_Manager::messagesSent;
+std::map<uint64_t, MessageBase *> Network_Manager::messages;
+std::map<uint64_t, MessageBase *> Network_Manager::messagesSent;
 
-Message_Base *Network_Manager::lastBroadcast;
+MessageBase *Network_Manager::lastBroadcast;
 
 uint8_t Network_Manager::buffer[RH_MESH_MAX_MESSAGE_LEN];
 
@@ -100,7 +100,7 @@ bool Network_Manager::init()
     return true;
 }
 
-uint8_t Network_Manager::sendBroadcastMessage(Message_Base *message)
+uint8_t Network_Manager::sendBroadcastMessage(MessageBase *message)
 {
     size_t msgLen = 0;
     uint8_t *msg = message->serialize(msgLen);
@@ -125,7 +125,7 @@ uint8_t Network_Manager::sendBroadcastMessage(Message_Base *message)
     }
 }
 
-uint8_t Network_Manager::sendMessageToUser(uint64_t user, Message_Base *message)
+uint8_t Network_Manager::sendMessageToUser(uint64_t user, MessageBase *message)
 {
     size_t msgLen = 0;
     uint8_t *msg = message->serialize(msgLen);
@@ -162,7 +162,7 @@ uint8_t Network_Manager::sendMessageToUser(uint64_t user, Message_Base *message)
 }
 
 // Review later
-void Network_Manager::rebroadcastMessage(Message_Base *msg)
+void Network_Manager::rebroadcastMessage(MessageBase *msg)
 {
     size_t msgLen = 0;
     uint8_t *msgBytes = msg->serialize(msgLen);
@@ -179,7 +179,7 @@ void Network_Manager::rebroadcastMessage(Message_Base *msg)
     delete msgBytes;
 }
 
-uint8_t Network_Manager::queueBroadcastMessage(Message_Base *msg)
+uint8_t Network_Manager::queueBroadcastMessage(MessageBase *msg)
 {
     uint8_t returnCode = RETURN_CODE_UNABLE_TO_QUEUE;
     MessageQueueItem item;
@@ -200,7 +200,7 @@ uint8_t Network_Manager::queueBroadcastMessage(Message_Base *msg)
     return returnCode;
 }
 
-uint8_t Network_Manager::queueMessageToUser(uint64_t user, Message_Base *msg)
+uint8_t Network_Manager::queueMessageToUser(uint64_t user, MessageBase *msg)
 {
     uint8_t returnCode = RETURN_CODE_UNABLE_TO_QUEUE;
     MessageQueueItem item;
@@ -221,7 +221,7 @@ uint8_t Network_Manager::queueMessageToUser(uint64_t user, Message_Base *msg)
     return returnCode;
 }
 
-uint8_t Network_Manager::queueMessage(Message_Base *msg)
+uint8_t Network_Manager::queueMessage(MessageBase *msg)
 {
     uint8_t returnCode = RETURN_CODE_UNABLE_TO_QUEUE;
     MessageQueueItem item;
@@ -294,7 +294,7 @@ void Network_Manager::listenForMessages(void *taskParams)
             memset(buffer, 0, len);
             if (manager->recvfromAck(buffer, &len, &from, &to, &id, &flags))
             {
-                MessageType msgType = Message_Base::getMessageType(buffer);
+                MessageType msgType = MessageBase::getMessageType(buffer);
                 if (msgType == MessageType::MESSAGE_INVALID)
                 {
 #if DEBUG == 1
@@ -303,7 +303,7 @@ void Network_Manager::listenForMessages(void *taskParams)
                     return;
                 }
 
-                Message_Base *msg;
+                MessageBase *msg;
                 switch (msgType)
                 {
                 case MessageType::MESSAGE_BASE:
@@ -312,7 +312,7 @@ void Network_Manager::listenForMessages(void *taskParams)
                     Serial.print("Base message received from nodeID: ");
                     Serial.println(from);
 #endif
-                    msg = new Message_Base(buffer);
+                    msg = new MessageBase(buffer);
                     break;
                 }
                 case MessageType::MESSAGE_PING:
@@ -330,7 +330,7 @@ void Network_Manager::listenForMessages(void *taskParams)
                     }
                     Serial.println();
 #endif
-                    msg = new Message_Ping(buffer);
+                    msg = new MessagePing(buffer);
                     break;
                 }
                 }
@@ -407,9 +407,9 @@ uint8_t Network_Manager::findNodeIDofUser(uint64_t user)
 }
 */
 
-Message_Base *Network_Manager::findMessageByIdx(uint16_t idx)
+MessageBase *Network_Manager::findMessageByIdx(uint16_t idx)
 {
-    std::map<uint64_t, Message_Base *>::iterator it;
+    std::map<uint64_t, MessageBase *>::iterator it;
     idx = idx % messages.size();
     it = messages.begin();
     for (uint16_t i = 0; i < idx; i++)
@@ -575,7 +575,7 @@ void Network_Manager::loadStatusList()
     // Settings_Manager::writeStatusesToEEPROM(statusList);
 }
 
-void Network_Manager::createUpdateMessageEntry(uint64_t user, Message_Base *msg)
+void Network_Manager::createUpdateMessageEntry(uint64_t user, MessageBase *msg)
 {
     // Lock Mutex
     xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
@@ -629,9 +629,9 @@ void Network_Manager::markMessageAsRead(uint64_t user)
     xSemaphoreGive(messageAccessSemaphore);
 }
 
-Message_Base *Network_Manager::getMessageEntry(uint64_t user)
+MessageBase *Network_Manager::getMessageEntry(uint64_t user)
 {
-    Message_Base *msg = nullptr;
+    MessageBase *msg = nullptr;
 
     // Lock Mutex
     xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);
@@ -647,9 +647,9 @@ Message_Base *Network_Manager::getMessageEntry(uint64_t user)
     return msg;
 }
 
-Message_Base *Network_Manager::cloneMessageEntry(uint64_t user)
+MessageBase *Network_Manager::cloneMessageEntry(uint64_t user)
 {
-    Message_Base *msg = nullptr;
+    MessageBase *msg = nullptr;
 
     // Lock Mutex
     xSemaphoreTake(messageAccessSemaphore, portMAX_DELAY);

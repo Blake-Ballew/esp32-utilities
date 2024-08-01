@@ -43,10 +43,10 @@ public:
                 auto userID = (*transferData.serializedData)["userID"].as<uint64_t>();
                 auto messageID = (*transferData.serializedData)["messageID"].as<uint32_t>();
 
-                Message_Base *msg = Network_Manager::cloneMessageEntry(userID);
+                MessageBase *msg = Network_Manager::cloneMessageEntry(userID);
                 if (msg != nullptr && msg->msgType == MESSAGE_PING)
                 {
-                    pingMsg = (Message_Ping *)(msg);
+                    pingMsg = (MessagePing *)(msg);
                 }
                 else
                 {
@@ -88,5 +88,5 @@ public:
 
 private:
     Tracking_Content *trackingContent;
-    Message_Ping *pingMsg = nullptr;
+    MessagePing *pingMsg = nullptr;
 };

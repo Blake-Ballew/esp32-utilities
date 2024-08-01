@@ -5,7 +5,7 @@
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
 #include "LED_Manager.h"
-#include "Message_Types.h"
+#include "MessagePing.h"
 
 class Tracking_Content : public OLED_Content
 {
@@ -43,7 +43,7 @@ public:
 
         if (currMsg->msgType == MessageType::MESSAGE_PING)
         {
-            Message_Ping *msg = (Message_Ping *)currMsg;
+            MessagePing *msg = (MessagePing *)currMsg;
             double distance = Navigation_Manager::getDistanceTo(msg->lat, msg->lng);
             if (distance < 2000)
             {
@@ -72,7 +72,7 @@ public:
     void encUp() {}
     void encDown() {}
 
-    void assignMsg(Message_Base *msg)
+    void assignMsg(MessageBase *msg)
     {
         currMsg = msg;
         thisInstance = this;
@@ -115,5 +115,5 @@ private:
 
     static TimerHandle_t updateTimer;
     static StaticTimer_t updateTimerBuffer;
-    Message_Base *currMsg;
+    MessageBase *currMsg;
 };

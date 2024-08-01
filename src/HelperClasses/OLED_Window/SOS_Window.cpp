@@ -40,6 +40,12 @@ void SOS_Window::execBtnCallback(uint8_t inputID)
     if (currentState == sosState && currentState->buttonCallbacks[inputID].callbackID == ACTION_BACK) 
     {
         // Send okay message
+        MessagePing *ping = createOkayMessage();
+
+        // Send message
+
+
+        delete ping;
     }
 }
 
@@ -57,7 +63,18 @@ void SOS_Window::transferState(State_Transfer_Data &transferData)
 {
     transferData.oldState->exitState(transferData);
 
-    // Child classes will process transfer data coming out of the old state if needed
+    if (transferData.newState == sosState)
+    {
+        // Send SOS message
+        MessagePing *ping = createSosMessage();
+
+        auto msgJson = ping->serializeJSON();
+        transferData.serializedData = msgJson;
+
+        delete ping;
+
+        // Send message
+    }
 
     transferData.newState->enterState(transferData);
 
@@ -70,6 +87,50 @@ void SOS_Window::transferState(State_Transfer_Data &transferData)
     {
         delete transferData.serializedData;
     }
+}
+
+MessagePing *SOS_Window::createSosMessage()
+{
+    Navigation_Manager::updateGPS();
+
+    MessagePing *ping = new MessagePing(
+        Navigation_Manager::getTime().value(),
+        Navigation_Manager::getDate().value(),
+        0,
+        Network_Manager::userID,
+        Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+        0,
+        255,
+        0,
+        0,
+        Navigation_Manager::getLocation().lat(),
+        Navigation_Manager::getLocation().lng(),
+        "SOS"
+    );
+    
+    return ping;
+}
+
+MessagePing *SOS_Window::createOkayMessage()
+{
+    Navigation_Manager::updateGPS();
+
+    MessagePing *ping = new MessagePing(
+        Navigation_Manager::getTime().value(),
+        Navigation_Manager::getDate().value(),
+        0,
+        Network_Manager::userID,
+        Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+        0,
+        0,
+        255,
+        0,
+        Navigation_Manager::getLocation().lat(),
+        Navigation_Manager::getLocation().lng(),
+        "OK"
+    );
+    
+    return ping;
 }
 
 

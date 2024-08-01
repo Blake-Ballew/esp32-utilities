@@ -70,7 +70,7 @@ void Received_Messages_Content::printContent()
 
     uint64_t userLookup = msgSenderUserIDs[msgIdx];
 
-    Message_Base *msg = Network_Manager::getMessageEntry(userLookup);
+    MessageBase *msg = Network_Manager::getMessageEntry(userLookup);
     switch (msg->msgType)
     {
     case MessageType::MESSAGE_BASE:
@@ -88,7 +88,7 @@ void Received_Messages_Content::printContent()
     }
     case MessageType::MESSAGE_PING:
     {
-        Message_Ping *pingMsg = (Message_Ping *)msg;
+        MessagePing *pingMsg = (MessagePing *)msg;
         uint64_t timeDiff = Navigation_Manager::getTimeDifference(pingMsg->time, pingMsg->date);
 
         display->setCursor(110, 8);

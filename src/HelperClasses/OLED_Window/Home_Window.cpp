@@ -276,7 +276,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             const char *message = (*doc)["message"].as<const char *>();
             // Send message
 
-            Message_Ping *newMsg = new Message_Ping(
+            MessagePing *newMsg = new MessagePing(
                 Navigation_Manager::getTime().value(),
                 Navigation_Manager::getDate().value(),
                 recipientID,

@@ -84,7 +84,7 @@ void LoRa_Test_Content::printContent()
     Serial.print("msgIdx: ");
     Serial.println(msgIdx);
 #endif
-    Message_Base *msg = Network_Manager::findMessageByIdx(msgIdx);
+    MessageBase *msg = Network_Manager::findMessageByIdx(msgIdx);
 
 #if DEBUG == 1
     Serial.print("SenderName: ");
@@ -110,7 +110,7 @@ uint8_t LoRa_Test_Content::sendBroadcast()
     uint32_t time = Navigation_Manager::getTime().value();
     uint32_t date = Navigation_Manager::getDate().value();
     const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
-    Message_Base msg = Message_Base(time, date, 0, Network_Manager::userID, senderName, esp_random());
+    MessageBase msg = MessageBase(time, date, 0, Network_Manager::userID, senderName, esp_random());
 
     return Network_Manager::queueMessage(&msg);
 }
@@ -123,7 +123,7 @@ void LoRa_Test_Content::updateMessages()
     printContent();
 }
 
-Message_Base *LoRa_Test_Content::getCurrentMessage()
+MessageBase *LoRa_Test_Content::getCurrentMessage()
 {
     return Network_Manager::findMessageByIdx(msgIdx);
 }

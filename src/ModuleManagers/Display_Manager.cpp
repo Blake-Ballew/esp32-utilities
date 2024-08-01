@@ -356,7 +356,7 @@ void Display_Manager::generateHomeWindow(uint8_t inputID)
 
 void Display_Manager::generatePingWindow(uint8_t inputID)
 {
-    Message_Base *msg;
+    MessageBase *msg;
 
     if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::STATUS)
     {

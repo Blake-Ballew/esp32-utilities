@@ -4,7 +4,7 @@
 #include "Network_Manager.h"
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
-#include "Message_Types.h"
+#include "MessagePing.h"
 
 // namespace
 // {
@@ -17,7 +17,7 @@
 class Ping_Content : public OLED_Content
 {
 public:
-    Ping_Content(Adafruit_SSD1306 *disp, Message_Base *msg)
+    Ping_Content(Adafruit_SSD1306 *disp, MessageBase *msg)
     {
         display = disp;
         type = ContentType::PING;
@@ -95,7 +95,7 @@ public:
         printContent();
     }
 
-    void assignMsg(Message_Base *msg)
+    void assignMsg(MessageBase *msg)
     {
         this->msg = msg;
     }
@@ -135,7 +135,7 @@ public:
 #endif
 
         const char *status = statusList[statusIdx].as<const char *>();
-        Message_Ping *msgPing = new Message_Ping(time, date, recipient, sender, senderName, msgID, R, G, B, lat, lng, status);
+        MessagePing *msgPing = new MessagePing(time, date, recipient, sender, senderName, msgID, R, G, B, lat, lng, status);
 
         uint8_t returnCode;
         bool isBroadcast = msg == nullptr;
@@ -211,7 +211,7 @@ public:
     uint8_t statusIdx;
 
 private:
-    Message_Base *msg;
+    MessageBase *msg;
 
     JsonArray statusList;
 };

@@ -40,7 +40,7 @@ void Save_Confirm_Content::encDown()
 {
 }
 
-void Save_Confirm_Content::saveMsg(Message_Ping *msg)
+void Save_Confirm_Content::saveMsg(MessagePing *msg)
 {
     if (msg == nullptr)
     {
@@ -50,7 +50,7 @@ void Save_Confirm_Content::saveMsg(Message_Ping *msg)
     Settings_Manager::addMessage(msg->status, strlen(msg->status));
 }
 
-void Save_Confirm_Content::saveCoordinates(Message_Ping *msg)
+void Save_Confirm_Content::saveCoordinates(MessagePing *msg)
 {
     return;
     // TODO: Implement coordinate storage

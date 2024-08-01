@@ -2,7 +2,7 @@
 
 #include "OLED_Content.h"
 #include "Settings_Manager.h"
-#include "Message_Types.h"
+#include "MessagePing.h"
 
 class Save_Confirm_Content : public OLED_Content
 {
@@ -16,6 +16,6 @@ public:
     void encUp();
     void encDown();
 
-    void saveMsg(Message_Ping *msg);
-    void saveCoordinates(Message_Ping *msg);
+    void saveMsg(MessagePing *msg);
+    void saveCoordinates(MessagePing *msg);
 };

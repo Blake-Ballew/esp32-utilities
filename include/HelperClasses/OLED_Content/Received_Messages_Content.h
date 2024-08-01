@@ -2,6 +2,7 @@
 
 #include "OLED_Content.h"
 #include "Network_Manager.h"
+#include "MessagePing.h"
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
 #include "LED_Manager.h"
@@ -19,7 +20,7 @@ public:
 
     void updateMessages() { printContent(); }
 
-    Message_Base *getCurrentMessage()
+    MessageBase *getCurrentMessage()
     {
         if (Network_Manager::messages.size() == 0)
         {

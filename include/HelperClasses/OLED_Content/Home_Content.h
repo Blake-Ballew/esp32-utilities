@@ -27,11 +27,11 @@ public:
 
     static void timerCallback(TimerHandle_t xTimer);
 
-    Message_Base *getCurrentMessage();
+    MessageBase *getCurrentMessage();
 
 private:
     static Home_Content *thisInstance;
     TimerHandle_t timer;
 
-    std::map<uint64_t, Message_Base *>::iterator msgIterator;
+    std::map<uint64_t, MessageBase *>::iterator msgIterator;
 };

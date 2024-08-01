@@ -1,13 +1,13 @@
 #pragma once
 
 #include "OLED_Window.h"
-#include "Message_Types.h"
+#include "MessagePing.h"
 #include "Ping_Content.h"
 
 class Ping_Window : public OLED_Window
 {
 public:
-    Ping_Window(OLED_Window *parent, Message_Base *msg)
+    Ping_Window(OLED_Window *parent, MessageBase *msg)
     {
         assignButton(ACTION_BACK, BUTTON_3, "Back", 4);
         assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, BUTTON_4, "Send", 4);

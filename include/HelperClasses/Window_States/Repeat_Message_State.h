@@ -59,7 +59,7 @@ public:
         if (transferData.serializedData != nullptr)
         {
             ArduinoJson::DynamicJsonDocument *doc = transferData.serializedData;
-            auto messageType = Message_Base::getMessageType(doc);
+            auto messageType = MessageBase::getMessageType(doc);
 
             if (message != nullptr)
             {
@@ -69,7 +69,7 @@ public:
 
             if (messageType == MESSAGE_PING) 
             {
-                Message_Ping *ping = new Message_Ping();
+                MessagePing *ping = new MessagePing();
                 ping->deserialize(doc);
                 message = ping;
 
@@ -116,7 +116,7 @@ public:
     }
     
 protected:
-    Message_Base *message;
+    MessageBase *message;
     Text_Display_Content *textContent;
 
     int ringPulseID;
