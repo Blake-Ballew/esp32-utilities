@@ -1,11 +1,9 @@
 #include "Received_Messages_Content.h"
 
-Received_Messages_Content::Received_Messages_Content(Adafruit_SSD1306 *disp, bool showReadMsgs, bool wrapAround)
+Received_Messages_Content::Received_Messages_Content(bool showReadMsgs, bool wrapAround)
     : showReadMsgs(showReadMsgs), wrapAround(wrapAround)
 {
-    display = disp;
     type = ContentType::STATUS;
-    msgIdx = 0;
 }
 
 Received_Messages_Content::~Received_Messages_Content()
@@ -14,15 +12,28 @@ Received_Messages_Content::~Received_Messages_Content()
 
 void Received_Messages_Content::encDown()
 {
-    if (!wrapAround && msgIdx == msgSenderUserIDs.size() - 1)
+    bool iteratorAtEnd = false;
+    if (showReadMsgs) 
+    {
+        iteratorAtEnd = LoraUtils::IsMessageIteratorAtEnd();
+    }
+    else
+    {
+        iteratorAtEnd = LoraUtils::IsUnreadMessageIteratorAtEnd();
+    }
+
+    if (!wrapAround && iteratorAtEnd)
     {
         return;
     }
 
-    msgIdx++;
-    if (msgIdx >= msgSenderUserIDs.size())
+    if (showReadMsgs) 
     {
-        msgIdx = 0;
+        LoraUtils::IncrementMessageIterator();
+    }
+    else
+    {
+        LoraUtils::IncrementUnreadMessageIterator();
     }
 
     printContent();
@@ -55,7 +66,18 @@ void Received_Messages_Content::printContent()
     Serial.println("Received_Messages_Content::printContent()");
 #endif
 
-    if (msgSenderUserIDs.size() == 0)
+    size_t numMsgs;
+
+    if (showReadMsgs)
+    {
+        numMsgs = LoraUtils::GetNumMessages();
+    }
+    else
+    {
+        numMsgs = LoraUtils::GetNumUnreadMessages();
+    }
+
+    if (numMsgs == 0)
     {
         display->fillRect(0, 0, OLED_WIDTH / 2, 8, BLACK);
         display->fillRect(OLED_WIDTH / 2, OLED_HEIGHT - 8, OLED_WIDTH / 2, 8, BLACK);
@@ -68,47 +90,37 @@ void Received_Messages_Content::printContent()
         return;
     }
 
-    uint64_t userLookup = msgSenderUserIDs[msgIdx];
+    // uint64_t userLookup = msgSenderUserIDs[msgIdx];
 
-    MessageBase *msg = Network_Manager::getMessageEntry(userLookup);
-    switch (msg->msgType)
+    MessageBase *msg;
+
+    if (showReadMsgs)
     {
-    case MessageType::MESSAGE_BASE:
+        msg = LoraUtils::GetCurrentMessage();
+    }
+    else
     {
-        display->setCursor(0, 8);
-        display->print(msg->senderName);
-
-        display->setCursor(0, 16);
-        display->print(F("MsgID: "));
-        display->print(msg->msgID, HEX);
-
-        display->setCursor(110, 8);
-        printMessageAge(Navigation_Manager::getTimeDifference(msg->time, msg->date));
-        break;
+        msg = LoraUtils::GetCurrentUnreadMessage();
     }
-    case MessageType::MESSAGE_PING:
+
+    std::vector<MessagePrintInformation> msgPrintInfo;
+    msg->GetPrintableInformation(msgPrintInfo);
+
+    // Start in content area
+    size_t lineNumber = 1;
+    for (auto &mpi : msgPrintInfo)
     {
-        MessagePing *pingMsg = (MessagePing *)msg;
-        uint64_t timeDiff = Navigation_Manager::getTimeDifference(pingMsg->time, pingMsg->date);
+        display->setCursor(Display_Utils::alignTextLeft(), Display_Utils::selectTextLine(lineNumber));
+        display->print(mpi.txt);
+        lineNumber++;
 
-        display->setCursor(110, 8);
-        // 128display->print(F("Recv: "));
-
-        // Greater than one day
-        printMessageAge(timeDiff);
-
-        display->setCursor(0, 8);
-        display->print(pingMsg->senderName);
-
-        display->setCursor(0, 16);
-        display->print(pingMsg->status);
-
-        LED_Manager::lightRing(pingMsg->color_R, pingMsg->color_G, pingMsg->color_B);
-        break;
+        if (lineNumber > 3)
+        {
+            break;
+        }
     }
-    default:
-        break;
-    }
+
+    printMessageAge(Navigation_Manager::getTimeDifference(msg->time, msg->date));
 
     display->display();
 
@@ -117,78 +129,88 @@ void Received_Messages_Content::printContent()
 
 void Received_Messages_Content::printMessageAge(uint64_t timeDiff)
 {
+    char buffer[8];
+
     if (timeDiff > 0xFFFFFFFF)
     {
-        display->print(">1d");
+        // display->print(">1d");
+        sprintf(buffer, ">1d");
     }
     else if ((timeDiff & 0xFF000000) >> 24)
     {
         uint8_t hours = (timeDiff & 0xFF000000) >> 24;
-        display->print(hours);
-        display->print(F("h"));
+        // display->print(hours);
+        // display->print(F("h"));
+        sprintf(buffer, "%dh", hours);
     }
     else if ((timeDiff && 0xFF0000) >> 16)
     {
         uint8_t minutes = (timeDiff && 0xFF0000) >> 16;
-        display->print(minutes);
-        display->print(F("m"));
+        // display->print(minutes);
+        // display->print(F("m"));
+        sprintf(buffer, "%dm", minutes);
     }
     else
     {
-        display->print(F("<1m"));
+        // display->print(F("<1m"));
+        sprintf(buffer, "<1m");
     }
+
+    display->setCursor(Display_Utils::alignTextRight(strlen(buffer)), Display_Utils::selectTextLine(1));
+
+    display->print(buffer);
 }
 
-void Received_Messages_Content::getMessages()
-{
-    msgSenderUserIDs.clear();
-    DynamicJsonDocument *doc;
-    uint64_t currentUserIDPointedTo = 0;
+// void Received_Messages_Content::getMessages()
+// {
+//     msgSenderUserIDs.clear();
+//     DynamicJsonDocument *doc;
+//     uint64_t currentUserIDPointedTo = 0;
 
-    if (msgIdx < msgSenderUserIDs.size())
-    {
-        currentUserIDPointedTo = msgSenderUserIDs[msgIdx];
-    }
+//     if (msgIdx < msgSenderUserIDs.size())
+//     {
+//         currentUserIDPointedTo = msgSenderUserIDs[msgIdx];
+//     }
 
-    if (showReadMsgs)
-    {
-        if (lastRefreshTime < Network_Manager::getLastMessageInsertDeleteTime())
-        {
-            lastRefreshTime = Network_Manager::getLastMessageInsertDeleteTime();
-            doc = Network_Manager::getMessages();
-        }
-        else
-        {
-            return;
-        }
-    }
-    else
-    {
-        if (lastRefreshTime < Network_Manager::getLastUnreadMessageInsertDeleteTime())
-        {
-            lastRefreshTime = Network_Manager::getLastUnreadMessageInsertDeleteTime();
-            doc = Network_Manager::getMessagesUnreadMessages();
-        }
-        else
-        {
-            return;
-        }
-    }
+//     if (showReadMsgs)
+//     {
+//         if (lastRefreshTime < Network_Manager::getLastMessageInsertDeleteTime())
+//         {
+//             lastRefreshTime = Network_Manager::getLastMessageInsertDeleteTime();
+//             doc = Network_Manager::getMessages();
+//         }
+//         else
+//         {
+//             return;
+//         }
+//     }
+//     else
+//     {
+//         if (lastRefreshTime < Network_Manager::getLastUnreadMessageInsertDeleteTime())
+//         {
+//             lastRefreshTime = Network_Manager::getLastUnreadMessageInsertDeleteTime();
+//             doc = Network_Manager::getMessagesUnreadMessages();
+//         }
+//         else
+//         {
+//             return;
+//         }
+//     }
 
-    for (uint16_t i = 0; i < (*doc)["UserIDs"].size(); i++)
-    {
-        msgSenderUserIDs.push_back((*doc)[i]);
-    }
+//     for (uint16_t i = 0; i < (*doc)["UserIDs"].size(); i++)
+//     {
+//         msgSenderUserIDs.push_back((*doc)[i]);
+//     }
 
-    auto it = std::find(msgSenderUserIDs.begin(), msgSenderUserIDs.end(), currentUserIDPointedTo);
-    if (it != msgSenderUserIDs.end())
-    {
-        msgIdx = std::distance(msgSenderUserIDs.begin(), it);
-    }
-    else
-    {
-        msgIdx = 0;
-    }
+//     auto it = std::find(msgSenderUserIDs.begin(), msgSenderUserIDs.end(), currentUserIDPointedTo);
+//     if (it != msgSenderUserIDs.end())
+//     {
+//         msgIdx = std::distance(msgSenderUserIDs.begin(), it);
+//     }
+//     else
+//     {
+//         msgIdx = 0;
+//     }
 
-    delete doc;
-}
+//     delete doc;
+// }

@@ -40,6 +40,7 @@
       "-Isrc/HelperClasses/OLED_Content",
       "-Isrc/HelperClasses/OLED_Window",
       "-Isrc/HelperClasses/Window_States",
+      "-Isrc/HelperClasses/Message_Types",
       "-Isrc/ModuleManagers",
       "-Isrc/Utilities"
     ]

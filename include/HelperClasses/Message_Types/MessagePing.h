@@ -2,19 +2,27 @@
 
 #include <MessageBase.h>
 
+namespace
+{
+    const char *MESSAGE_TYPE_COLOR_R PROGMEM = "r";
+    const char *MESSAGE_TYPE_COLOR_G PROGMEM = "g";
+    const char *MESSAGE_TYPE_COLOR_B PROGMEM = "b";
+    const char *MESSAGE_TYPE_LAT PROGMEM = "a";
+    const char *MESSAGE_TYPE_LNG PROGMEM = "o";
+    const char *MESSAGE_TYPE_STATUS PROGMEM = "s";
+}
+
 class MessagePing : public MessageBase
 {
 public:
-    MessagePing()
+    MessagePing() : MessageBase()
     {
+        
     }
 
-    MessagePing(uint32_t time, uint32_t date, uint64_t recipient, uint64_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
+    MessagePing(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
         : MessageBase(time, date, recipient, sender, senderName, msgID)
     {
-        this->isValid = true;
-        messageOpened = false;
-
         this->color_R = color_R;
         this->color_G = color_G;
         this->color_B = color_B;
@@ -30,173 +38,57 @@ public:
         this->status[strLen] = '\0';
     }
 
-    MessagePing(uint8_t *buffer)
-    {
-        messageOpened = false;
-        deserialize(buffer);
-    }
-
     ~MessagePing()
     {
     }
 
-    uint8_t *serialize(size_t &len)
+    bool serialize(JsonDocument &doc)
     {
-        ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
-        doc[MESSAGE_TYPE_KEY] = _MessageType;
-        doc[MESSAGE_TYPE_ID] = msgID;
-        doc[MESSAGE_TYPE_RECIPIENT] = recipient;
-        doc[MESSAGE_TYPE_FROM] = sender;
-        doc[MESSAGE_TYPE_FROM_NAME] = senderName;
-        doc[MESSAGE_TYPE_TIME] = time;
-        doc[MESSAGE_TYPE_DATE] = date;
+        if (!MessageBase::serialize(doc))
+        {
+            return false;
+        }
 
-        doc[MESSAGE_TYPE_LAT] = lat;
-        doc[MESSAGE_TYPE_LNG] = lng;
-
-        doc[MESSAGE_TYPE_STATUS] = status;
+        std::string statusStr(status);
 
         doc[MESSAGE_TYPE_COLOR_R] = color_R;
         doc[MESSAGE_TYPE_COLOR_G] = color_G;
         doc[MESSAGE_TYPE_COLOR_B] = color_B;
+        doc[MESSAGE_TYPE_LAT] = lat;
+        doc[MESSAGE_TYPE_LNG] = lng;
+        doc[MESSAGE_TYPE_STATUS] = statusStr;
 
-        len = measureMsgPack(doc);
-        uint8_t *buffer = new uint8_t[len];
-        serializeMsgPack(doc, buffer, len);
+        if (doc.overflowed())
+        {
+            return false;
+        }
 
-#if DEBUG == 1
-        Serial.print("Ping msg length: ");
-        Serial.println(len);
-        serializeJson(doc, Serial);
-        Serial.println();
-#endif
-        return buffer;
+        return true;
     }
 
-    void deserialize(uint8_t *buffer)
+    void deserialize(JsonDocument &doc)
     {
-        ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
+        MessageBase::deserialize(doc);
 
-        deserializeMsgPack(doc, buffer, MSG_BASE_SIZE);
-#if DEBUG == 1
-        serializeJson(doc, Serial);
-        Serial.println();
-#endif
+        color_R = doc[MESSAGE_TYPE_COLOR_R] | 0;
+        color_G = doc[MESSAGE_TYPE_COLOR_G] | 0;
+        color_B = doc[MESSAGE_TYPE_COLOR_B] | 255;
 
-        auto msgType = doc[MESSAGE_TYPE_KEY].as<uint8_t>();
-        if (msgType != _MessageType)
-        {
-            isValid = false;
-            return;
-        }
-
-        isValid = true;
-
-        msgID = doc[MESSAGE_TYPE_ID];
-        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
-            recipient = doc[MESSAGE_TYPE_RECIPIENT];
-        sender = doc[MESSAGE_TYPE_FROM];
-        const char *sendName = doc[MESSAGE_TYPE_FROM_NAME].as<const char *>();
-        size_t nameLen = strlen(sendName);
-        if (nameLen > NAME_LENGTH)
-            nameLen = NAME_LENGTH;
-        strncpy(senderName, sendName, nameLen);
-        senderName[nameLen] = '\0';
-        time = doc[MESSAGE_TYPE_TIME];
-        date = doc[MESSAGE_TYPE_DATE];
-
-        lat = doc[MESSAGE_TYPE_LAT];
-        lng = doc[MESSAGE_TYPE_LNG];
-
-        const char *msgStatus = doc[MESSAGE_TYPE_STATUS].as<const char *>();
-        size_t strLen = 0;
-        if (msgStatus == nullptr)
-        {
-#if DEBUG == 1
-            Serial.println("Status is null");
-#endif
-        }
-        else
-        {
-            strLen = strlen(msgStatus);
-            Serial.print("Status length: ");
-            Serial.println(strLen);
-        }
-
-        if (strLen > STATUS_LENGTH)
-        {
-#if DEBUG == 1
-            Serial.println("Status length is too long");
-#endif
-            strLen = STATUS_LENGTH;
-        }
-
-        if (msgStatus != nullptr)
-        {
-            strncpy(status, msgStatus, strLen);
-            status[strLen] = '\0';
-        }
-
-        color_R = doc[MESSAGE_TYPE_COLOR_R];
-        color_G = doc[MESSAGE_TYPE_COLOR_G];
-        color_B = doc[MESSAGE_TYPE_COLOR_B];
-    }
-
-    void deserialize(JsonObject &doc)
-    {
-        auto msgType = doc[MESSAGE_TYPE_KEY].as<uint8_t>();
-        if (msgType != _MessageType)
-        {
-            isValid = false;
-            return;
-        }
-
-        msgID = doc[MESSAGE_TYPE_ID];
-        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
-            recipient = doc[MESSAGE_TYPE_RECIPIENT];
-        sender = doc[MESSAGE_TYPE_FROM];
-        strcpy(senderName, doc[MESSAGE_TYPE_FROM_NAME].as<const char *>());
-        time = doc[MESSAGE_TYPE_TIME];
-        date = doc[MESSAGE_TYPE_DATE];
-
-        lat = doc[MESSAGE_TYPE_LAT];
-        lng = doc[MESSAGE_TYPE_LNG];
-
-        strcpy(status, doc[MESSAGE_TYPE_STATUS].as<const char *>());
-
-        color_R = doc[MESSAGE_TYPE_COLOR_R];
-        color_G = doc[MESSAGE_TYPE_COLOR_G];
-        color_B = doc[MESSAGE_TYPE_COLOR_B];
-    }
-
-    DynamicJsonDocument *serializeJSON()
-    {
-        DynamicJsonDocument *doc = new DynamicJsonDocument(MSG_BASE_SIZE);
-        (*doc)[MESSAGE_TYPE_KEY] = _MessageType;
-        (*doc)[MESSAGE_TYPE_ID] = msgID;
-        (*doc)[MESSAGE_TYPE_RECIPIENT] = recipient;
-        (*doc)[MESSAGE_TYPE_FROM] = sender;
-        (*doc)[MESSAGE_TYPE_FROM_NAME] = senderName;
-        (*doc)[MESSAGE_TYPE_TIME] = time;
-        (*doc)[MESSAGE_TYPE_DATE] = date;
-
-        (*doc)[MESSAGE_TYPE_LAT] = lat;
-        (*doc)[MESSAGE_TYPE_LNG] = lng;
-
-        (*doc)[MESSAGE_TYPE_STATUS] = status;
-
-        (*doc)[MESSAGE_TYPE_COLOR_R] = color_R;
-        (*doc)[MESSAGE_TYPE_COLOR_G] = color_G;
-        (*doc)[MESSAGE_TYPE_COLOR_B] = color_B;
-
-        return doc;
+        lat = doc[MESSAGE_TYPE_LAT] | 0;
+        lng = doc[MESSAGE_TYPE_LNG] | 0;
+        strncpy(status, doc[MESSAGE_TYPE_STATUS], STATUS_LENGTH);
+        status[STATUS_LENGTH] = '\0';
     }
 
     MessageBase *clone()
     {
-        return new MessagePing(time, date, recipient, sender, senderName, msgID, color_R, color_G, color_B, lat, lng, status);
+        MessagePing *newMsg = new MessagePing(time, date, recipient, sender, senderName, msgID, color_R, color_G, color_B, lat, lng, status);
+        newMsg->bouncesLeft = bouncesLeft;
+        newMsg->isValid = isValid;
+        return newMsg;
     }
 
+    // TODO: Get rid of this
     void displayMessage(Adafruit_SSD1306 *display)
     {
         Navigation_Manager::updateGPS();
@@ -218,9 +110,24 @@ public:
         LED_Manager::lightRing(this->color_R, this->color_G, this->color_B);
     }
 
-    void toString(char *buffer, size_t bufferLen)
+    void GetPrintableInformation(std::vector<MessagePrintInformation> &info)
     {
-        snprintf(buffer, bufferLen, status);
+        MessagePrintInformation mpi(senderName);
+        info.push_back(mpi);
+
+        MessagePrintInformation mpi2(this->status);
+        info.push_back(mpi2);
+    }
+
+    // TODO: Get rid of this
+    // void toString(char *buffer, size_t bufferLen)
+    // {
+    //     snprintf(buffer, bufferLen, status);
+    // }
+
+    uint8_t GetInstanceMessageType()
+    {
+        return _MessageType;
     }
 
     static uint8_t MessageType()
@@ -235,9 +142,25 @@ public:
 
     static MessageBase *MessageFactory(uint8_t *buffer, size_t len)
     {
-        MessageBase *msg = new MessagePing(buffer);
-        if (!msg->isValid)
+        #if DEBUG == 1
+        Serial.println("MessagePing::MessageFactory");
+        #endif
+        MessageBase *msg = new MessagePing();
+        StaticJsonDocument<MSG_BASE_SIZE> doc;
+
+        if (deserializeMsgPack(doc, (const char *)buffer, len) != DeserializationError::Ok)
         {
+            delete msg;
+            return nullptr;
+        }
+
+        msg->deserialize(doc);
+
+        if (!msg->IsValid())
+        {
+            #if DEBUG == 1
+            Serial.println("MessagePing::MessageFactory: Invalid message");
+            #endif
             delete msg;
             return nullptr;
         }

@@ -4,7 +4,7 @@ LoRa_Test_Content::LoRa_Test_Content(Adafruit_SSD1306 *disp)
 {
     display = disp;
     type = ContentType::LORA_TEST;
-    msgIdx = 0;
+    LoraUtils::ResetMessageIterator();
 }
 
 LoRa_Test_Content::~LoRa_Test_Content()
@@ -13,30 +13,21 @@ LoRa_Test_Content::~LoRa_Test_Content()
 
 void LoRa_Test_Content::encDown()
 {
-    if (Network_Manager::messages.size() == 0)
+    if (LoraUtils::GetNumMessages() == 0)
     {
 #if DEBUG == 1
         Serial.println("No messages");
 #endif
         return;
     }
-    msgIdx++;
-    if (msgIdx >= Network_Manager::messages.size())
-    {
-        msgIdx = 0;
-    }
-
-#if DEBUG == 1
-    Serial.print("msgIdx: ");
-    Serial.println(msgIdx);
-#endif
-
+    LoraUtils::DecrementMessageIterator();
+    
     printContent();
 }
 
 void LoRa_Test_Content::encUp()
 {
-    if (Network_Manager::messages.size() == 0)
+    if (LoraUtils::GetNumMessages() == 0)
     {
 #if DEBUG == 1
         Serial.println("No messages");
@@ -44,19 +35,7 @@ void LoRa_Test_Content::encUp()
         return;
     }
 
-    if (msgIdx == 0)
-    {
-        msgIdx = Network_Manager::messages.size() - 1;
-    }
-    else
-    {
-        msgIdx--;
-    }
-
-#if DEBUG == 1
-    Serial.print("msgIdx: ");
-    Serial.println(msgIdx);
-#endif
+    LoraUtils::IncrementMessageIterator();
 
     printContent();
 }
@@ -66,11 +45,11 @@ void LoRa_Test_Content::printContent()
     display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
 #if DEBUG == 1
-    Serial.print("Network_Manager::messages.size(): ");
-    Serial.println(Network_Manager::messages.size());
+    Serial.print("LoraUtils::GetNumMessages(): ");
+    Serial.println(LoraUtils::GetNumMessages());
 #endif
 
-    if (Network_Manager::messages.size() == 0)
+    if (LoraUtils::GetNumMessages() == 0)
     {
 #if DEBUG == 1
         Serial.println("printContent(): No messages");
@@ -84,7 +63,16 @@ void LoRa_Test_Content::printContent()
     Serial.print("msgIdx: ");
     Serial.println(msgIdx);
 #endif
-    MessageBase *msg = Network_Manager::findMessageByIdx(msgIdx);
+    MessageBase *msg = LoraUtils::GetCurrentMessage();
+
+    if (msg == nullptr)
+    {
+#if DEBUG == 1
+        Serial.println("printContent(): Message is null. We shouldn't be here");
+#endif
+    return;
+    }
+
 
 #if DEBUG == 1
     Serial.print("SenderName: ");
@@ -102,6 +90,8 @@ void LoRa_Test_Content::printContent()
     display->print(msg->msgID, HEX);
 
     display->display();
+
+    delete msg;
 }
 
 uint8_t LoRa_Test_Content::sendBroadcast()
@@ -110,9 +100,9 @@ uint8_t LoRa_Test_Content::sendBroadcast()
     uint32_t time = Navigation_Manager::getTime().value();
     uint32_t date = Navigation_Manager::getDate().value();
     const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
-    MessageBase msg = MessageBase(time, date, 0, Network_Manager::userID, senderName, esp_random());
+    MessageBase msg = MessageBase(time, date, 0, LoraUtils::UserID(), senderName, esp_random());
 
-    return Network_Manager::queueMessage(&msg);
+    return LoraUtils::SendMessage(&msg, 1);
 }
 
 void LoRa_Test_Content::updateMessages()
@@ -123,7 +113,7 @@ void LoRa_Test_Content::updateMessages()
     printContent();
 }
 
-MessageBase *LoRa_Test_Content::getCurrentMessage()
-{
-    return Network_Manager::findMessageByIdx(msgIdx);
-}
+// MessageBase *LoRa_Test_Content::getCurrentMessage()
+// {
+//     return Network_Manager::findMessageByIdx(msgIdx);
+// }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "OLED_Content.h"
-#include "Network_Manager.h"
+#include "LoraUtils.h"
 #include "MessagePing.h"
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
@@ -11,7 +11,7 @@
 class Received_Messages_Content : public OLED_Content
 {
 public:
-    Received_Messages_Content(Adafruit_SSD1306 *disp, bool showReadMsgs = false, bool wrapAround = true);
+    Received_Messages_Content(bool showReadMsgs = false, bool wrapAround = true);
     ~Received_Messages_Content();
 
     void printContent();
@@ -22,48 +22,63 @@ public:
 
     MessageBase *getCurrentMessage()
     {
-        if (Network_Manager::messages.size() == 0)
+        if (showReadMsgs)
         {
-            return nullptr;
+            return LoraUtils::GetCurrentMessage();
         }
-        return Network_Manager::findMessageByIdx(msgIdx);
+        else
+        {
+            return LoraUtils::GetCurrentUnreadMessage();
+        }
     }
 
-    uint16_t getMsgIdx() { return msgIdx; }
+    // uint16_t getMsgIdx() { return msgIdx; }
     bool getShowReadMsgs() { return showReadMsgs; }
     bool getWrapAround() { return wrapAround; }
     size_t getSelectedIndex() { return msgIdx; }
     void markMessageAsRead()
     {
-        if (msgIdx < msgSenderUserIDs.size())
+        MessageBase *msg = nullptr;
+        if (showReadMsgs)
         {
-            return;
+            msg = LoraUtils::GetCurrentMessage();
         }
-        Network_Manager::markMessageAsRead(msgSenderUserIDs[msgIdx]);
+        else
+        {
+            msg = LoraUtils::GetCurrentUnreadMessage();
+        }
+
+        if (msg != nullptr)
+        {
+            LoraUtils::MarkMessageOpened(msg->sender);
+            delete msg;
+        }
+
+        printContent();
     }
 
 private:
     void printMessageAge(uint64_t timeDiff);
     void getMessages();
-    void checkAndRefreshMessages()
-    {
-        if (showReadMsgs)
-        {
-            if (Network_Manager::isLocalMsgMapOutdated(lastRefreshTime))
-            {
-                getMessages();
-                lastRefreshTime = Network_Manager::getLastMessageInsertDeleteTime();
-            }
-        }
-        else
-        {
-            if (Network_Manager::isLocalUnreadMsgMapOutdated(lastRefreshTime))
-            {
-                getMessages();
-                lastRefreshTime = Network_Manager::getLastUnreadMessageInsertDeleteTime();
-            }
-        }
-    }
+    // void checkAndRefreshMessages()
+    // {
+    //     if (showReadMsgs)
+    //     {
+    //         if (Network_Manager::isLocalMsgMapOutdated(lastRefreshTime))
+    //         {
+    //             getMessages();
+    //             lastRefreshTime = Network_Manager::getLastMessageInsertDeleteTime();
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if (Network_Manager::isLocalUnreadMsgMapOutdated(lastRefreshTime))
+    //         {
+    //             getMessages();
+    //             lastRefreshTime = Network_Manager::getLastUnreadMessageInsertDeleteTime();
+    //         }
+    //     }
+    // }
 
     std::vector<uint64_t> msgSenderUserIDs;
     int64_t lastRefreshTime;

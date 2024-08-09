@@ -26,6 +26,7 @@ EventHandler System_Utils::systemShutdown;
 
 void System_Utils::init()
 {
+    Serial.println("Initializing System Utils");
     healthTimerID = registerTimer("System Health Monitor", 60000, monitorSystemHealth, healthTimerBuffer);
     startTimer(healthTimerID);
     monitorSystemHealth(nullptr);
@@ -37,8 +38,8 @@ long System_Utils::getBatteryPercentage()
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
 
 #if DEBUG == 1
-    Serial.print("Battery voltage: ");
-    Serial.println(voltage);
+    // Serial.print("Battery voltage: ");
+    // Serial.println(voltage);
 #endif
 
     // Show full battery if BATT_SENSE_PIN is low. Device is plugged in.

@@ -2,7 +2,8 @@
 
 #include "globalDefines.h"
 #include "Window_State.h"
-#include "Network_Manager.h"
+#include "LoraUtils.h"
+#include "MessagePing.h"
 #include "Repeat_Message_Content.h"
 #include "Text_Display_Content.h"
 #include "Ring_Pulse.h"
@@ -59,7 +60,7 @@ public:
         if (transferData.serializedData != nullptr)
         {
             ArduinoJson::DynamicJsonDocument *doc = transferData.serializedData;
-            auto messageType = MessageBase::getMessageType(doc);
+            auto messageType = MessageBase::GetMessageTypeFromJson(*doc);
 
             if (message != nullptr)
             {
@@ -67,10 +68,10 @@ public:
                 message = nullptr;
             }
 
-            if (messageType == MESSAGE_PING) 
+            if (messageType == MessagePing::MessageType()) 
             {
                 MessagePing *ping = new MessagePing();
-                ping->deserialize(doc);
+                ping->deserialize(*doc);
                 message = ping;
 
                 uint8_t msgR = ping->color_R;

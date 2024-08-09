@@ -5,6 +5,7 @@
 #include "LED_Manager.h"
 #include "Navigation_Manager.h"
 #include "Adafruit_SSD1306.h"
+#include <string>
 
 #define MSG_TYPE_OFFSET 0
 
@@ -18,25 +19,30 @@ namespace
     const char *MESSAGE_TYPE_KEY PROGMEM = "t";
     const char *MESSAGE_TYPE_ID PROGMEM = "i";
     const char *MESSAGE_TYPE_BOUNCES_LEFT PROGMEM = "B";
-    const char *MESSAGE_TYPE_RECIPIENT PROGMEM = "R ";
+    const char *MESSAGE_TYPE_RECIPIENT PROGMEM = "R";
     const char *MESSAGE_TYPE_FROM PROGMEM = "f";
     const char *MESSAGE_TYPE_FROM_NAME PROGMEM = "n";
     const char *MESSAGE_TYPE_TIME PROGMEM = "T";
     const char *MESSAGE_TYPE_DATE PROGMEM = "D";
-    const char *MESSAGE_TYPE_COLOR_R PROGMEM = "r";
-    const char *MESSAGE_TYPE_COLOR_G PROGMEM = "g";
-    const char *MESSAGE_TYPE_COLOR_B PROGMEM = "b";
-    const char *MESSAGE_TYPE_LAT PROGMEM = "a";
-    const char *MESSAGE_TYPE_LNG PROGMEM = "o";
-    const char *MESSAGE_TYPE_STATUS PROGMEM = "s";
+
+    const size_t MAX_LEN_MESSAGE_PRINT_INFO = 64;
 }
 
-// enum MessageType
-// {
-//     MESSAGE_INVALID = 0,
-//     MESSAGE_BASE = 1,
-//     MESSAGE_PING = 2
-// };
+struct MessagePrintInformation
+{
+    char txt[MAX_LEN_MESSAGE_PRINT_INFO];
+
+    MessagePrintInformation(const char *txt)
+    {
+        strncpy(this->txt, txt, MAX_LEN_MESSAGE_PRINT_INFO);
+    }
+
+    // Copy constructor
+    MessagePrintInformation(const MessagePrintInformation &mpi)
+    {
+        strncpy(this->txt, mpi.txt, MAX_LEN_MESSAGE_PRINT_INFO);
+    }
+};
 
 // Base class for all LoRa messages
 // All message classes should contain a static method to determine the message type
@@ -46,25 +52,35 @@ class MessageBase
 public:
     bool messageOpened;
 
+    // Unique ID for the message
     uint32_t msgID;
+
+    // Number of times the message can be forwarded. Each node decrements this value
     uint8_t bouncesLeft;
 
-    uint64_t recipient = 0;
+    // ID of the recipient. 0 is broadcast
+    uint32_t recipient = 0;
 
-    uint64_t sender;
+    // ID of the sender. This should never be 0
+    uint32_t sender;
+
+    // Name of the sender
     char senderName[NAME_LENGTH + 1];
 
+    // Time and date the message was sent
     uint32_t time;
     uint32_t date;
 
+    // Deprecated. Use IsValid() instead
     bool isValid;
 
     MessageBase()
     {
+        isValid = false;
     }
 
     // Constructor for message created by this node
-    MessageBase(uint32_t time, uint32_t date, uint64_t recipient, uint64_t sender, const char *senderName, uint32_t msgID)
+    MessageBase(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID)
     {
         messageOpened = false;
         isValid = true;
@@ -84,12 +100,6 @@ public:
         {
             this->msgID = esp_random();
         }
-    }
-    // Constructor for message received from another node
-    MessageBase(uint8_t *buffer)
-    {
-        messageOpened = false;
-        deserialize(buffer);
     }
 
     virtual ~MessageBase()
@@ -117,7 +127,7 @@ public:
         }
     }
 
-    static uint8_t GetMessageTypeFromJson(JsonObject &doc)
+    static uint8_t GetMessageTypeFromJson(JsonDocument &doc)
     {
         if (doc.containsKey(MESSAGE_TYPE_KEY))
         {
@@ -129,97 +139,128 @@ public:
         }
     }
 
-    virtual uint8_t *serialize(size_t &len)
+    virtual bool serialize(JsonDocument &doc)
     {
-        ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
-        doc[MESSAGE_TYPE_KEY] = _MessageType;
+        std::string senderNameStr(senderName);
+
+        doc[MESSAGE_TYPE_KEY] = GetInstanceMessageType();
         doc[MESSAGE_TYPE_ID] = msgID;
         doc[MESSAGE_TYPE_BOUNCES_LEFT] = bouncesLeft;
         doc[MESSAGE_TYPE_RECIPIENT] = recipient;
         doc[MESSAGE_TYPE_FROM] = sender;
-        doc[MESSAGE_TYPE_FROM_NAME] = senderName;
+        doc[MESSAGE_TYPE_FROM_NAME] = senderNameStr;
         doc[MESSAGE_TYPE_TIME] = time;
         doc[MESSAGE_TYPE_DATE] = date;
 
-        len = measureMsgPack(doc) + 1;
-        uint8_t *buffer = new uint8_t[len];
-        serializeMsgPack(doc, buffer, len);
-        buffer[len - 1] = '\0';
-        return buffer;
-    }
-
-    virtual void deserialize(const uint8_t *buffer)
-    {
-        ArduinoJson::StaticJsonDocument<MSG_BASE_SIZE> doc;
-
-        deserializeMsgPack(doc, buffer, MSG_BASE_SIZE);
-
-        auto msgType = doc[MESSAGE_TYPE_KEY].as<uint8_t>();
-        if (msgType != _MessageType)
+        if (doc.overflowed())
         {
-            isValid = false;
-            return;
+            return false;
         }
 
-        isValid = true;
-        msgID = doc[MESSAGE_TYPE_ID];
-        if (doc.containsKey(MESSAGE_TYPE_BOUNCES_LEFT))
-            bouncesLeft = doc[MESSAGE_TYPE_BOUNCES_LEFT];
-        else
-            bouncesLeft = 0;
-        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
-            recipient = doc[MESSAGE_TYPE_RECIPIENT];
-        sender = doc[MESSAGE_TYPE_FROM];
-        strcpy(senderName, doc[MESSAGE_TYPE_FROM_NAME].as<const char *>());
-        time = doc[MESSAGE_TYPE_TIME];
-        date = doc[MESSAGE_TYPE_DATE];
+        return true;
     }
 
-    virtual void deserialize(JsonObject &doc)
+    virtual void deserialize(JsonDocument &doc)
     {
-        auto msgType = doc[MESSAGE_TYPE_KEY].as<uint8_t>();
-        if (msgType != _MessageType)
+        if (doc[MESSAGE_TYPE_KEY].as<uint8_t>() | 0 > 0)
         {
-            isValid = false;
-            return;
+            isValid = true;
         }
 
-        isValid = true;
-        msgID = doc[MESSAGE_TYPE_ID];
-        if (doc.containsKey(MESSAGE_TYPE_BOUNCES_LEFT))
-            bouncesLeft = doc[MESSAGE_TYPE_BOUNCES_LEFT];
+        if (doc.containsKey(MESSAGE_TYPE_ID))
+        {
+            msgID = doc[MESSAGE_TYPE_ID].as<uint32_t>();
+        }
         else
-            bouncesLeft = 0;
-        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
-            recipient = doc[MESSAGE_TYPE_RECIPIENT];
-        sender = doc[MESSAGE_TYPE_FROM];
-        strcpy(senderName, doc[MESSAGE_TYPE_FROM_NAME].as<const char *>());
-        time = doc[MESSAGE_TYPE_TIME];
-        date = doc[MESSAGE_TYPE_DATE];
-    }
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No message ID found");
+            #endif
+            msgID = 0;
+        }
 
-    virtual DynamicJsonDocument *serializeJSON()
-    {
-        DynamicJsonDocument *doc = new DynamicJsonDocument(MSG_BASE_SIZE);
-        (*doc)[MESSAGE_TYPE_KEY] = _MessageType;
-        (*doc)[MESSAGE_TYPE_ID] = msgID;
-        (*doc)[MESSAGE_TYPE_BOUNCES_LEFT] = bouncesLeft;
-        (*doc)[MESSAGE_TYPE_RECIPIENT] = recipient;
-        (*doc)[MESSAGE_TYPE_FROM] = sender;
-        (*doc)[MESSAGE_TYPE_FROM_NAME] = senderName;
-        (*doc)[MESSAGE_TYPE_TIME] = time;
-        (*doc)[MESSAGE_TYPE_DATE] = date;
-        return doc;
+        if (doc.containsKey(MESSAGE_TYPE_BOUNCES_LEFT))
+        {
+            bouncesLeft = doc[MESSAGE_TYPE_BOUNCES_LEFT].as<uint8_t>();
+        }
+        else
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No bounces left found");
+            #endif
+            bouncesLeft = 0;
+        }
+
+        if (doc.containsKey(MESSAGE_TYPE_RECIPIENT))
+        {
+            recipient = doc[MESSAGE_TYPE_RECIPIENT].as<uint32_t>();
+        }
+        else
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No recipient found");
+            #endif
+            recipient = 0;
+        }
+
+        if (doc.containsKey(MESSAGE_TYPE_FROM))
+        {
+            sender = doc[MESSAGE_TYPE_FROM].as<uint32_t>();
+        }
+        else
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No sender found");
+            #endif
+            sender = 0;
+        }
+
+        const char *sendName = doc[MESSAGE_TYPE_FROM_NAME].as<const char *>();
+        strncpy(senderName, sendName, NAME_LENGTH);
+
+        if(doc.containsKey(MESSAGE_TYPE_TIME))
+        {
+            time = doc[MESSAGE_TYPE_TIME].as<uint32_t>();
+        }
+        else
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No time found");
+            #endif
+            time = 0;
+        }
+
+        if(doc.containsKey(MESSAGE_TYPE_DATE))
+        {
+            date = doc[MESSAGE_TYPE_DATE].as<uint32_t>();
+        }
+        else
+        {
+            #if DEBUG == 1 
+            Serial.println("MessageBase::deserialize: No date found");
+            #endif
+            date = 0;
+        }
     }
 
     virtual MessageBase *clone()
     {
-        return new MessageBase(time, date, recipient, sender, senderName, msgID);
+        MessageBase *newMsg = new MessageBase(time, date, recipient, sender, senderName, msgID);
+        newMsg->bouncesLeft = bouncesLeft;
+        newMsg->isValid = isValid;
+        return newMsg;
     }
 
-    virtual void toString(char *buffer, size_t bufferLen)
+    // 
+    virtual void GetPrintableInformation(std::vector<MessagePrintInformation> &info)
     {
-        snprintf(buffer, bufferLen, "MsgID: %X", msgID);
+        MessagePrintInformation mpi(senderName);
+        info.push_back(mpi);
+
+        char buffer[32];
+        snprintf(buffer, 32, "MsgID: %X", msgID);
+        MessagePrintInformation mpi2(buffer);
+        info.push_back(mpi2);
     }
 
     static void printFromBuffer(uint8_t *buffer)
@@ -229,6 +270,7 @@ public:
         serializeJson(doc, Serial);
     }
 
+    // TODO: Get rid of this
     virtual void displayMessage(Adafruit_SSD1306 *display)
     {
         display->setCursor(0, 8);
@@ -240,6 +282,11 @@ public:
 
         display->setCursor(110, 8);
         printMessageAge(Navigation_Manager::getTimeDifference(this->time, this->date), display);
+    }
+
+    virtual bool IsValid()
+    {
+        return (msgID != 0 && sender != 0);
     }
 
     static void printMessageAge(uint64_t timeDiff, Adafruit_SSD1306 *display)
@@ -278,17 +325,37 @@ public:
 
     static MessageBase *MessageFactory(uint8_t *buffer, size_t len) 
     {
-        MessageBase *msg = new MessageBase(buffer);
-        
-        if (msg->isValid)
+        #if DEBUG == 1
+        Serial.println("MessageBase::MessageFactory");
+        #endif
+        MessageBase *msg = new MessageBase();
+        StaticJsonDocument<MSG_BASE_SIZE> doc;
+
+        if (deserializeMsgPack(doc, (const char *)buffer, len) != DeserializationError::Ok)
+        {
+            delete msg;
+            return nullptr;
+        }
+
+        msg->deserialize(doc);
+
+        if (msg->IsValid())
         {
             return msg;
         }
         else
         {
+            #if DEBUG == 1
+            Serial.println("MessageBase::MessageFactory: Invalid message");
+            #endif
             delete msg;
             return nullptr;
         }
+    }
+
+    virtual uint8_t GetInstanceMessageType()
+    {
+        return _MessageType;
     }
 
     static uint8_t MessageType()

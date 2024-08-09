@@ -9,7 +9,7 @@ Home_Window::Home_Window() : OLED_Window()
 {
     homeContent = new Home_Content(display);
     trackingContent = new Tracking_Content(display);
-    receivedMessagesContent = new Received_Messages_Content(display, false, false);
+    receivedMessagesContent = new Received_Messages_Content(false, false);
     savedMessagesContent = new Saved_Messages_Content();
     savedLocationsContent = new Saved_Locations_Content(true, true);
 
@@ -280,7 +280,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
                 Navigation_Manager::getTime().value(),
                 Navigation_Manager::getDate().value(),
                 recipientID,
-                Network_Manager::userID,
+                LoraUtils::UserID(),
                 Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
                 0,
                 Settings_Manager::settings["User"]["Theme Red"]["cfgVal"].as<uint8_t>(),
@@ -292,20 +292,22 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 
             uint8_t returnCode;
 
-            if (sendDirect)
+            auto success = LoraUtils::SendMessage(newMsg, 0);
+
+            Display_Utils::clearContentArea();
+            
+            if (success)
             {
-                returnCode = Network_Manager::queueMessageToUser(recipientID, newMsg);
+                char displayMsg[] = "Message sent";
+                display->setCursor(Display_Utils::centerTextHorizontal(displayMsg), Display_Utils::centerTextVertical());
+                display->print(displayMsg);
             }
             else
             {
-                returnCode = Network_Manager::queueBroadcastMessage(newMsg);
+                char displayMsg[] = "Unable to send";
+                display->setCursor(Display_Utils::centerTextHorizontal(displayMsg), Display_Utils::centerTextVertical());
+                display->print(displayMsg);
             }
-
-            Display_Utils::clearContentArea();
-            auto returnStr = Network_Manager::getReturnCodeString(returnCode);
-
-            display->setCursor(Display_Utils::centerTextHorizontal(returnStr), Display_Utils::centerTextVertical());
-            display->print(returnStr);
 
             display->display();
             clearMessageInfo();

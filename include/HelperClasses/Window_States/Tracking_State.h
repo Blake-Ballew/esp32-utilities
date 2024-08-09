@@ -43,8 +43,11 @@ public:
                 auto userID = (*transferData.serializedData)["userID"].as<uint64_t>();
                 auto messageID = (*transferData.serializedData)["messageID"].as<uint32_t>();
 
-                MessageBase *msg = Network_Manager::cloneMessageEntry(userID);
-                if (msg != nullptr && msg->msgType == MESSAGE_PING)
+                auto msgType = MessageBase::GetMessageTypeFromJson(*transferData.serializedData);
+
+                MessageBase *msg = LoraUtils::DeserializeMessage(*transferData.serializedData);
+
+                if (msg != nullptr && msgType == MessagePing::MessageType())
                 {
                     pingMsg = (MessagePing *)(msg);
                 }

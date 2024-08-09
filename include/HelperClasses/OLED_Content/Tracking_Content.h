@@ -20,6 +20,11 @@ public:
     ~Tracking_Content()
     {
         thisInstance = nullptr;
+
+        if (currMsg != nullptr)
+        {
+            delete currMsg;
+        }
     }
 
     void printContent()
@@ -31,17 +36,17 @@ public:
 
         Navigation_Manager::read();
 
-        char statusTxt[STATUS_LENGTH];
-        currMsg->toString(statusTxt, STATUS_LENGTH);
-        display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
+        std::vector<MessagePrintInformation> messageDisplay;
+        currMsg->GetPrintableInformation(messageDisplay);
+        Display_Utils::clearContentArea();
 
-        display->setCursor(Display_Utils::centerTextHorizontal(statusTxt), 16);
-        display->print(statusTxt);
+        display->setCursor(Display_Utils::centerTextHorizontal(messageDisplay[0].txt), Display_Utils::selectTextLine(3));
+        display->print(messageDisplay[0].txt);
 
         display->setCursor(0, 8);
         display->print(currMsg->senderName);
 
-        if (currMsg->msgType == MessageType::MESSAGE_PING)
+        if (currMsg->GetInstanceMessageType() == MessagePing::MessageType())
         {
             MessagePing *msg = (MessagePing *)currMsg;
             double distance = Navigation_Manager::getDistanceTo(msg->lat, msg->lng);
@@ -74,6 +79,11 @@ public:
 
     void assignMsg(MessageBase *msg)
     {
+        if (currMsg != nullptr)
+        {
+            delete currMsg;
+        }
+
         currMsg = msg;
         thisInstance = this;
     }

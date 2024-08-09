@@ -349,12 +349,7 @@ void Settings_Manager::flashSettings()
     EepromStream eepromStream = EepromStream(EEPROM_SETTINGS_ADDR, SIZE_SETTINGS_OBJECT);
     JsonObject User = doc.createNestedObject("User");
 
-    JsonArray User_UserID = User.createNestedArray("UserID");
-    for (int i = 0; i < 8; i++)
-    {
-        // Fill with random bytes with esp random function
-        User_UserID.add(esp_random() % 256);
-    }
+    User["UserID"] = esp_random();
 
     JsonObject User_Name = User.createNestedObject("Name");
     User_Name["cfgType"] = 10;

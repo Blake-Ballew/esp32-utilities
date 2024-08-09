@@ -68,12 +68,14 @@ void SOS_Window::transferState(State_Transfer_Data &transferData)
         // Send SOS message
         MessagePing *ping = createSosMessage();
 
-        auto msgJson = ping->serializeJSON();
-        transferData.serializedData = msgJson;
+        // transferData.serializedData = new ArduinoJson::DynamicJsonDocument(512);
+        // ping->serialize(*transferData.serializedData);
+        // transferData.serializedData->shrinkToFit();
 
-        delete ping;
+        // delete ping;
 
         // Send message
+        LoraUtils::SendMessage(ping, 0);
     }
 
     transferData.newState->enterState(transferData);
@@ -97,7 +99,7 @@ MessagePing *SOS_Window::createSosMessage()
         Navigation_Manager::getTime().value(),
         Navigation_Manager::getDate().value(),
         0,
-        Network_Manager::userID,
+        LoraUtils::UserID(),
         Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
         0,
         255,
@@ -119,7 +121,7 @@ MessagePing *SOS_Window::createOkayMessage()
         Navigation_Manager::getTime().value(),
         Navigation_Manager::getDate().value(),
         0,
-        Network_Manager::userID,
+        LoraUtils::UserID(),
         Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
         0,
         0,

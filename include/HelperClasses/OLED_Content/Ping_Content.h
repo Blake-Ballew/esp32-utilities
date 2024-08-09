@@ -1,18 +1,16 @@
 #pragma once
 
 #include "OLED_Content.h"
-#include "Network_Manager.h"
+#include "LoraUtils.h"
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
 #include "MessagePing.h"
 
-// namespace
-// {
-//     const char *MESSAGE_SENT PROGMEM = "Message sent";
-//     const char *NO_ROUTE PROGMEM = "No route";
-//     const char *DELIVERY_FAILED PROGMEM = "Delivery failed";
-//     const char *UNABLE_TO_QUEUE PROGMEM = "Unable to queue";
-// }
+namespace
+{
+    const char *MESSAGE_SENT PROGMEM = "Message sent";
+    const char *UNABLE_TO_SEND PROGMEM = "Unable to send";
+}
 
 class Ping_Content : public OLED_Content
 {
@@ -115,7 +113,7 @@ public:
         date = Navigation_Manager::getDate().value();
 
         uint64_t recipient = msg == nullptr ? 0 : msg->sender;
-        uint64_t sender = Network_Manager::userID;
+        uint64_t sender = LoraUtils::UserID();
         const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
 
         uint32_t msgID = esp_random();
@@ -137,7 +135,6 @@ public:
         const char *status = statusList[statusIdx].as<const char *>();
         MessagePing *msgPing = new MessagePing(time, date, recipient, sender, senderName, msgID, R, G, B, lat, lng, status);
 
-        uint8_t returnCode;
         bool isBroadcast = msg == nullptr;
 
         display->clearDisplay();
@@ -160,48 +157,24 @@ public:
 #endif
         }
 
-        returnCode = Network_Manager::queueMessage(msgPing);
-        Serial.print("Return code: ");
-        Serial.println(returnCode);
+        auto success = LoraUtils::SendMessage(msgPing, 0);
 
-        display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
+        Display_Utils::clearContentArea();
 
-        switch (returnCode)
+        if (success)
         {
-        case RH_ROUTER_ERROR_NONE:
             display->setCursor(Display_Utils::centerTextHorizontal(MESSAGE_SENT), Display_Utils::centerTextVertical());
             display->print(MESSAGE_SENT);
 
-            if (isBroadcast)
-            {
-                delete Network_Manager::lastBroadcast;
-                Network_Manager::lastBroadcast = msgPing;
-            }
-            else
-            {
-                uint64_t receiver = msg->sender;
-                if (Network_Manager::messagesSent.find(receiver) != Network_Manager::messagesSent.end())
-                {
-                    delete Network_Manager::messagesSent[receiver];
-                }
-                Network_Manager::messagesSent[receiver] = msgPing;
-            }
-            break;
-        case RH_ROUTER_ERROR_NO_ROUTE:
-            display->setCursor(Display_Utils::centerTextHorizontal(NO_ROUTE), Display_Utils::centerTextVertical());
-            display->print(NO_ROUTE);
-            break;
-        case RH_ROUTER_ERROR_UNABLE_TO_DELIVER:
-            display->setCursor(Display_Utils::centerTextHorizontal(DELIVERY_FAILED), Display_Utils::centerTextVertical());
-            display->print(DELIVERY_FAILED);
-            break;
-        case RETURN_CODE_UNABLE_TO_QUEUE:
-            display->setCursor(Display_Utils::centerTextHorizontal(UNABLE_TO_QUEUE), Display_Utils::centerTextVertical());
-            display->print(UNABLE_TO_QUEUE);
-            break;
-        default:
-            break;
+            LoraUtils::SetMyLastBroadcast(msgPing);
         }
+        else
+        {
+            display->setCursor(Display_Utils::centerTextHorizontal(UNABLE_TO_SEND), Display_Utils::centerTextVertical());
+            display->print(UNABLE_TO_SEND);
+        }
+
+        delete msgPing;
 
         // display->fillRect(OLED_WIDTH, OLED_HEIGHT, OLED_WIDTH - 24, OLED_HEIGHT - 8, BLACK);
         display->display();

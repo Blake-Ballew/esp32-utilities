@@ -54,7 +54,7 @@ void Home_Content::printContent()
 
     OLED_Content::drawBatteryIcon(Display_Utils::alignTextLeft(0), Display_Utils::selectTextLine(2), System_Utils::getBatteryPercentage());
 
-    size_t unreadMsgs = Network_Manager::getNumUnreadMessages();
+    size_t unreadMsgs = LoraUtils::GetNumUnreadMessages();
 
     /*display->setCursor(Display_Utils::alignTextLeft(), Display_Utils::selectTextLine(3));
     display->printf("Unread: %d", unreadMsgs);*/

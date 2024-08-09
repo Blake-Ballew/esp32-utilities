@@ -11,6 +11,7 @@ namespace
 {
     const size_t MAX_MESSAGE_SIZE = 255;
     const uint64_t BROADCAST_ID = 0x0;
+    const uint8_t DEFAULT_NODE_ID = 1;
 }
 
 // Struct to manage message pointers waiting to send
@@ -26,7 +27,7 @@ class LoraManager
 {
 public:
     // Constructor for manager with radios accepting a frequency and power level
-    LoraManager(RadioType &driver, uint8_t cs, uint8_t intPin, uint8_t txPower)
+    LoraManager(RadioType *driver, uint8_t cs, uint8_t intPin, uint8_t txPower)
     {
         _driver = driver;
         _cs = cs;
@@ -37,16 +38,12 @@ public:
     bool Init()
     {
         // Initialize the manager
-        _manager = RHReliableDatagram(_driver, 1);
+        _manager = new RHReliableDatagram(*_driver, 1);
+        _manager->setTimeout(10000);
 
         if (Settings_Manager::settings != nullptr)
         {
-            JsonArray user = Settings_Manager::settings["User"]["UserID"].as<JsonArray>();
-            uint64_t userID = 0;
-            for (uint8_t i = 0; i < USERID_SIZE_BYTES; i++)
-            {
-                userID |= (uint64_t)user[i] << (((USERID_SIZE_BYTES - 1) - i) * 8);
-            }
+            uint32_t userID = Settings_Manager::settings["User"]["UserID"].as<uint32_t>();
 
 #if DEBUG == 1
             Serial.print("UserID: 0x");
@@ -61,11 +58,11 @@ public:
             size_t cfgIdx = Settings_Manager::settings["Radio"]["Modem Config"]["cfgVal"].as<size_t>();
 
             // TODO: break different radio types into separate functions
-            if (typeid(RadioType) == typeid(RH_RF95))
-            {
-                auto modemConfig = (RH_RF95::ModemConfigChoice)Settings_Manager::settings["Radio"]["Modem Config"]["vals"].as<JsonArray>()[cfgIdx].as<uint32_t>();
-                driver.setModemConfig(modemConfig);
-            }
+            // if (typeid(RadioType) == typeid(RH_RF95))
+            // {
+            auto modemConfig = (RH_RF95::ModemConfigChoice)Settings_Manager::settings["Radio"]["Modem Config"]["vals"].as<JsonArray>()[cfgIdx].as<uint32_t>();
+            _driver->setModemConfig(modemConfig);
+            // }
 
             _transmitRetries = Settings_Manager::settings["Radio"]["Broadcast Retries"]["cfgVal"].as<uint8_t>();
         }
@@ -75,10 +72,10 @@ public:
             _transmitRetries = 3;
         }
 
-        driver.setFrequency(_freq);
-        // driver.setTxPower(_txPower);
+        _driver->setFrequency(_freq);
+        _driver->setTxPower(_txPower);
 
-        if(!_manager.init())
+        if(!_manager->init())
         {
             Serial.println("Radio Manager failed to initialize");
             return false;
@@ -99,7 +96,7 @@ public:
     void ReceiveTask(void *pvParameters)
     {
         while (true) 
-        {
+        { 
             uint8_t buffer[MAX_MESSAGE_SIZE];
 
             uint8_t from;
@@ -110,29 +107,75 @@ public:
 
             memset(buffer, 0, sizeof(buffer));
 
-            if (manager->recvfromAck(buffer, &len, &from, &to, &id, &flags))
+            if (_manager->available())
             {
+                _manager->recvfromAck(buffer, &len, &from, &to, &id, &flags);
+                #if DEBUG == 1
+                Serial.println("Raw bytes:");
+                for (size_t i = 0; i < len; i++)
+                {
+                    Serial.print(buffer[i], HEX);
+                    Serial.print(" ");
+                }
+                Serial.println();
+                {
+                    StaticJsonDocument<MSG_BASE_SIZE> testDoc;
+                    deserializeMsgPack(testDoc, (const char *)buffer, len);
+                    Serial.println("Deserialized message:");
+                    serializeJson(testDoc, Serial);
+                    Serial.println();
+                }
+                #endif
                 auto msg = LoraUtils::DeserializeMessage(buffer, len);
 
                 if (msg != nullptr)
                 {   
+                    #if DEBUG == 1
+                    // Serial.print("Received message from 0x");
+                    // Serial.print(msg->sender, HEX);
+                    // Serial.println();
+                    // Serial.printf("Length: %u\n", len);
+                    // // auto jsondoc = msg->serializeJSON();
+                    // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
+                    // msg->serialize(jsondoc);
+                    // serializeJson(jsondoc, Serial);
+                    // Serial.println();
+                    // Serial.println("End of message");
+                    // Serial.println("Raw bytes:");
+                    // for (size_t i = 0; i < len; i++)
+                    // {
+                    //     Serial.printf("%02X", buffer[i]);
+                    //     Serial.print(" ");
+                    // }
+                    // Serial.println();
+                    #endif
+
+                    if (!msg->IsValid())
+                    {
+                        delete msg;
+                        continue;
+                    }
+
                     // Check if the message should be forwarded
                     auto fwd = ShouldMessageBeForwarded(msg);
 
+                    // Dump message if it was sent from this node and came back
+                    if (msg->sender == LoraUtils::UserID())
+                    {
+                        delete msg;
+                        continue;
+                    }
+
                     if (fwd)
                     {
-                        // Forward the message
-                        if (msg->bouncesLeft > 0)
-                        {
-                            msg->bouncesLeft--;
-                            LoraUtils::SendMessage(msg, 1);
+                        msg->bouncesLeft--;
+                        LoraUtils::SendMessage(msg, 1); 
 
-                            _lastReceivedMessages[msg->sender] = msg->msgID;
-                        }
+                        _lastReceivedMessages[msg->sender] = msg->msgID;
                     }
                     
                     // Check if the message is a broadcast or intended for this node
-                    if (msg->recipient == LoraUtils::NodeID() || msg->recipient == BROADCAST_ID)
+                    if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
                     {
                         // Handle the message
                         auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
@@ -140,8 +183,12 @@ public:
 
                         LoraUtils::MessageReceived().Invoke(msg->sender, msgExists);
                     }
+
+                    delete msg;
                 }
             }
+
+            vTaskDelay(50 / portTICK_PERIOD_MS);
         }
     }
 
@@ -157,7 +204,7 @@ public:
             vTaskDelete(NULL);
         }
 
-        const size_t SEND_THREAD_TICK_MS = 100;
+        const size_t SEND_THREAD_TICK_MS = 250;
         const size_t MAX_SEND_DELAY_TICKS = 15;
 
         // Map of messages to ticks until send
@@ -170,6 +217,19 @@ public:
             if (xQueueReceive(sendQueue, &item, 0) == pdTRUE)
             {
                 QueuedMessageInfo info = {item.msg, item.numSendAttempts, 0};
+
+                #if DEBUG == 1
+                // Serial.print("Message queued to send: ");
+                // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
+                // item.msg->serialize(jsondoc);
+                // // auto jsondoc = item.msg->serializeJSON();
+                // serializeJson(jsondoc, Serial);
+                // Serial.println();
+                // Serial.println("Sanity checking message:");
+                // LoraUtils::MessagePackSanityCheck(jsondoc);
+                // Serial.print("Message length: ");
+                // Serial.println(measureMsgPack(jsondoc));
+                #endif
 
                 // Assign a random delay to the message
                 info.ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
@@ -186,33 +246,72 @@ public:
                     size_t len = 0;
 
                     // Send the message
-                    auto buffer = msgTimer->msg->serialize(len);
+                    StaticJsonDocument<MSG_BASE_SIZE> doc;
+                    auto success = msgTimer->msg->serialize(doc);                  
 
-                    if (buffer != nullptr)
+                    if (success)
                     {
-                        _manager.sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
+                        #if DEBUG == 1
+                        // Serial.println("Message serialized successfully. Message: ");
+                        // serializeJson(doc, Serial);
+                        // Serial.println();
+                        #endif
+                        len = measureMsgPack(doc) + 4;
+                        uint8_t buffer[len];
+                        len = serializeMsgPack(doc, buffer, len);
 
-                        delete[] buffer;
+                        #if DEBUG == 1
+                        Serial.println("Sending message:");
+                        serializeJson(doc, Serial);
+                        Serial.println();
+                        Serial.println("Sending raw bytes:");
+                        for (size_t i = 0; i < len; i++)
+                        {
+                            Serial.printf("%02X", buffer[i]);
+                            Serial.print(" ");
+                        }
+                        Serial.println();
+                        #endif
+
+                        _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
+
+                        #if DEBUG == 1
+                        // Serial.printf("Message sent of size: %u\n", len);
+                        // Serial.println("Raw bytes:");
+                        // for (size_t i = 0; i < len; i++)
+                        // {
+                        //     Serial.print(buffer[i], HEX);
+                        //     Serial.print(" ");
+                        // }
+                        // Serial.println();
+                        #endif
                     }
+                    #if DEBUG == 1
+                    else
+                    {
+                        Serial.println("Message failed to serialize");
+                    }
+                    #endif
 
                     msgTimer->numSendAttempts--;
+
+                    if (msgTimer->msg->sender == LoraUtils::UserID())
+                    {
+                        // Update the last broadcast message. It will be deleted when overwritten
+                        LoraUtils::SetMyLastBroadcast(msgTimer->msg);
+                    }
 
                     if (msgTimer->numSendAttempts > 0)
                     {
                         // Requeue the message
                         msgTimer->ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
                     }
-                    else if (msgTimer->msg->sender == LoraUtils::UserID())
-                    {
-                        // Update the last broadcast message. It will be deleted when overwritten
-                        LoraUtils::SetMyLastBroadcast(msgTimer->msg);
-
-                        // Remove from the vector
-                        msgTimer = ticksUntilSend.erase(msgTimer);
-                    }
                     else
                     {
                         // Delete the message
+                        #if DEBUG == 1
+                        // Serial.printf("Deleting message of ID: %u\n", msgTimer->msg->msgID);
+                        #endif
                         delete msgTimer->msg;
 
                         // Remove from the vector
@@ -234,6 +333,9 @@ protected:
     {
         if (msg == nullptr)
         {
+            #if DEBUG == 1
+            Serial.println("Message is null");
+            #endif
             return false;
         }
 
@@ -243,6 +345,17 @@ protected:
         // Don't forward messages that came from this node
         if (senderID == LoraUtils::UserID())
         {
+            #if DEBUG == 1
+            Serial.println("Message came from this node");
+            #endif
+            return false;
+        }
+
+        if (msg->bouncesLeft == 0)
+        {
+            #if DEBUG == 1
+            Serial.println("Message has no bounces left");
+            #endif
             return false;
         }
 
@@ -251,24 +364,30 @@ protected:
         {
             if (_lastReceivedMessages[senderID] == msgID)
             {
-                if (msg->bouncesLeft == 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                #if DEBUG == 1
+                Serial.println("Message has already been received");
+                #endif
+                return false;
+            }
+            else
+            {
+                #if DEBUG == 1
+                Serial.println("Message has not been received. Resending");
+                #endif
+                return true;
             }
         }
         else
         {
+            #if DEBUG == 1
+            Serial.println("Message from new user. Resending");
+            #endif
             return true;
         }
     }
 
-    RHReliableDatagram _manager;
-    RadioType &_driver;
+    RHReliableDatagram *_manager;
+    RadioType *_driver;
     uint8_t _cs;
     uint8_t _intPin;
     float _freq;

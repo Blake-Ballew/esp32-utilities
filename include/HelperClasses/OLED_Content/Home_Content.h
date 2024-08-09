@@ -3,7 +3,7 @@
 #include "OLED_Content.h"
 #include "Navigation_Manager.h"
 #include "Settings_Manager.h"
-#include "Network_Manager.h"
+#include "LoraUtils.h"
 #include "System_Utils.h"
 
 class Home_Content : public OLED_Content

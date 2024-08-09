@@ -3,6 +3,7 @@
 #include "OLED_Window.h"
 #include "Text_Display_Content.h"
 #include "Repeat_Message_State.h"
+#include "LoraUtils.h"
 #include "Confirm_State.h"
 #include "Lock_State.h"
 #include "MessagePing.h"
