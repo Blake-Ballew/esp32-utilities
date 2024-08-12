@@ -34,7 +34,6 @@ Home_Window::Home_Window() : OLED_Window()
     setInitialState(homeState);
 
     homeState->setAdjacentState(BUTTON_2, selectLocationState);
-    homeState->setAdjacentState(ENC_DOWN, receivedMessagesState);
 
     receivedMessagesState->setAdjacentState(ENC_UP, homeState);
     receivedMessagesState->setAdjacentState(BUTTON_1, trackingState);
@@ -42,6 +41,41 @@ Home_Window::Home_Window() : OLED_Window()
 
     selectLocationState->setAdjacentState(BUTTON_4, selectMessageState);
     selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
+}
+
+void Home_Window::drawWindow()
+{
+    OLED_Window::drawWindow();
+
+    if (LoraUtils::GetNumUnreadMessages() > 0) 
+    {
+        homeState->setAdjacentState(ENC_DOWN, receivedMessagesState);
+    }
+    else
+    {
+        homeState->clearAdjacentState(ENC_DOWN);
+    }
+}
+
+void Home_Window::execBtnCallback(uint8_t inputID)
+{
+    OLED_Window::execBtnCallback(inputID);
+
+    if (currentState == receivedMessagesState)
+    {
+        if (LoraUtils::IsUnreadMessageIteratorAtBeginning())
+        {
+            receivedMessagesState->setAdjacentState(ENC_UP, homeState);
+            receivedMessagesState->assignInput(ENC_UP, ACTION_SWITCH_WINDOW_STATE);
+        }
+        else
+        {
+            receivedMessagesState->clearAdjacentState(ENC_UP);
+            receivedMessagesState->assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
+        }
+    }
+
+    drawWindow();
 }
 
 // void Home_Window::Pause()
@@ -194,6 +228,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
     oldState->exitState(transferData);
 
     // ***************** Mid-transfer logic *****************
+    // Sending a broadcast or replying to a message
     if ((oldState == homeState || oldState == receivedMessagesState) && newState == selectLocationState)
     {
 #if DEBUG == 1
@@ -216,6 +251,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             }
         }
     }
+    // Location selected and moving to select message state
     else if (oldState == selectLocationState && transferData.serializedData != nullptr)
     {
 #if DEBUG == 1
@@ -268,6 +304,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 
         newState = selectMessageState;
     }
+    // Message selected. Time to send it
     else if (oldState == selectMessageState && transferData.serializedData != nullptr)
     {
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;

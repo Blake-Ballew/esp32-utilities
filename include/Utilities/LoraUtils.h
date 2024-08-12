@@ -276,7 +276,14 @@ protected:
 
     static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageEnd()
     {
-        return _ReceivedMessages.end();
+        if (_ReceivedMessages.size() == 0)
+        {
+            return _ReceivedMessages.end();
+        }
+
+        auto it = _ReceivedMessages.end();
+        it--;
+        return it;
     }
 
     static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageBegin()
@@ -295,6 +302,28 @@ protected:
 
     static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageEnd()
     {
-        return _ReceivedMessages.end();
+        auto it = _ReceivedMessages.end();
+
+        if (_ReceivedMessages.size() == 0)
+        {
+            return it;
+        }
+
+        if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
+        {
+            while (it != _ReceivedMessages.begin() && it->second->messageOpened)
+            {
+                it--;
+            }
+
+            if (it->second->messageOpened)
+            {
+                it = _ReceivedMessages.end();
+            }
+
+            xSemaphoreGive(_MessageAccessMutex);
+        }
+
+        return it;
     }
 };

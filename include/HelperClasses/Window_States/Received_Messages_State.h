@@ -8,21 +8,30 @@ class Received_Messages_State : public Window_State
 public:
     Received_Messages_State(Received_Messages_Content *statuses) : statusesContent(statuses)
     {
-        //typeID = __COUNTER__;
         renderContent = statusesContent;
 
         if (statusesContent != nullptr)
         {
+            // TODO: Move this control to the window
             wrapAround = statusesContent->getWrapAround();
+
+            assignInput(ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
 
             if (!wrapAround)
             {
+                // This is used for the home window
                 assignInput(ENC_UP, ACTION_SWITCH_WINDOW_STATE);
+                assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
+                assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+                assignInput(BUTTON_3, ACTION_DEFER_CALLBACK_TO_WINDOW, "Mark Read");
             }
             else
             {
+                // this is used for received messages window
                 assignInput(BUTTON_3, ACTION_BACK, "Back");
+                assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
             }
+            
         }
     }
 
@@ -36,6 +45,15 @@ public:
         Serial.println("Received_Messages_State::enterState");
 #endif
         Window_State::enterState(transferData);
+
+        if (statusesContent->ShowReadMsgs())
+        {
+            LoraUtils::ResetMessageIterator();
+        }
+        else
+        {
+            LoraUtils::ResetUnreadMessageIterator();
+        }
     }
 
     void exitState(State_Transfer_Data &transferData)
@@ -106,29 +124,14 @@ public:
             break;
         case ENC_DOWN:
         {
-            size_t selectedIndex = statusesContent->getSelectedIndex();
             statusesContent->encDown();
-            if (statusesContent->getSelectedIndex() > 0 && selectedIndex == 0)
-            {
-                assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
-            }
             break;
         }
         case ENC_UP:
-            if (wrapAround)
-            {
-                statusesContent->encUp();
-            }
-            else if (statusesContent->getSelectedIndex() > 0)
-            {
-                statusesContent->encUp();
-                if (statusesContent->getSelectedIndex() == 0)
-                {
-                    assignInput(ENC_UP, ACTION_SWITCH_WINDOW_STATE);
-                }
-            }
+        {
             statusesContent->encUp();
             break;
+        }
         default:
             break;
         }

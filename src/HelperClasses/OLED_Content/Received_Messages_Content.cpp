@@ -27,6 +27,8 @@ void Received_Messages_Content::encDown()
         return;
     }
 
+    
+
     if (showReadMsgs) 
     {
         LoraUtils::IncrementMessageIterator();
@@ -41,18 +43,28 @@ void Received_Messages_Content::encDown()
 
 void Received_Messages_Content::encUp()
 {
-    if (!wrapAround && msgIdx == 0)
+    bool iteratorAtStart = false;
+    if (showReadMsgs) 
+    {
+        iteratorAtStart = LoraUtils::IsMessageIteratorAtBeginning();
+    }
+    else
+    {
+        iteratorAtStart = LoraUtils::IsUnreadMessageIteratorAtBeginning();
+    }
+
+    if (!wrapAround && iteratorAtStart)
     {
         return;
     }
 
-    if (msgIdx == 0)
+    if (showReadMsgs) 
     {
-        msgIdx = msgSenderUserIDs.size() - 1;
+        LoraUtils::DecrementMessageIterator();
     }
     else
     {
-        msgIdx--;
+        LoraUtils::DecrementUnreadMessageIterator();
     }
 
     printContent();
@@ -79,11 +91,8 @@ void Received_Messages_Content::printContent()
 
     if (numMsgs == 0)
     {
-        display->fillRect(0, 0, OLED_WIDTH / 2, 8, BLACK);
-        display->fillRect(OLED_WIDTH / 2, OLED_HEIGHT - 8, OLED_WIDTH / 2, 8, BLACK);
-#if DEBUG == 1
-        Serial.println("No messages");
-#endif
+        display->clearDisplay();
+
         display->setCursor(20, 12);
         display->print("No messages");
         display->display();
@@ -107,7 +116,7 @@ void Received_Messages_Content::printContent()
     msg->GetPrintableInformation(msgPrintInfo);
 
     // Start in content area
-    size_t lineNumber = 1;
+    size_t lineNumber = 2;
     for (auto &mpi : msgPrintInfo)
     {
         display->setCursor(Display_Utils::alignTextLeft(), Display_Utils::selectTextLine(lineNumber));
@@ -156,7 +165,7 @@ void Received_Messages_Content::printMessageAge(uint64_t timeDiff)
         sprintf(buffer, "<1m");
     }
 
-    display->setCursor(Display_Utils::alignTextRight(strlen(buffer)), Display_Utils::selectTextLine(1));
+    display->setCursor(Display_Utils::alignTextRight(strlen(buffer)), Display_Utils::selectTextLine(2));
 
     display->print(buffer);
 }

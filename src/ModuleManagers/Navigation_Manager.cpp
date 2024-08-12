@@ -113,15 +113,15 @@ TinyGPSDate Navigation_Manager::getDate()
 uint64_t Navigation_Manager::getTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
 {
 #if DEBUG == 1
-    Serial.println("Navigation_Manager::getTimeDifference()");
-    Serial.print("time1: ");
-    Serial.println(time1);
-    Serial.print("date1: ");
-    Serial.println(date1);
-    Serial.print("time2: ");
-    Serial.println(time2);
-    Serial.print("date2: ");
-    Serial.println(date2);
+    // Serial.println("Navigation_Manager::getTimeDifference()");
+    // Serial.print("time1: ");
+    // Serial.println(time1);
+    // Serial.print("date1: ");
+    // Serial.println(date1);
+    // Serial.print("time2: ");
+    // Serial.println(time2);
+    // Serial.print("date2: ");
+    // Serial.println(date2);
 #endif
 
     uint8_t csec1, sec1, min1, hour1, day1, month1 = 0;
@@ -146,34 +146,34 @@ uint64_t Navigation_Manager::getTimeDifference(uint32_t time1, uint32_t date1, u
     year2 = (date2 / 10000) % 10000;
 
     #if DEBUG == 1
-    Serial.print("csec1: ");
-    Serial.println(csec1);
-    Serial.print("sec1: ");
-    Serial.println(sec1);
-    Serial.print("min1: ");
-    Serial.println(min1);
-    Serial.print("hour1: ");
-    Serial.println(hour1);
-    Serial.print("day1: ");
-    Serial.println(day1);
-    Serial.print("month1: ");
-    Serial.println(month1);
-    Serial.print("year1: ");
-    Serial.println(year1);
-    Serial.print("csec2: ");
-    Serial.println(csec2);
-    Serial.print("sec2: ");
-    Serial.println(sec2);
-    Serial.print("min2: ");
-    Serial.println(min2);
-    Serial.print("hour2: ");
-    Serial.println(hour2);
-    Serial.print("day2: ");
-    Serial.println(day2);
-    Serial.print("month2: ");
-    Serial.println(month2);
-    Serial.print("year2: ");
-    Serial.println(year2);
+    // Serial.print("csec1: ");
+    // Serial.println(csec1);
+    // Serial.print("sec1: ");
+    // Serial.println(sec1);
+    // Serial.print("min1: ");
+    // Serial.println(min1);
+    // Serial.print("hour1: ");
+    // Serial.println(hour1);
+    // Serial.print("day1: ");
+    // Serial.println(day1);
+    // Serial.print("month1: ");
+    // Serial.println(month1);
+    // Serial.print("year1: ");
+    // Serial.println(year1);
+    // Serial.print("csec2: ");
+    // Serial.println(csec2);
+    // Serial.print("sec2: ");
+    // Serial.println(sec2);
+    // Serial.print("min2: ");
+    // Serial.println(min2);
+    // Serial.print("hour2: ");
+    // Serial.println(hour2);
+    // Serial.print("day2: ");
+    // Serial.println(day2);
+    // Serial.print("month2: ");
+    // Serial.println(month2);
+    // Serial.print("year2: ");
+    // Serial.println(year2);
     #endif
 
     uint64_t diff = 0;
@@ -267,9 +267,9 @@ uint64_t Navigation_Manager::getTimeDifference(uint32_t time1, uint32_t date1, u
     diff |= ((uint64_t)(year2 - year1) << 48);
 
 #if DEBUG == 1
-    Serial.print("diff: ");
-    Serial.println(diff);
-    #endif
+    // Serial.print("diff: ");
+    // Serial.println(diff);
+#endif
 
     return diff;
 

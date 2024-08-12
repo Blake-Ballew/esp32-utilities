@@ -28,8 +28,8 @@ public:
 
     // void drawWindow() override;
 
-    // void drawWindow();
-    // void execBtnCallback(uint8_t inputID) {}
+    void drawWindow();
+    void execBtnCallback(uint8_t inputID);
 
     void transferState(State_Transfer_Data &transferData) override;
 

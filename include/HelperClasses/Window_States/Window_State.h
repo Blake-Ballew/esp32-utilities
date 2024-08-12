@@ -109,6 +109,12 @@ public:
         adjacentStates[inputID] = state;
     }
 
+    void clearAdjacentState(uint8_t inputID)
+    {
+        if (adjacentStates.find(inputID) != adjacentStates.end())
+            adjacentStates.erase(inputID);
+    }
+
     Window_State *getAdjacentState(uint8_t inputID)
     {
         if (adjacentStates.find(inputID) != adjacentStates.end())

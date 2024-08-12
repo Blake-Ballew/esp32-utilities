@@ -111,17 +111,17 @@ public:
             {
                 _manager->recvfromAck(buffer, &len, &from, &to, &id, &flags);
                 #if DEBUG == 1
-                Serial.println("Raw bytes:");
-                for (size_t i = 0; i < len; i++)
-                {
-                    Serial.print(buffer[i], HEX);
-                    Serial.print(" ");
-                }
-                Serial.println();
+                // Serial.println("Raw bytes:");
+                // for (size_t i = 0; i < len; i++)
+                // {
+                //     Serial.print(buffer[i], HEX);
+                //     Serial.print(" ");
+                // }
+                // Serial.println();
                 {
                     StaticJsonDocument<MSG_BASE_SIZE> testDoc;
                     deserializeMsgPack(testDoc, (const char *)buffer, len);
-                    Serial.println("Deserialized message:");
+                    Serial.println("Received message:");
                     serializeJson(testDoc, Serial);
                     Serial.println();
                 }
@@ -264,13 +264,13 @@ public:
                         Serial.println("Sending message:");
                         serializeJson(doc, Serial);
                         Serial.println();
-                        Serial.println("Sending raw bytes:");
-                        for (size_t i = 0; i < len; i++)
-                        {
-                            Serial.printf("%02X", buffer[i]);
-                            Serial.print(" ");
-                        }
-                        Serial.println();
+                        // Serial.println("Sending raw bytes:");
+                        // for (size_t i = 0; i < len; i++)
+                        // {
+                        //     Serial.printf("%02X", buffer[i]);
+                        //     Serial.print(" ");
+                        // }
+                        // Serial.println();
                         #endif
 
                         _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);

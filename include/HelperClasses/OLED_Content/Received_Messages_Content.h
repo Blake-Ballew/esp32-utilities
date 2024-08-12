@@ -57,6 +57,8 @@ public:
         printContent();
     }
 
+    bool ShowReadMsgs() { return showReadMsgs; }
+
 private:
     void printMessageAge(uint64_t timeDiff);
     void getMessages();
