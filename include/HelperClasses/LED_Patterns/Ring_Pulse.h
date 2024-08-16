@@ -16,7 +16,7 @@ public:
         endIdx = -1;
     }
 
-    void configurePattern(JsonObject &config)
+    void configurePattern(JsonDocument &config)
     {
         if (config.containsKey("beginIdx"))
         {

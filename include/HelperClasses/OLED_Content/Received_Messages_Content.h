@@ -8,6 +8,7 @@
 #include "LED_Manager.h"
 #include <vector>
 
+// TODO: Kill this. Content should not be responsible for getting messages.
 class Received_Messages_Content : public OLED_Content
 {
 public:

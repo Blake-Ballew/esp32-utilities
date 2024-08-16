@@ -3,6 +3,7 @@
 #include "Adafruit_GFX.h"
 #include "System_Utils.h"
 #include "EventHandler.h"
+#include <string>
 
 enum TextAlignmentHorizontal
 {
@@ -39,7 +40,31 @@ struct TextFormat
 
 struct TextDrawData
 {
-    const char *text;
+    TextDrawData(const char *txt, TextFormat fmt)
+    {
+        text = std::string(txt);
+        format = fmt;
+    }
+
+    TextDrawData(std::string txt, TextFormat fmt)
+    {
+        text = txt;
+        format = fmt;
+    }
+
+    TextDrawData(const char *txt)
+    {
+        text = std::string(txt);
+        format = TextFormat();
+    }
+
+    TextDrawData()
+    {
+        text = "";
+        format = TextFormat();
+    }
+
+    std::string text;
     TextFormat format;
 };
 

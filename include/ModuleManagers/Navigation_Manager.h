@@ -45,6 +45,7 @@ public:
     static TinyGPSLocation getLocation();
     static TinyGPSTime getTime();
     static TinyGPSDate getDate();
+    static bool IsGPSConnected();
 
     static uint64_t getTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2);
 

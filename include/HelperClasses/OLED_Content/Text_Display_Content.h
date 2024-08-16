@@ -17,10 +17,10 @@ public:
         #endif
         for (auto txt : textData)
         {
-            Display_Utils::printFormattedText(txt.text, txt.format);
+            Display_Utils::printFormattedText(txt.text.c_str(), txt.format);
             #if DEBUG == 1
                 Serial.print("Text_Display_Content::printContent(): ");
-                Serial.println(txt.text);
+                Serial.println(txt.text.c_str());
             #endif
         }
         

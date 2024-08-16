@@ -68,9 +68,7 @@ void LED_Manager::inputButtonFlash(uint8_t inputID)
     StaticJsonDocument<64> cfg;
     cfg["inputID"] = inputID;
 
-    auto cfgObj = cfg.as<JsonObject>();
-
-    LED_Utils::configurePattern(buttonFlashPatternID, cfgObj);
+    LED_Utils::configurePattern(buttonFlashPatternID, cfg);
     LED_Utils::loopPattern(buttonFlashPatternID, 1);
 }
 

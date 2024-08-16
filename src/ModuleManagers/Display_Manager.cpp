@@ -70,6 +70,7 @@ void Display_Manager::init()
     }
     #endif
     OLED_Content::setTimerID(Display_Manager::refreshTimerID);
+    Display_Utils::setRefreshTimerID(refreshTimerID);
 
     Display_Manager::initializeCallbacks();
     Display_Manager::generateHomeWindow(0);

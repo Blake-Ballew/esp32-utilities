@@ -40,9 +40,7 @@ public:
         doc["beginIdx"] = beginLedIdx;
         doc["endIdx"] = endLedIdx;
 
-        auto cfgObj = doc.as<JsonObject>();
-
-        LED_Utils::configurePattern(ringPulseID, cfgObj);
+        LED_Utils::configurePattern(ringPulseID, doc);
     }
 
     ~Repeat_Message_State()
@@ -83,9 +81,7 @@ public:
                 cfg["gOverride"] = msgG;
                 cfg["bOverride"] = msgB;
 
-                auto cfgObj = cfg.as<JsonObject>();
-
-                LED_Utils::configurePattern(ringPulseID, cfgObj);
+                LED_Utils::configurePattern(ringPulseID, cfg);
             }
 
             if (message != nullptr)

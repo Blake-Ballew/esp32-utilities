@@ -1,25 +1,26 @@
 #pragma once
 
 #include "Window_State.h"
-#include "Saved_Locations_Content.h"
+// #include "Saved_Locations_Content.h"
+
+struct Saved_Location
+{
+    std::string name;
+    double lat;
+    double lon;
+};
+
+namespace
+{
+    const char *LOC_SELECT PROGMEM = "Select a location";
+    const char *NO_LOC PROGMEM = "No locations";
+}
 
 class Select_Location_State : public Window_State
 {
 public:
-    Select_Location_State(Saved_Locations_Content *locations = nullptr)
+    Select_Location_State()
     {
-        // typeID = __COUNTER__;
-        if (locations == nullptr)
-        {
-            locationsContent = new Saved_Locations_Content();
-            renderContent = locationsContent;
-        }
-        else
-        {
-            locationsContent = locations;
-            renderContent = locations;
-        }
-
         assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
         assignInput(BUTTON_4, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Select");
         assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
@@ -32,48 +33,45 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Select_Location_State::enterState");
-#endif
-        locationsContent->loadLocations();
         Window_State::enterState(transferData);
+
+        locations.clear();
+
+        if (transferData.serializedData != nullptr)
+        {
+            DynamicJsonDocument *doc = transferData.serializedData;
+            if (doc->containsKey("locations") && (*doc)["locations"].is<JsonArray>())
+            {
+                for (auto loc : (*doc)["locations"].as<JsonArray>())
+                {
+                    Saved_Location location;
+                    location.name = loc["n"].as<std::string>();
+                    location.lat = loc["la"].as<double>();
+                    location.lon = loc["lo"].as<double>();
+
+                    locations.push_back(location);
+                }
+
+                locationIt = locations.begin();
+            }
+        }
     }
 
     void exitState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Select_Location_State::exitState");
-#endif
         Window_State::exitState(transferData);
         DynamicJsonDocument *doc = nullptr;
 
-        switch (transferData.inputID)
-        {
-        case BUTTON_4:
+        if (locationIt != locations.end() && transferData.inputID == BUTTON_4)
         {
             doc = new DynamicJsonDocument(128);
-            auto location = locationsContent->getSelectedLocation();
-            if (location != nullptr)
-            {
-                if (location->idx == -1)
-                {
-                    (*doc)["isCurrLocation"] = true;
-                }
-                else
-                {
-                    (*doc)["isCurrLocation"] = false;
-                    (*doc)["idx"] = location->idx;
-                    (*doc)["name"] = location->name;
-                    (*doc)["lat"] = location->lat;
-                    (*doc)["lon"] = location->lon;
-                }
-            }
+            auto location = *locationIt;
+
+            (*doc)["name"] = location.name;
+            (*doc)["lat"] = location.lat;
+            (*doc)["lon"] = location.lon;
 
             transferData.serializedData = doc;
-        }
-        break;
-        default:
-            break;
         }
 
         LED_Manager::clearRing();
@@ -85,12 +83,30 @@ public:
         {
         case ENC_UP:
         {
-            locationsContent->encUp();
+            if (locations.size() > 1)
+            {
+                if (locationIt == locations.begin())
+                {
+                    locationIt = locations.end() - 1;
+                }
+                else
+                {
+                    locationIt--;
+                }
+            }
         }
         break;
         case ENC_DOWN:
         {
-            locationsContent->encDown();
+            if (locations.size() > 1)
+            {
+                locationIt++;
+
+                if (locationIt == locations.end())
+                {
+                    locationIt = locations.begin();
+                }
+            }
         }
         break;
         default:
@@ -98,6 +114,41 @@ public:
         }
     }
 
+    void displayState()
+    {
+        Display_Utils::clearContentArea();
+
+        if (locations.size() > 0)
+        {
+            Saved_Location location = *locationIt;
+            
+            TextFormat prompt;
+            prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            prompt.verticalAlignment = TEXT_LINE;
+            prompt.line = 2;
+
+            Display_Utils::printFormattedText(LOC_SELECT, prompt);
+
+            TextFormat locationText;
+            locationText.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            locationText.verticalAlignment = TEXT_LINE;
+            locationText.line = 3;
+
+            Display_Utils::printFormattedText(location.name.c_str(), locationText);
+        }
+        else
+        {
+            TextFormat prompt;
+            prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            prompt.verticalAlignment = ALIGN_CENTER_VERTICAL;
+
+            Display_Utils::printFormattedText(NO_LOC, prompt);
+        }
+
+        display->display();
+    }
+
 private:
-    Saved_Locations_Content *locationsContent;
+    std::vector<Saved_Location> locations;
+    std::vector<Saved_Location>::iterator locationIt;
 };

@@ -54,6 +54,7 @@ public:
     static size_t getNumMsges();
     static JsonArray::iterator getMsgIteratorBegin();
     static JsonArray::iterator getMsgIteratorEnd();
+    static void WriteMessagesToJSON(ArduinoJson::JsonDocument &doc);
 
     // Saved Coordinates
     static bool readCoordsFromEEPROM();
@@ -65,6 +66,7 @@ public:
     static size_t getNumCoords();
     static JsonArray::iterator getCoordIteratorBegin();
     static JsonArray::iterator getCoordIteratorEnd();
+    static void WriteCoordinatesToJSON(ArduinoJson::JsonDocument &doc);
 
     static bool readSettingsFromEEPROM();
     static bool writeSettingsToEEPROM();

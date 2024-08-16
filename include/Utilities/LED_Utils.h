@@ -34,7 +34,7 @@ public:
     static void setAnimationLengthTicks(int patternID, size_t ticks);
 
     // Sends a configuration object to a pattern
-    static void configurePattern(int patternID, JsonObject &config);
+    static void configurePattern(int patternID, JsonDocument &config);
 
     // Sets a pattern to loop n times, or indefinitely if numLoops is -1
     // Enables the pattern timer if it is not already running

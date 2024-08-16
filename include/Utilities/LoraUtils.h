@@ -58,18 +58,7 @@ public:
     static EventHandlerT<uint32_t, bool> &MessageReceived() { return _MessageReceived; }
     static uint8_t DefaultSendAttempts() { return _DefaultSendAttempts; }
     static size_t GetNumMessages() { return _ReceivedMessages.size(); }
-    static size_t GetNumUnreadMessages() 
-    {
-        size_t count = 0;
-        xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY);
-        for (auto it = _ReceivedMessages.begin(); it != _ReceivedMessages.end(); it++)
-        {
-            if (!it->second->messageOpened)
-                count++;
-        }
-        xSemaphoreGive(_MessageAccessMutex);
-        return count;
-    }
+    static size_t GetNumUnreadMessages() { return _UnreadMessages.size(); }
 
     // Setters
     static void SetMessageSendQueueID(int id) { _MessageSendQueueID = id; }
@@ -93,15 +82,11 @@ public:
     { 
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (_ReceivedMessages.size() > 0)
+            if (_ReceivedMessageIterator != _ReceivedMessages.end())
             {
                 _ReceivedMessageIterator++;
             }
 
-            if (_ReceivedMessageIterator == _ReceivedMessages.end())
-            {
-                _ReceivedMessageIterator = _ReceivedMessages.begin();
-            }
             xSemaphoreGive(_MessageAccessMutex);
         }
     }
@@ -110,14 +95,11 @@ public:
     {
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (_ReceivedMessages.size() > 0)
+            if (_ReceivedMessageIterator != _ReceivedMessages.begin())
             {
-                if (_ReceivedMessageIterator == _ReceivedMessages.begin())
-                {
-                    _ReceivedMessageIterator = _ReceivedMessages.end();
-                }
                 _ReceivedMessageIterator--;
             }
+
             xSemaphoreGive(_MessageAccessMutex);
         }
     }
@@ -139,12 +121,12 @@ public:
 
     static bool IsMessageIteratorAtBeginning()
     {
-        return _ReceivedMessageIterator == GetReceivedMessageBegin();
+        return _ReceivedMessageIterator == _ReceivedMessages.begin();
     }
 
     static bool IsMessageIteratorAtEnd()
     {
-        return _ReceivedMessageIterator == GetReceivedMessageEnd();
+        return _ReceivedMessageIterator == _ReceivedMessages.end();
     }
 
     // Unread messages
@@ -152,11 +134,7 @@ public:
     {
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            _UnreadMessageIterator = _ReceivedMessages.begin();
-            while (_UnreadMessageIterator != _ReceivedMessages.end() && _UnreadMessageIterator->second->messageOpened)
-            {
-                _UnreadMessageIterator++;
-            }
+            _UnreadMessageIterator = _UnreadMessages.begin();
             xSemaphoreGive(_MessageAccessMutex);
         }
     }
@@ -165,23 +143,11 @@ public:
     {
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (_ReceivedMessages.size() > 0)
+            if (_UnreadMessageIterator != _UnreadMessages.end())
             {
                 _UnreadMessageIterator++;
-                while (_UnreadMessageIterator != _ReceivedMessages.end() && _UnreadMessageIterator->second->messageOpened)
-                {
-                    _UnreadMessageIterator++;
-                }
             }
 
-            if (_UnreadMessageIterator == _ReceivedMessages.end())
-            {
-                _UnreadMessageIterator = _ReceivedMessages.begin();
-                while (_UnreadMessageIterator != _ReceivedMessages.end() && _UnreadMessageIterator->second->messageOpened)
-                {
-                    _UnreadMessageIterator++;
-                }
-            }
             xSemaphoreGive(_MessageAccessMutex);
         }
     }
@@ -190,18 +156,11 @@ public:
     {
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (_ReceivedMessages.size() > 0)
+            if (_UnreadMessageIterator != _UnreadMessages.begin())
             {
-                if (_UnreadMessageIterator == _ReceivedMessages.begin())
-                {
-                    _UnreadMessageIterator = _ReceivedMessages.end();
-                }
                 _UnreadMessageIterator--;
-                while (_UnreadMessageIterator != _ReceivedMessages.begin() && _UnreadMessageIterator->second->messageOpened)
-                {
-                    _UnreadMessageIterator--;
-                }
             }
+
             xSemaphoreGive(_MessageAccessMutex);
         }
     }
@@ -210,7 +169,7 @@ public:
     {
         if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (_UnreadMessageIterator != _ReceivedMessages.end())
+            if (_UnreadMessageIterator != _UnreadMessages.end())
             {
                 auto msg = _UnreadMessageIterator->second->clone();
                 xSemaphoreGive(_MessageAccessMutex);
@@ -223,17 +182,20 @@ public:
 
     static bool IsUnreadMessageIteratorAtBeginning()
     {
-        return _UnreadMessageIterator == GetUnreadMessageBegin();
+        return _UnreadMessageIterator == _UnreadMessages.begin();
     }
 
     static bool IsUnreadMessageIteratorAtEnd()
     {
-        return _UnreadMessageIterator == GetUnreadMessageEnd();
+        return _UnreadMessageIterator == _UnreadMessages.end();
     }
 
 protected:
     // Last message received from each user
     static std::map<uint32_t, MessageBase *> _ReceivedMessages;
+
+    // Unread messages
+    static std::map<uint32_t, MessageBase *> _UnreadMessages;
 
     // Last message broadcasted by this device
     static MessageBase *_MyLastBroadcast;
@@ -269,61 +231,23 @@ protected:
     static std::map<uint32_t, MessageBase *>::iterator _ReceivedMessageIterator;
     static std::map<uint32_t, MessageBase *>::iterator _UnreadMessageIterator;
 
-    static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageBegin()
-    {
-        return _ReceivedMessages.begin();
-    }
+    // static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageBegin()
+    // {
+    //     return _ReceivedMessages.begin();
+    // }
 
-    static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageEnd()
-    {
-        if (_ReceivedMessages.size() == 0)
-        {
-            return _ReceivedMessages.end();
-        }
+    // static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageEnd()
+    // {
+    //     return _ReceivedMessages.end();
+    // }
 
-        auto it = _ReceivedMessages.end();
-        it--;
-        return it;
-    }
+    // static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageBegin()
+    // {
+    //     return _UnreadMessages.begin();
+    // }
 
-    static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageBegin()
-    {
-        auto it = _ReceivedMessages.begin();
-        if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
-        {
-            while (it != _ReceivedMessages.end() && it->second->messageOpened)
-            {
-                it++;
-            }
-            xSemaphoreGive(_MessageAccessMutex);
-        }
-        return it;
-    }
-
-    static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageEnd()
-    {
-        auto it = _ReceivedMessages.end();
-
-        if (_ReceivedMessages.size() == 0)
-        {
-            return it;
-        }
-
-        if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
-        {
-            while (it != _ReceivedMessages.begin() && it->second->messageOpened)
-            {
-                it--;
-            }
-
-            if (it->second->messageOpened)
-            {
-                it = _ReceivedMessages.end();
-            }
-
-            xSemaphoreGive(_MessageAccessMutex);
-        }
-
-        return it;
-    }
+    // static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageEnd()
+    // {
+    //     return _UnreadMessages.end();
+    // }
 };

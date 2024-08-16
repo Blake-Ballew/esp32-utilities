@@ -71,9 +71,7 @@ public:
             
             if (currentInput == inputSequence.end())
             {
-                auto cfgObj = cfg.as<JsonObject>();
-
-                LED_Utils::configurePattern(illuminateID, cfgObj);
+                LED_Utils::configurePattern(illuminateID, cfg);
                 LED_Utils::iteratePattern(illuminateID);
 
                 unlock();
@@ -83,9 +81,7 @@ public:
                 cfg["inputStates"][1]["input"] = *currentInput;
                 cfg["inputStates"][1]["state"] = true;
 
-                auto cfgObj = cfg.as<JsonObject>();
-
-                LED_Utils::configurePattern(illuminateID, cfgObj);
+                LED_Utils::configurePattern(illuminateID, cfg);
                 LED_Utils::iteratePattern(illuminateID);
             }
         }
@@ -116,9 +112,7 @@ protected:
         cfg["inputStates"][1]["input"] = *currentInput;
         cfg["inputStates"][1]["state"] = true;
 
-        auto cfgObj = cfg.as<JsonObject>();
-
-        LED_Utils::configurePattern(illuminateID, cfgObj);
+        LED_Utils::configurePattern(illuminateID, cfg);
         LED_Utils::iteratePattern(illuminateID);
     }
 

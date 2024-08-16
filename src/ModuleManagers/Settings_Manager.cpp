@@ -222,6 +222,21 @@ JsonArray::iterator Settings_Manager::getMsgIteratorEnd()
     return savedMessages["Messages"].as<JsonArray>().end();
 }
 
+void Settings_Manager::WriteMessagesToJSON(ArduinoJson::JsonDocument &doc)
+{
+    // Create nested array "messages" if it does not exist
+    if (!doc.containsKey("messages"))
+    {
+        doc.createNestedArray("messages");
+    }
+
+    // iterate through saved messages and add them to the JSON document
+    for (auto msg : savedMessages["Messages"].as<JsonArray>())
+    {
+        doc["messages"].add(msg.as<std::string>());
+    }
+}
+
 bool Settings_Manager::readCoordsFromEEPROM()
 {
     File coordFile = SPIFFS.open("/coords.json", FILE_READ);
@@ -325,6 +340,24 @@ JsonArray::iterator Settings_Manager::getCoordIteratorBegin()
 JsonArray::iterator Settings_Manager::getCoordIteratorEnd()
 {
     return savedCoordinates["Coords"].as<JsonArray>().end();
+}
+
+void Settings_Manager::WriteCoordinatesToJSON(ArduinoJson::JsonDocument &doc)
+{
+    // Create nested array "locations" if it does not exist
+    if (!doc.containsKey("locations"))
+    {
+        doc.createNestedArray("locations");
+    }
+
+    // iterate through saved coordinates and add them to the JSON document
+    for (auto coord : savedCoordinates["Coords"].as<JsonArray>())
+    {
+        JsonObject location = doc["locations"].createNestedObject();
+        location["n"] = coord["n"].as<std::string>();
+        location["la"] = coord["la"].as<double>();
+        location["lo"] = coord["lo"].as<double>();
+    }
 }
 
 bool Settings_Manager::readStatusesFromEEPROM(ArduinoJson::JsonDocument &doc)

@@ -1,95 +1,161 @@
 #pragma once
 
 #include "Window_State.h"
-#include "Tracking_Content.h"
+#include "LoraMessageDisplay.h"
+#include "LoraUtils.h"
+#include "LED_Utils.h"
+#include "RingPoint.h"
+#include "Navigation_Manager.h"
+
+namespace
+{
+    const size_t LedRingIdxStart = 0;
+    const size_t LedRingIdxEnd = 15;
+}
 
 class Tracking_State : public Window_State
 {
 public:
-    Tracking_State(Tracking_Content *tracking) : trackingContent(tracking)
+    Tracking_State(LoraMessageDisplay *content)
     {
-        // typeID = __COUNTER__;
-        renderContent = trackingContent;
-        assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
+        messageDisplay = content;
+        renderContent = content;
     }
 
     ~Tracking_State()
     {
-        if (trackingContent != nullptr)
-        {
-            trackingContent->stop();
-        }
-
-        if (pingMsg != nullptr)
-        {
-            delete pingMsg;
-            pingMsg = nullptr;
-        }
+        
     }
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Tracking_State::enterState");
-#endif
         Window_State::enterState(transferData);
 
-        if (trackingContent != nullptr)
+        Display_Utils::enableRefreshTimer(500);
+
+        if (RingPoint::RegisteredPatternID() == -1)
         {
-            trackingContent->start();
+            RingPoint *ringPoint = new RingPoint();
+            LED_Utils::registerPattern(ringPoint);
+        }
 
-            if (transferData.serializedData != nullptr)
+        _RingPointID = RingPoint::RegisteredPatternID();
+        LED_Utils::enablePattern(_RingPointID);
+
+        StaticJsonDocument<256> cfg;
+        cfg["beginIdx"] = LedRingIdxStart;
+        cfg["endIdx"] = LedRingIdxEnd;
+
+        if (transferData.serializedData != nullptr)
+        {
+            auto doc = transferData.serializedData;
+
+            if (MessageBase::GetMessageTypeFromJson(*doc) == MessagePing::MessageType())
             {
-                auto userID = (*transferData.serializedData)["userID"].as<uint64_t>();
-                auto messageID = (*transferData.serializedData)["messageID"].as<uint32_t>();
+                pingMsg = new MessagePing();
+                pingMsg->deserialize(*doc);
+                messageDisplay->SetDisplayMessage(pingMsg);
 
-                auto msgType = MessageBase::GetMessageTypeFromJson(*transferData.serializedData);
+                cfg["rOverride"] = pingMsg->color_R;
+                cfg["gOverride"] = pingMsg->color_G;
+                cfg["bOverride"] = pingMsg->color_B;
 
-                MessageBase *msg = LoraUtils::DeserializeMessage(*transferData.serializedData);
-
-                if (msg != nullptr && msgType == MessagePing::MessageType())
-                {
-                    pingMsg = (MessagePing *)(msg);
-                }
-                else
-                {
-                    if (msg != nullptr)
-                    {
-                        delete msg;
-                    }
-                    transferData.returnCode = ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE;
-
-                    return;
-                }
-
-                trackingContent->assignMsg(pingMsg);
+                LED_Utils::configurePattern(_RingPointID, cfg);
             }
         }
     }
 
     void exitState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Tracking_State::exitState");
-#endif
         Window_State::exitState(transferData);
 
-        if (trackingContent != nullptr)
+        Display_Utils::disableRefreshTimer();
+        LED_Utils::disablePattern(_RingPointID);
+        LED_Utils::clearPattern(_RingPointID);
+
+        messageDisplay->ClearDisplayMessage();
+        pingMsg = nullptr;
+    }
+
+    void displayState()
+    {
+        #if DEBUG != 1
+        if (!Navigation_Manager::IsGPSConnected())
         {
-            trackingContent->stop();
-            trackingContent->unassignMsg();
-
-            if (pingMsg != nullptr)
-            {
-                delete pingMsg;
-                pingMsg = nullptr;
-            }
+            Display_Utils::printCenteredText("No GPS Signal");
+            display->display();
+            Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            return;
         }
+        #endif
 
-        transferData.serializedData = nullptr;
+        Window_State::displayState();
+
+        if (pingMsg != nullptr)
+        {
+            double distance = Navigation_Manager::getDistanceTo(pingMsg->lat, pingMsg->lng);
+
+            char distanceStr[10];
+            if (distance > 2000)
+            {
+                sprintf(distanceStr, "%.2f km", distance / 1000);
+            }
+            else
+            {
+                sprintf(distanceStr, "%d m", (uint32_t)distance);
+            }
+
+            TextFormat format;
+            format.horizontalAlignment = ALIGN_RIGHT;
+            format.verticalAlignment = TEXT_LINE;
+            format.line = 2;
+
+            Display_Utils::printFormattedText(distanceStr, format);
+
+            size_t ledFxMin = 20;
+            size_t ledFxMax = 500;
+
+            if (distance > ledFxMax)
+            {
+                distance = ledFxMax;
+            } 
+            else if (distance < ledFxMin)
+            {
+                distance = ledFxMin;
+            }
+
+            Navigation_Manager::read();
+            double heading = Navigation_Manager::getHeadingTo(pingMsg->lat, pingMsg->lng);
+            int azimuth = Navigation_Manager::InvertXAzimuth(Navigation_Manager::getAzimuth());
+
+            float fadeDegrees = -0.075f * distance + 61.5;
+            float directionDegrees = heading - azimuth;
+
+            if (directionDegrees < 0)
+            {
+                directionDegrees += 360;
+            }
+
+            StaticJsonDocument<64> cfg;
+            cfg["fadeDegrees"] = fadeDegrees;
+            cfg["directionDegrees"] = directionDegrees;
+
+            #if DEBUG == 1
+                Serial.print("heading: ");
+                Serial.println(heading);
+                Serial.print("azimuth: ");
+                Serial.println(azimuth);
+            #endif
+
+            LED_Utils::configurePattern(_RingPointID, cfg);
+            LED_Utils::iteratePattern(_RingPointID);
+        }
     }
 
 private:
-    Tracking_Content *trackingContent;
+    LoraMessageDisplay *messageDisplay;
     MessagePing *pingMsg = nullptr;
+
+    int _RingPointID = -1;
 };

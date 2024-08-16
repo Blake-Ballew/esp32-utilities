@@ -1,12 +1,18 @@
 #include "LoraUtils.h"
 
-MessageBase *LoraUtils::_MyLastBroadcast = nullptr;
 std::map<uint32_t, MessageBase *> LoraUtils::_ReceivedMessages;
+std::map<uint32_t, MessageBase *> LoraUtils::_UnreadMessages;
+
+MessageBase *LoraUtils::_MyLastBroadcast = nullptr;
+
 EventHandlerT<uint32_t, bool> LoraUtils::_MessageReceived;
+
 int LoraUtils::_MessageSendQueueID = -1;
+
+uint8_t LoraUtils::_DefaultSendAttempts = 3;
+
 uint32_t LoraUtils::_UserID = 0;
 uint8_t LoraUtils::_NodeID = 0;
-uint8_t LoraUtils::_DefaultSendAttempts = 3;
 
 StaticSemaphore_t LoraUtils::_MessageAccessMutexBuffer;
 SemaphoreHandle_t LoraUtils::_MessageAccessMutex;
@@ -60,18 +66,17 @@ bool LoraUtils::SendMessage(MessageBase *msg, uint8_t numSendAttempts) {
 
 void LoraUtils::MarkMessageOpened(uint64_t userID) {
     if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE) {
-        if (_ReceivedMessages.find(userID) != _ReceivedMessages.end()) {
-            _ReceivedMessages[userID]->messageOpened = true;
-            xSemaphoreGive(_MessageAccessMutex);
+        if (_UnreadMessages.find(userID) != _UnreadMessages.end()) {
+            delete _UnreadMessages[userID];
 
             if (_UnreadMessageIterator->first == userID) {
-                IncrementUnreadMessageIterator();
+                _UnreadMessageIterator = _UnreadMessages.erase(_UnreadMessageIterator);
+            } else {
+                _UnreadMessages.erase(userID);
             }
         }
-        else
-        {
-            xSemaphoreGive(_MessageAccessMutex);
-        }
+        
+        xSemaphoreGive(_MessageAccessMutex);
     }
 }
 
@@ -114,6 +119,16 @@ void LoraUtils::SetReceivedMessage(uint64_t userID, MessageBase *msg) {
             delete _ReceivedMessages[userID];
         }
         _ReceivedMessages[userID] = msg->clone();
+
+        if (msg->messageOpened == false) 
+        {
+            if (_UnreadMessages.find(userID) != _UnreadMessages.end()) 
+            {
+                delete _UnreadMessages[userID];
+            }
+
+            _UnreadMessages[userID] = msg->clone();
+        }
         xSemaphoreGive(_MessageAccessMutex);
     }
 }

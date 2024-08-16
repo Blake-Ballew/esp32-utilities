@@ -2,19 +2,17 @@
 
 #include "Window_State.h"
 #include "Saved_Messages_Content.h"
-#include "Network_Manager.h"
-#include "Navigation_Manager.h"
+#include <vector>
+#include <string>
 
-// namespace
-// {
-//     const char *MESSAGE_SENT PROGMEM = "Message sent";
-//     const char *NO_ROUTE PROGMEM = "No route";
-//     const char *DELIVERY_FAILED PROGMEM = "Delivery failed";
-//     const char *UNABLE_TO_QUEUE PROGMEM = "Unable to queue";
-// }
+namespace
+{
+    const char *MSG_SELECT PROGMEM = "Select a message";
+    const char *NO_MSG PROGMEM = "No messages";
+}
 
 /*
-    Takes in a set of coordinates to be sent as a broadcast or direct message.
+    Takes in a set of messages to be sent as a broadcast or direct message.
     The user can select a message to send from a list of saved messages or
     use the name of the location as the message.
 */
@@ -23,73 +21,48 @@ class Select_Message_State : public Window_State
 {
 public:
     // edit bool decides if state is used to manage saved messages or send them.
-    Select_Message_State(Saved_Messages_Content *content)
-    {
-        msgContent = content;
-        renderContent = msgContent;
-
-        assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
-        assignInput(BUTTON_4, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Send");
-
-        msgContent->setSelectMsgPrompt();
-    }
-
     Select_Message_State()
     {
-        Select_Message_State(new Saved_Messages_Content());
+        assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
+        assignInput(BUTTON_4, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Send");
     }
 
     ~Select_Message_State()
     {
-        if (msgContent != nullptr)
-        {
-            msgContent->stop();
-        }
+
     }
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Select_Message_State::enterState");
-#endif
-        // Window_State::enterState(transferData);
+        Window_State::enterState(transferData);
 
-        if (transferData.serializedData != nullptr && transferData.serializedData->containsKey("additionalMsgList"))
+        _Messages.clear();
+
+        if (transferData.serializedData != nullptr)
         {
-            for (auto msg : (*transferData.serializedData)["additionalMsgList"].as<JsonArray>())
+            DynamicJsonDocument *doc = transferData.serializedData;
+            if (doc->containsKey("messages") && (*doc)["messages"].is<JsonArray>())
             {
-#if DEBUG == 1
-                Serial.print("Adding message: ");
-                Serial.println(msg.as<const char *>());
-#endif
-                msgContent->insertMessage(msg.as<const char *>());
+                for (auto msg : (*doc)["messages"].as<JsonArray>())
+                {
+                    _Messages.push_back(msg.as<std::string>());
+                }
+
+                _MessageIt = _Messages.begin();
             }
         }
-
-        msgContent->loadMessages();
     }
 
     void exitState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Select_Message_State::exitState");
-#endif
         Window_State::exitState(transferData);
 
-        if (transferData.inputID == BUTTON_4)
+        if (_MessageIt != _Messages.end() && transferData.inputID == BUTTON_4)
         {
-            auto message = msgContent->getCurrentMessage();
-            if (message != nullptr)
-            {
-                DynamicJsonDocument *doc = new DynamicJsonDocument(128);
-                (*doc)["message"] = message;
-                transferData.serializedData = doc;
-            }
+            DynamicJsonDocument *doc = new DynamicJsonDocument(200);
+            (*doc)["message"] = *_MessageIt;
+            transferData.serializedData = doc;
         }
-
-        msgContent->clearAdditionalMessages();
-
-        LED_Manager::clearRing();
     }
 
     void processInput(uint8_t inputID)
@@ -98,12 +71,30 @@ public:
         {
         case ENC_UP:
         {
-            msgContent->encUp();
+            if (_Messages.size() > 0)
+            {
+                if (_MessageIt == _Messages.begin())
+                {
+                    _MessageIt = _Messages.end() - 1;
+                }
+                else
+                {
+                    _MessageIt--;
+                }
+            }
         }
         break;
         case ENC_DOWN:
         {
-            msgContent->encDown();
+            if (_Messages.size() > 0)
+            {
+                _MessageIt++;
+
+                if (_MessageIt == _Messages.end())
+                {
+                    _MessageIt = _Messages.begin();
+                }
+            }
         }
         break;
         default:
@@ -111,9 +102,39 @@ public:
         }
     }
 
-private:
-    Saved_Messages_Content *msgContent;
+    void displayState()
+    {
+        if (_Messages.size() > 0)
+        {
+            TextFormat prompt;
+            prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            prompt.verticalAlignment = TEXT_LINE;
+            prompt.line = 2;
 
-    bool sendDirect;
+            Display_Utils::printFormattedText(MSG_SELECT, prompt);
+
+            TextFormat msg;
+            msg.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            msg.verticalAlignment = TEXT_LINE;
+            msg.line = 3;
+
+            Display_Utils::printFormattedText(_MessageIt->c_str(), msg);
+        }
+        else
+        {
+            TextFormat prompt;
+            prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+            prompt.verticalAlignment = ALIGN_CENTER_VERTICAL;
+
+            Display_Utils::printFormattedText(NO_MSG, prompt);
+        }
+
+        display->display();
+    }
+
+private:
+    
+    std::vector<std::string> _Messages;
+    std::vector<std::string>::iterator _MessageIt;
     uint64_t userID;
 };

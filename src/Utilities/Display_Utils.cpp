@@ -175,6 +175,9 @@ size_t Display_Utils::getUintLength(uint64_t num)
 
 void Display_Utils::enableRefreshTimer(size_t timerPeriodMS)
 {
+    #if DEBUG == 1
+        Serial.printf("Display_Utils::enableRefreshTimer(): starting timerID: %d\n", refreshTimerID);
+    #endif
     if (refreshTimerID == -1)
         return;
 
@@ -186,6 +189,9 @@ void Display_Utils::enableRefreshTimer(size_t timerPeriodMS)
 
 void Display_Utils::disableRefreshTimer()
 {
+    #if DEBUG == 1
+        Serial.printf("Display_Utils::disableRefreshTimer(): stopping timerID: %d\n", refreshTimerID);
+    #endif
     if (refreshTimerID == -1)
         return;
 

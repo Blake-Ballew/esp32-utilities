@@ -59,7 +59,7 @@ void LED_Utils::setAnimationLengthTicks(int patternID, size_t ticks)
     registeredPatterns[patternID].pattern->setAnimationLengthTicks(ticks);
 }
 
-void LED_Utils::configurePattern(int patternID, JsonObject &config)
+void LED_Utils::configurePattern(int patternID, JsonDocument &config)
 {
     if (registeredPatterns.find(patternID) == registeredPatterns.end())
     {

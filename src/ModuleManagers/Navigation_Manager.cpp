@@ -110,6 +110,12 @@ TinyGPSDate Navigation_Manager::getDate()
     return gps.date;
 }
 
+bool Navigation_Manager::IsGPSConnected()
+{
+    updateGPS();
+    return getLocation().isValid();
+}
+
 uint64_t Navigation_Manager::getTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
 {
 #if DEBUG == 1

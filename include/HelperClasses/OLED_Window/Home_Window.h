@@ -7,12 +7,20 @@
 #include "Received_Messages_Content.h"
 #include "Saved_Locations_Content.h"
 #include "Saved_Messages_Content.h"
+#include "LoraMessageDisplay.h"
+#include <string>
 
-#include "Received_Messages_State.h"
+// #include "Received_Messages_State.h"
+#include "UnreadMessageState.h"
 #include "Home_State.h"
 #include "Select_Message_State.h"
 #include "Select_Location_State.h"
 #include "Tracking_State.h"
+
+namespace
+{
+    const char *CURR_LOC PROGMEM = "Current Location";
+}
 
 class Home_Window : public OLED_Window
 {
@@ -29,22 +37,19 @@ public:
     // void drawWindow() override;
 
     void drawWindow();
-    void execBtnCallback(uint8_t inputID);
+    // void execBtnCallback(uint8_t inputID);
 
     void transferState(State_Transfer_Data &transferData) override;
 
 private:
     Home_Content *homeContent;
-    Tracking_Content *trackingContent;
-    Saved_Messages_Content *savedMessagesContent;
-    Received_Messages_Content *receivedMessagesContent;
-    Saved_Locations_Content *savedLocationsContent;
+    LoraMessageDisplay *messageDisplay;
 
     Home_State *homeState;
     Tracking_State *trackingState;
     Select_Message_State *selectMessageState;
     Select_Location_State *selectLocationState;
-    Received_Messages_State *receivedMessagesState;
+    UnreadMessageState *unreadMessageState;
 
     // Message info
     bool sendDirect;
@@ -53,6 +58,6 @@ private:
     int locationIdx;
     double latitude;
     double longitude;
-    const char *locName;
+    std::string locName;
     void clearMessageInfo();
 };

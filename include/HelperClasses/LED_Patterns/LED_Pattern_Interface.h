@@ -17,7 +17,7 @@ public:
     // Used to pass custom parameters to the pattern
     // This function will typically follow the pattern of:
     // if (config.containsKey("key")) { key = config["key"]; }
-    virtual void configurePattern(JsonObject &config) {}
+    virtual void configurePattern(JsonDocument &config) {}
 
     // Called to reset the pattern to its initial state
     void resetPattern() {

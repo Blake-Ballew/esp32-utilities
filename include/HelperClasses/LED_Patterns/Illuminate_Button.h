@@ -17,7 +17,7 @@ public:
         animationTicks = 15;
     }
 
-    void configurePattern(JsonObject &config)
+    void configurePattern(JsonDocument &config)
     {
         if (config.containsKey("inputStates"))
         {

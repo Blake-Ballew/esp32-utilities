@@ -8,39 +8,39 @@ Home_Window::Home_Window(OLED_Window *parent) : OLED_Window(parent)
 Home_Window::Home_Window() : OLED_Window()
 {
     homeContent = new Home_Content(display);
-    trackingContent = new Tracking_Content(display);
-    receivedMessagesContent = new Received_Messages_Content(false, false);
-    savedMessagesContent = new Saved_Messages_Content();
-    savedLocationsContent = new Saved_Locations_Content(true, true);
+    messageDisplay = new LoraMessageDisplay();
 
-    receivedMessagesState = new Received_Messages_State(receivedMessagesContent);
+    unreadMessageState = new UnreadMessageState(messageDisplay);
     homeState = new Home_State(homeContent);
-    trackingState = new Tracking_State(trackingContent);
-    selectMessageState = new Select_Message_State(savedMessagesContent);
-    selectLocationState = new Select_Location_State(savedLocationsContent);
+    trackingState = new Tracking_State(messageDisplay);
+    selectMessageState = new Select_Message_State();
+    selectLocationState = new Select_Location_State();
 
     contentList.push_back(homeContent);
-    contentList.push_back(trackingContent);
-    contentList.push_back(receivedMessagesContent);
-    contentList.push_back(selectMessageState->renderContent);
-    contentList.push_back(selectLocationState->renderContent);
+    contentList.push_back(messageDisplay);
 
     stateList.push_back(homeState);
     stateList.push_back(trackingState);
-    stateList.push_back(receivedMessagesState);
+    stateList.push_back(unreadMessageState);
     stateList.push_back(selectMessageState);
     stateList.push_back(selectLocationState);
 
     setInitialState(homeState);
 
     homeState->setAdjacentState(BUTTON_2, selectLocationState);
+    homeState->setAdjacentState(ENC_DOWN, unreadMessageState);
 
-    receivedMessagesState->setAdjacentState(ENC_UP, homeState);
-    receivedMessagesState->setAdjacentState(BUTTON_1, trackingState);
-    receivedMessagesState->setAdjacentState(BUTTON_4, selectLocationState);
+    unreadMessageState->setAdjacentState(BUTTON_1, trackingState);
+    unreadMessageState->setAdjacentState(BUTTON_4, selectLocationState);
+
+    unreadMessageState->assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+    unreadMessageState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
+    unreadMessageState->assignInput(BUTTON_3, ACTION_DEFER_CALLBACK_TO_WINDOW, "Mark Read");
 
     selectLocationState->setAdjacentState(BUTTON_4, selectMessageState);
     selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
+
+    trackingState->assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
 }
 
 void Home_Window::drawWindow()
@@ -49,172 +49,13 @@ void Home_Window::drawWindow()
 
     if (LoraUtils::GetNumUnreadMessages() > 0) 
     {
-        homeState->setAdjacentState(ENC_DOWN, receivedMessagesState);
+        homeState->assignInput(ENC_DOWN, ACTION_CALL_FUNCTIONAL_WINDOW_STATE);
     }
     else
     {
-        homeState->clearAdjacentState(ENC_DOWN);
+        homeState->assignInput(ENC_DOWN, ACTION_NONE);
     }
 }
-
-void Home_Window::execBtnCallback(uint8_t inputID)
-{
-    OLED_Window::execBtnCallback(inputID);
-
-    if (currentState == receivedMessagesState)
-    {
-        if (LoraUtils::IsUnreadMessageIteratorAtBeginning())
-        {
-            receivedMessagesState->setAdjacentState(ENC_UP, homeState);
-            receivedMessagesState->assignInput(ENC_UP, ACTION_SWITCH_WINDOW_STATE);
-        }
-        else
-        {
-            receivedMessagesState->clearAdjacentState(ENC_UP);
-            receivedMessagesState->assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
-        }
-    }
-
-    drawWindow();
-}
-
-// void Home_Window::Pause()
-// {
-//     homeContent->Pause();
-// }
-
-// void Home_Window::Resume()
-// {
-//     homeContent->Resume();
-// }
-
-/* void Home_Window::encUp()
-{
-    content->encUp();
-
-    if (content->type == ContentType::HOME)
-    {
-        // Change button actions based on content mode
-        if (homeContent->contentMode == 1)
-        {
-            homeContent1();
-        }
-        else if (homeContent->contentMode == 2)
-        {
-            homeContent2();
-        }
-    }
-}
-
-void Home_Window::encDown()
-{
-    content->encDown();
-
-    if (content->type == ContentType::HOME)
-    {
-        // Change button actions based on content mode
-        if (homeContent->contentMode == 1)
-        {
-            homeContent1();
-        }
-        else if (homeContent->contentMode == 2)
-        {
-            homeContent2();
-        }
-    }
-} */
-
-/* void Home_Window::drawWindow()
-{
-#if DEBUG == 1
-    Serial.println("Home_Window::drawWindow()");
-#endif
-    OLED_Window::drawWindow();
-    // homeContent->printContent();
-} */
-
-/* void Home_Window::execBtnCallback(uint8_t inputID)
-{
-    switch (inputID)
-    {
-    case BUTTON_1:
-    {
-        if (content->type == ContentType::HOME)
-        {
-            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
-            {
-                swapToTracking(homeContent->getCurrentMessage());
-            }
-        }
-    }
-    break;
-    case BUTTON_2:
-    {
-        if (content->type == ContentType::HOME)
-        {
-            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MAIN)
-            {
-                swapToPing(nullptr);
-            }
-            else if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
-            {
-                // Mark message read
-
-                Message_Base *msg = homeContent->getCurrentMessage();
-                if (msg != nullptr)
-                {
-                    msg->messageOpened = true;
-                    encUp();
-                }
-            }
-        }
-    }
-    break;
-    case BUTTON_3:
-    {
-        if (content->type == ContentType::PING)
-        {
-            swapToHome();
-        }
-
-        if (content->type == ContentType::TRACKING)
-        {
-            swapToHome();
-        }
-    }
-    break;
-    case BUTTON_4:
-    {
-        if (content->type == ContentType::PING)
-        {
-#if DEBUG == 1
-            Serial.println("Sending ping");
-#endif
-            pingContent->sendPing();
-#if DEBUG == 1
-            Serial.println("Ping sent");
-#endif
-            pingContent->unassignMsg();
-            swapToHome();
-        }
-
-        if (content->type == ContentType::HOME)
-        {
-            if (homeContent->contentMode == Home_Content::HOME_CONTENT_MESSAGES)
-            {
-                Message_Base *msg = homeContent->getCurrentMessage();
-                if (msg != nullptr)
-                {
-                    swapToPing(msg);
-                }
-            }
-        }
-    }
-    break;
-    default:
-        break;
-    }
-} */
 
 void Home_Window::transferState(State_Transfer_Data &transferData)
 {
@@ -227,29 +68,19 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 
     oldState->exitState(transferData);
 
-    // ***************** Mid-transfer logic *****************
-    // Sending a broadcast or replying to a message
-    if ((oldState == homeState || oldState == receivedMessagesState) && newState == selectLocationState)
+
+    // Sending broadcast from home screen
+    if (oldState == homeState && newState == selectLocationState)
     {
-#if DEBUG == 1
-        Serial.println("Transfering to select location state");
-#endif
-        if (transferData.serializedData != nullptr)
-        {
-            DynamicJsonDocument *doc = transferData.serializedData;
-            if (doc->containsKey("sendDirect"))
-            {
-                sendDirect = (*doc)["sendDirect"].as<bool>();
-                if (sendDirect)
-                {
-                    recipientID = (*doc)["recipientID"].as<uint64_t>();
-                }
-                else
-                {
-                    recipientID = 0;
-                }
-            }
-        }
+        sendDirect = false;
+        recipientID = 0;
+    }
+    // Replying to a message
+    else if (oldState == unreadMessageState && newState == selectLocationState)
+    {
+        auto *doc = transferData.serializedData;
+        sendDirect = true;
+        recipientID = (*doc)["recipientID"].as<uint32_t>();
     }
     // Location selected and moving to select message state
     else if (oldState == selectLocationState && transferData.serializedData != nullptr)
@@ -259,54 +90,52 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 #endif
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
 
-        if (doc != nullptr && doc->containsKey("isCurrLocation"))
+        if (doc->containsKey("name")
+        && doc->containsKey("lat")
+        && doc->containsKey("lon"))
         {
-#if DEBUG == 1
-            Serial.println("data is not null and contains key");
-#endif
-
-            if ((*doc)["isCurrLocation"] == true)
+            locName = (*doc)["name"].as<std::string>();
+            latitude = (*doc)["lat"].as<double>();
+            longitude = (*doc)["lon"].as<double>();
+            
+            std::string currLocCompare = std::string(CURR_LOC);
+            if (locName == currLocCompare)
             {
-#if DEBUG == 1
-                Serial.println("Using current location");
-#endif
                 useCurrLocation = true;
             }
             else
             {
-#if DEBUG == 1
-                Serial.println("Using selected location");
-#endif
                 useCurrLocation = false;
-                locationIdx = (*doc)["idx"].as<int>();
-                locName = (*doc)["name"].as<const char *>();
-                latitude = (*doc)["lat"].as<double>();
-                longitude = (*doc)["lon"].as<double>();
             }
         }
-#if DEBUG == 1
-        else
-        {
-            Serial.println("No location data");
-        }
-#endif
 
         // Transfer to Select Message State
         delete transferData.serializedData;
-        transferData.serializedData = nullptr;
+        transferData.serializedData = new DynamicJsonDocument(1024);
+
+        JsonArray msgArray = (*transferData.serializedData).createNestedArray("messages");
 
         if (!useCurrLocation)
         {
-            transferData.serializedData = new DynamicJsonDocument(128);
-            (*transferData.serializedData).createNestedArray("additionalMsgList");
-            (*transferData.serializedData)["additionalMsgList"].add(locName);
+            msgArray.add(locName);
         }
+
+        Settings_Manager::WriteMessagesToJSON(*transferData.serializedData);
 
         newState = selectMessageState;
     }
     // Message selected. Time to send it
     else if (oldState == selectMessageState && transferData.serializedData != nullptr)
     {
+        if (useCurrLocation)
+        {
+            Navigation_Manager::updateGPS();
+            auto loc = Navigation_Manager::getLocation();
+
+            latitude = loc.lat();
+            longitude = loc.lng();
+        }
+
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
         if (doc != nullptr && doc->containsKey("message"))
         {
@@ -331,7 +160,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 
             auto success = LoraUtils::SendMessage(newMsg, 0);
 
-            Display_Utils::clearContentArea();
+            display->clearDisplay();
             
             if (success)
             {
@@ -352,6 +181,27 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             newState = homeState;
         }
     }
+
+    if (newState == selectLocationState)
+    {
+        if (transferData.serializedData != nullptr)
+        {
+            delete transferData.serializedData;
+            transferData.serializedData = nullptr;
+        }
+        
+        Navigation_Manager::updateGPS();
+
+        transferData.serializedData = new DynamicJsonDocument(1024);
+        (*transferData.serializedData).createNestedArray("locations");
+        auto currLocObj = (*transferData.serializedData)["locations"].createNestedObject();
+        currLocObj["n"] = CURR_LOC;
+        currLocObj["la"] = Navigation_Manager::getLocation().lat();
+        currLocObj["lo"] = Navigation_Manager::getLocation().lng();
+        
+        Settings_Manager::WriteCoordinatesToJSON(*transferData.serializedData);
+        
+    }
     // ***************** End mid-transfer logic *****************
 
     newState->enterState(transferData);
@@ -370,7 +220,7 @@ void Home_Window::clearMessageInfo()
     recipientID = 0;
     useCurrLocation = false;
     locationIdx = -1;
-    locName = nullptr;
+    locName.clear();
     latitude = 0;
     longitude = 0;
 }
