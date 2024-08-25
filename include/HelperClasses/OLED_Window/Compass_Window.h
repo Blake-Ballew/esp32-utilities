@@ -1,7 +1,6 @@
 #pragma once
 
 #include "OLED_Window.h"
-#include "Navigation_Manager.h"
 #include "QMC5883LCompass.h"
 #include "Compass_Content.h"
 #include "Compass_States.h"

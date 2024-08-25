@@ -30,10 +30,10 @@ Home_Window::Home_Window() : OLED_Window()
     homeState->setAdjacentState(BUTTON_2, selectLocationState);
     homeState->setAdjacentState(ENC_DOWN, unreadMessageState);
 
-    unreadMessageState->setAdjacentState(BUTTON_1, trackingState);
-    unreadMessageState->setAdjacentState(BUTTON_4, selectLocationState);
+    unreadMessageState->setAdjacentState(BUTTON_4, trackingState);
+    unreadMessageState->setAdjacentState(BUTTON_2, selectLocationState);
 
-    unreadMessageState->assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+    unreadMessageState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
     unreadMessageState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
     unreadMessageState->assignInput(BUTTON_3, ACTION_DEFER_CALLBACK_TO_WINDOW, "Mark Read");
 
@@ -92,11 +92,11 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 
         if (doc->containsKey("name")
         && doc->containsKey("lat")
-        && doc->containsKey("lon"))
+        && doc->containsKey("lng"))
         {
             locName = (*doc)["name"].as<std::string>();
             latitude = (*doc)["lat"].as<double>();
-            longitude = (*doc)["lon"].as<double>();
+            longitude = (*doc)["lng"].as<double>();
             
             std::string currLocCompare = std::string(CURR_LOC);
             if (locName == currLocCompare)
@@ -120,7 +120,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             msgArray.add(locName);
         }
 
-        Settings_Manager::WriteMessagesToJSON(*transferData.serializedData);
+        LoraUtils::SerializeSavedMessageList(*transferData.serializedData);
 
         newState = selectMessageState;
     }
@@ -129,8 +129,8 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
     {
         if (useCurrLocation)
         {
-            Navigation_Manager::updateGPS();
-            auto loc = Navigation_Manager::getLocation();
+            NavigationUtils::UpdateGPS();
+            auto loc = NavigationUtils::GetLocation();
 
             latitude = loc.lat();
             longitude = loc.lng();
@@ -143,8 +143,8 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             // Send message
 
             MessagePing *newMsg = new MessagePing(
-                Navigation_Manager::getTime().value(),
-                Navigation_Manager::getDate().value(),
+                NavigationUtils::GetTime().value(),
+                NavigationUtils::GetDate().value(),
                 recipientID,
                 LoraUtils::UserID(),
                 Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
@@ -190,16 +190,16 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             transferData.serializedData = nullptr;
         }
         
-        Navigation_Manager::updateGPS();
+        NavigationUtils::UpdateGPS();
 
         transferData.serializedData = new DynamicJsonDocument(1024);
         (*transferData.serializedData).createNestedArray("locations");
         auto currLocObj = (*transferData.serializedData)["locations"].createNestedObject();
-        currLocObj["n"] = CURR_LOC;
-        currLocObj["la"] = Navigation_Manager::getLocation().lat();
-        currLocObj["lo"] = Navigation_Manager::getLocation().lng();
+        currLocObj["name"] = CURR_LOC;
+        currLocObj["lat"] = NavigationUtils::GetLocation().lat();
+        currLocObj["lng"] = NavigationUtils::GetLocation().lng();
         
-        Settings_Manager::WriteCoordinatesToJSON(*transferData.serializedData);
+        NavigationUtils::SerializeSavedLocations(*transferData.serializedData);
         
     }
     // ***************** End mid-transfer logic *****************

@@ -11,6 +11,14 @@ QueueHandle_t Display_Utils::displayCommandQueue = nullptr;
 
 EventHandlerT<uint8_t> Display_Utils::inputRaised;
 
+// Input IDs
+uint8_t Display_Utils::_SelectButtonInputID = 0;
+uint8_t Display_Utils::_BackButtonInputID = 0;
+uint8_t Display_Utils::_Function1ButtonInputID = 0;
+uint8_t Display_Utils::_Function2ButtonInputID = 0;
+uint8_t Display_Utils::_EncUpInputID = 0;
+uint8_t Display_Utils::_EncDownInputID = 0;
+
 // Setters
 void Display_Utils::setDisplay(Adafruit_GFX *display) 
 { 
@@ -33,6 +41,18 @@ void Display_Utils::setDisplayCommandQueue(QueueHandle_t queue)
     displayCommandQueue = queue; 
 }
 
+void Display_Utils::SetSelectButtonInputID(uint8_t inputID) { _SelectButtonInputID = inputID; }
+
+void Display_Utils::SetBackButtonInputID(uint8_t inputID) { _BackButtonInputID = inputID; }
+
+void Display_Utils::SetFunction1ButtonInputID(uint8_t inputID) { _Function1ButtonInputID = inputID; }
+
+void Display_Utils::SetFunction2ButtonInputID(uint8_t inputID) { _Function2ButtonInputID = inputID; }
+
+void Display_Utils::SetEncUpInputID(uint8_t inputID) { _EncUpInputID = inputID; }
+
+void Display_Utils::SetEncDownInputID(uint8_t inputID) { _EncDownInputID = inputID; }
+
 // Getters
 Adafruit_GFX *Display_Utils::getDisplay() { return display; }
 
@@ -41,6 +61,18 @@ size_t Display_Utils::getDisplayWidth() { return displayWidth; }
 size_t Display_Utils::getDisplayHeight() { return displayHeight; }
 
 QueueHandle_t Display_Utils::getDisplayCommandQueue() { return displayCommandQueue; }
+
+uint8_t Display_Utils::SelectButtonInputID() { return _SelectButtonInputID; }
+
+uint8_t Display_Utils::BackButtonInputID() { return _BackButtonInputID; }
+
+uint8_t Display_Utils::Function1ButtonInputID() { return _Function1ButtonInputID; }
+
+uint8_t Display_Utils::Function2ButtonInputID() { return _Function2ButtonInputID; }
+
+uint8_t Display_Utils::EncUpInputID() { return _EncUpInputID; }
+
+uint8_t Display_Utils::EncDownInputID() { return _EncDownInputID; }
 
 // Graphics Helper Functions
 
@@ -119,7 +151,7 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
     }
 
     #if DEBUG == 1
-        Serial.printf("Display_Utils::printFormattedText(): xPos: %d, yPos: %d\n", xPos, yPos);
+        // Serial.printf("Display_Utils::printFormattedText(): xPos: %d, yPos: %d\n", xPos, yPos);
     #endif
 
     display->setCursor(xPos, yPos);

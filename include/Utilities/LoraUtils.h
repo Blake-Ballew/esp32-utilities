@@ -13,6 +13,12 @@ namespace
     const size_t MESSAGE_QUEUE_LENGTH = 8; // Number of messages that can be queued for sending
 }
 
+struct UserInfo
+{
+    uint32_t UserID;
+    std::string Name;
+};
+
 struct OutboundMessageQueueItem
 {
     MessageBase *msg;
@@ -119,6 +125,20 @@ public:
         return nullptr;
     }
 
+    static uint32_t GetCurrentMessageSenderID()
+    {
+        if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
+        {
+            if (_ReceivedMessageIterator != _ReceivedMessages.end())
+            {
+                xSemaphoreGive(_MessageAccessMutex);
+                return _ReceivedMessageIterator->first;
+            }
+            xSemaphoreGive(_MessageAccessMutex);
+        }
+        return 0;
+    }
+
     static bool IsMessageIteratorAtBeginning()
     {
         return _ReceivedMessageIterator == _ReceivedMessages.begin();
@@ -180,6 +200,20 @@ public:
         return nullptr;
     }
 
+    static uint32_t GetCurrentUnreadMessageSenderID()
+    {
+        if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE)
+        {
+            if (_UnreadMessageIterator != _UnreadMessages.end())
+            {
+                xSemaphoreGive(_MessageAccessMutex);
+                return _UnreadMessageIterator->first;
+            }
+            xSemaphoreGive(_MessageAccessMutex);
+        }
+        return 0;
+    }
+
     static bool IsUnreadMessageIteratorAtBeginning()
     {
         return _UnreadMessageIterator == _UnreadMessages.begin();
@@ -189,6 +223,28 @@ public:
     {
         return _UnreadMessageIterator == _UnreadMessages.end();
     }
+
+    static EventHandler &SavedMessageListUpdated() { return _SavedMessageListUpdated; }
+
+    static std::vector<std::string>::iterator SavedMessageListBegin() { return _SavedMessageList.begin(); }
+    static std::vector<std::string>::iterator SavedMessageListEnd() { return _SavedMessageList.end(); }
+    static void AddSavedMessage(std::string message);
+    static void DeleteSavedMessage(std::vector<std::string>::iterator &it);
+
+    static void SerializeSavedMessageList(JsonDocument &doc);
+    static void DeserializeSavedMessageList(JsonDocument &doc);
+
+    static EventHandler &UserInfoListUpdated() { return _UserInfoListUpdated; }
+
+    static std::vector<UserInfo>::iterator UserInfoListBegin() { return _UserInfoList.begin(); }
+    static std::vector<UserInfo>::iterator UserInfoListEnd() { return _UserInfoList.end(); }
+    static void AddUserInfo(UserInfo userInfo);
+    static void DeleteUserInfo(std::vector<UserInfo>::iterator &it);
+
+    static void SerializeUserInfoList(JsonDocument &doc);
+    static void DeserializeUserInfoList(JsonDocument &doc);
+
+    static void FlashDefaultMessages();
 
 protected:
     // Last message received from each user
@@ -203,6 +259,18 @@ protected:
     // Invoked when a message is received with the UserID of the sender and
     // a boolean indicating if the message is new or an update of an old message
     static EventHandlerT<uint32_t, bool> _MessageReceived;
+
+    // Invoked when the UserInfo list is updated
+    static EventHandler _UserInfoListUpdated;
+
+    // Invoked when saved message list is updated
+    static EventHandler _SavedMessageListUpdated;
+
+    // List of saved users
+    static std::vector<UserInfo> _UserInfoList;
+
+    // List of saved messages
+    static std::vector<std::string> _SavedMessageList;
 
     // ID for queue to send outgoing messages to manager class
     static int _MessageSendQueueID;
@@ -231,23 +299,5 @@ protected:
     static std::map<uint32_t, MessageBase *>::iterator _ReceivedMessageIterator;
     static std::map<uint32_t, MessageBase *>::iterator _UnreadMessageIterator;
 
-    // static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageBegin()
-    // {
-    //     return _ReceivedMessages.begin();
-    // }
-
-    // static std::map<uint32_t, MessageBase *>::iterator GetReceivedMessageEnd()
-    // {
-    //     return _ReceivedMessages.end();
-    // }
-
-    // static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageBegin()
-    // {
-    //     return _UnreadMessages.begin();
-    // }
-
-    // static std::map<uint32_t, MessageBase *>::iterator GetUnreadMessageEnd()
-    // {
-    //     return _UnreadMessages.end();
-    // }
+    
 };

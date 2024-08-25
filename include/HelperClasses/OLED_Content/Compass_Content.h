@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "OLED_Content.h"
 // #include "QMC5883LCompass.h"
 #include "LED_Manager.h"

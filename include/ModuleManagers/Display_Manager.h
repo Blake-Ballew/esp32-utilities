@@ -22,6 +22,8 @@
 #include "Menu_Window.h"
 #include "Save_Location_Window.h"
 #include "OTA_Update_Window.h"
+#include "LoraUtils.h"
+#include "NavigationUtils.h"
 
 #include "Lock_State.h"
 

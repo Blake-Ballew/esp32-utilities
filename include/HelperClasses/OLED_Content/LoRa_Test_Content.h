@@ -2,7 +2,7 @@
 
 #include "OLED_Content.h"
 #include "LoraUtils.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "Settings_Manager.h"
 
 class LoRa_Test_Content : public OLED_Content

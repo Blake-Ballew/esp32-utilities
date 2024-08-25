@@ -3,7 +3,7 @@
 #include "OLED_Content.h"
 #include "LoraUtils.h"
 #include "MessagePing.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "Settings_Manager.h"
 #include "LED_Manager.h"
 #include <vector>

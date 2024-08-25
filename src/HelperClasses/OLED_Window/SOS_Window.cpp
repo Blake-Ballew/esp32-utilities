@@ -93,11 +93,11 @@ void SOS_Window::transferState(State_Transfer_Data &transferData)
 
 MessagePing *SOS_Window::createSosMessage()
 {
-    Navigation_Manager::updateGPS();
+    NavigationUtils::UpdateGPS();
 
     MessagePing *ping = new MessagePing(
-        Navigation_Manager::getTime().value(),
-        Navigation_Manager::getDate().value(),
+        NavigationUtils::GetTime().value(),
+        NavigationUtils::GetDate().value(),
         0,
         LoraUtils::UserID(),
         Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
@@ -105,8 +105,8 @@ MessagePing *SOS_Window::createSosMessage()
         255,
         0,
         0,
-        Navigation_Manager::getLocation().lat(),
-        Navigation_Manager::getLocation().lng(),
+        NavigationUtils::GetLocation().lat(),
+        NavigationUtils::GetLocation().lng(),
         "SOS"
     );
     
@@ -115,11 +115,11 @@ MessagePing *SOS_Window::createSosMessage()
 
 MessagePing *SOS_Window::createOkayMessage()
 {
-    Navigation_Manager::updateGPS();
+    NavigationUtils::UpdateGPS();
 
     MessagePing *ping = new MessagePing(
-        Navigation_Manager::getTime().value(),
-        Navigation_Manager::getDate().value(),
+        NavigationUtils::GetTime().value(),
+        NavigationUtils::GetDate().value(),
         0,
         LoraUtils::UserID(),
         Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
@@ -127,8 +127,8 @@ MessagePing *SOS_Window::createOkayMessage()
         0,
         255,
         0,
-        Navigation_Manager::getLocation().lat(),
-        Navigation_Manager::getLocation().lng(),
+        NavigationUtils::GetLocation().lat(),
+        NavigationUtils::GetLocation().lng(),
         "OK"
     );
     

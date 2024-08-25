@@ -5,7 +5,7 @@
 #include "LoraUtils.h"
 #include "LED_Utils.h"
 #include "RingPoint.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 
 namespace
 {
@@ -31,7 +31,7 @@ public:
     {
         Window_State::enterState(transferData);
 
-        Display_Utils::enableRefreshTimer(500);
+        Display_Utils::enableRefreshTimer(50);
 
         if (RingPoint::RegisteredPatternID() == -1)
         {
@@ -94,12 +94,12 @@ public:
 
         if (pingMsg != nullptr)
         {
-            double distance = Navigation_Manager::getDistanceTo(pingMsg->lat, pingMsg->lng);
+            double distance = NavigationUtils::GetDistanceTo(pingMsg->lat, pingMsg->lng);
 
             char distanceStr[10];
             if (distance > 2000)
             {
-                sprintf(distanceStr, "%.2f km", distance / 1000);
+                sprintf(distanceStr, "%.1f km", distance / 1000);
             }
             else
             {
@@ -125,9 +125,8 @@ public:
                 distance = ledFxMin;
             }
 
-            Navigation_Manager::read();
-            double heading = Navigation_Manager::getHeadingTo(pingMsg->lat, pingMsg->lng);
-            int azimuth = Navigation_Manager::InvertXAzimuth(Navigation_Manager::getAzimuth());
+            double heading = NavigationUtils::GetHeadingTo(pingMsg->lat, pingMsg->lng);
+            int azimuth = NavigationUtils::GetAzimuth();
 
             float fadeDegrees = -0.075f * distance + 61.5;
             float directionDegrees = heading - azimuth;
@@ -151,6 +150,8 @@ public:
             LED_Utils::configurePattern(_RingPointID, cfg);
             LED_Utils::iteratePattern(_RingPointID);
         }
+
+        display->display();
     }
 
 private:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "OLED_Content.h"
 
 class GPS_Content : public OLED_Content

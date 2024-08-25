@@ -1,5 +1,5 @@
 #include "OLED_Window.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "GPS_Content.h"
 #include "Edit_String_Content.h"
 

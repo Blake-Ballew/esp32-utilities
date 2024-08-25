@@ -18,10 +18,9 @@ Home_Content::~Home_Content()
 void Home_Content::printContent()
 {
 
-    Navigation_Manager::updateGPS();
-    Navigation_Manager::read();
+    NavigationUtils::UpdateGPS();
     // TinyGPSDate date;
-    TinyGPSTime time = Navigation_Manager::getTime();
+    TinyGPSTime time = NavigationUtils::GetTime();
     if (time.isValid())
     {
         // Adjust for timezone -4

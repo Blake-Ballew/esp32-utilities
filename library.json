@@ -26,6 +26,7 @@
   "build": {
     "flags": [
       "-Iinclude/",
+      "-Iinclude/Interfaces",
       "-Iinclude/HelperClasses",
       "-Iinclude/HelperClasses/LED_Patterns",
       "-Iinclude/HelperClasses/OLED_Content",

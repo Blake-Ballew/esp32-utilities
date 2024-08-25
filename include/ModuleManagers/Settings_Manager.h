@@ -7,6 +7,7 @@
 // #include <FS.h>
 #include <SPIFFS.h>
 
+// TODO: Find less stupid way to do this
 enum JsonVariantType
 {
     JSON_VARIANT_TYPE_NULL = 0,

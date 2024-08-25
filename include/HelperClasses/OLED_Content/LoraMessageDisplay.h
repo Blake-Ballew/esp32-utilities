@@ -43,7 +43,7 @@ public:
     void printContent()
     {
         #if DEBUG == 1
-        Serial.println("LoraMessageDisplay::printContent()");
+        // Serial.println("LoraMessageDisplay::printContent()");
         #endif
         if (_DisplayMessage == nullptr)
         {
@@ -56,7 +56,7 @@ public:
         Display_Utils::clearContentArea();
 
         #if DEBUG == 1
-        Serial.printf("LoraMessageDisplay::printContent() displayInfo.size() = %d\n", displayInfo.size());
+        // Serial.printf("LoraMessageDisplay::printContent() displayInfo.size() = %d\n", displayInfo.size());
         #endif
 
         for (size_t i = 0; i < displayInfo.size(); i++)
@@ -66,7 +66,7 @@ public:
             display->print(displayInfo[i].txt);
         }
 
-        display->display();
+        // display->display();
     }
 
 protected:

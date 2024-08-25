@@ -1,7 +1,7 @@
 #pragma once
 
 #include "OLED_Content.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "Settings_Manager.h"
 #include "LoraUtils.h"
 #include "System_Utils.h"

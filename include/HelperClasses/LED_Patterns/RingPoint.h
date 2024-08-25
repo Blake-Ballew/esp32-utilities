@@ -67,7 +67,7 @@ public:
     bool iterateFrame()
     {
         #if DEBUG == 1
-            Serial.println("RingPoint::iterateFrame");
+            // Serial.println("RingPoint::iterateFrame");
         #endif
         if (beginIdx == -1 || endIdx == -1)
         {

@@ -470,6 +470,8 @@ void Display_Manager::flashDefaultSettings(uint8_t inputID)
     display.println("Flashing...");
     display.display();
     Settings_Manager::flashSettings();
+    LoraUtils::FlashDefaultMessages();
+    NavigationUtils::FlashSampleLocations();
     rebootDevice(inputID);
 }
 

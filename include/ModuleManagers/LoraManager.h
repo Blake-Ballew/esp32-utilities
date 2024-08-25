@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LoraUtils.h"
+#include "FilesystemUtils.h"
 #include <RadioHead.h>
 #include <RHGenericDriver.h>
 #include <RHReliableDatagram.h>
@@ -12,6 +13,8 @@ namespace
     const size_t MAX_MESSAGE_SIZE = 255;
     const uint64_t BROADCAST_ID = 0x0;
     const uint8_t DEFAULT_NODE_ID = 1;
+    const char *USER_LIST_FILENAME PROGMEM = "/SavedUsers.msgpk";
+    const char *MESSAGE_LIST_FILENAME PROGMEM = "/SavedMessages.msgpk";
 }
 
 // Struct to manage message pointers waiting to send
@@ -82,6 +85,13 @@ public:
         }
 
         LoraUtils::Init();
+
+        LoraUtils::UserInfoListUpdated() += SaveUserInfoList;
+        this->LoadUserInfoList(); 
+
+        LoraUtils::SavedMessageListUpdated() += SaveMessageList;
+        this->LoadMessageList();
+
         _sendQueue = System_Utils::getQueue(LoraUtils::MessageSendQueueID());
 
         if (_sendQueue == nullptr)
@@ -96,19 +106,18 @@ public:
     void ReceiveTask(void *pvParameters)
     {
         while (true) 
-        { 
-            uint8_t buffer[MAX_MESSAGE_SIZE];
-
-            uint8_t from;
-            uint8_t to;
-            uint8_t id;
-            uint8_t flags;
-            uint8_t len = sizeof(buffer);
-
-            memset(buffer, 0, sizeof(buffer));
-
+        {
             if (_manager->available())
             {
+                uint8_t buffer[MAX_MESSAGE_SIZE];
+                memset(buffer, 0, sizeof(buffer));
+
+                uint8_t from;
+                uint8_t to;
+                uint8_t id;
+                uint8_t flags;
+                uint8_t len = sizeof(buffer);
+
                 _manager->recvfromAck(buffer, &len, &from, &to, &id, &flags);
                 #if DEBUG == 1
                 // Serial.println("Raw bytes:");
@@ -152,6 +161,9 @@ public:
 
                     if (!msg->IsValid())
                     {
+                        #if DEBUG == 1
+                        Serial.println("Invalid message");
+                        #endif
                         delete msg;
                         continue;
                     }
@@ -162,6 +174,9 @@ public:
                     // Dump message if it was sent from this node and came back
                     if (msg->sender == LoraUtils::UserID())
                     {
+                        #if DEBUG == 1
+                        Serial.println("Message was sent from this node and came back");
+                        #endif
                         delete msg;
                         continue;
                     }
@@ -177,18 +192,21 @@ public:
                     // Check if the message is a broadcast or intended for this node
                     if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
                     {
+                        #if DEBUG == 1
+                        Serial.println("Message directed to this node or broadcast");
+                        #endif
                         // Handle the message
                         auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
                         LoraUtils::SetReceivedMessage(msg->sender, msg);
 
-                        LoraUtils::MessageReceived().Invoke(msg->sender, msgExists);
+                        LoraUtils::MessageReceived().Invoke(msg->sender, !msgExists);
                     }
 
                     delete msg;
                 }
             }
 
-            vTaskDelay(50 / portTICK_PERIOD_MS);
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
 
@@ -222,7 +240,6 @@ public:
                 // Serial.print("Message queued to send: ");
                 // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
                 // item.msg->serialize(jsondoc);
-                // // auto jsondoc = item.msg->serializeJSON();
                 // serializeJson(jsondoc, Serial);
                 // Serial.println();
                 // Serial.println("Sanity checking message:");
@@ -324,6 +341,78 @@ public:
             }
 
             vTaskDelay(SEND_THREAD_TICK_MS / portTICK_PERIOD_MS);      
+        }
+    }
+
+    // Event code to save user list to flash
+    static void SaveUserInfoList()
+    {
+        DynamicJsonDocument doc(1024);
+        LoraUtils::SerializeUserInfoList(doc);
+
+        auto returncode = FilesystemUtils::WriteFile(USER_LIST_FILENAME, doc);
+
+        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        {
+            #if DEBUG == 1
+            Serial.print("Failed to save user list. Error code: ");
+            Serial.println((int)returncode);
+            #endif
+        }
+    }
+
+    // Load user list from flash
+    void LoadUserInfoList()
+    {
+        DynamicJsonDocument doc(1024);
+        auto returncode = FilesystemUtils::ReadFile(USER_LIST_FILENAME, doc);
+
+        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        {
+            #if DEBUG == 1
+            Serial.print("Failed to load user list. Error code: ");
+            Serial.println((int)returncode);
+            #endif
+        }
+        else
+        {
+            LoraUtils::DeserializeUserInfoList(doc);
+        }
+    }
+
+    // Event code to save message list to flash
+    static void SaveMessageList()
+    {
+        DynamicJsonDocument doc(1024);
+        LoraUtils::SerializeSavedMessageList(doc);
+
+        auto returncode = FilesystemUtils::WriteFile(MESSAGE_LIST_FILENAME, doc);
+
+        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        {
+            #if DEBUG == 1
+            Serial.print("Failed to save message list. Error code: ");
+            Serial.println((int)returncode);
+            #endif
+        }
+    }
+
+    // Load message list from flash
+    void LoadMessageList()
+    {
+        DynamicJsonDocument doc(1024);
+        auto returncode = FilesystemUtils::ReadFile(MESSAGE_LIST_FILENAME, doc);
+
+        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        {
+            #if DEBUG == 1
+            Serial.print("Failed to load message list. Error code: ");
+            Serial.println((int)returncode);
+            #endif
+        }
+        else
+        {
+            LoraUtils::DeserializeSavedMessageList(doc);
         }
     }
 

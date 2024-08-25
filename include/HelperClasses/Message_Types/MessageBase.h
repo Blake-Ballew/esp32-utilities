@@ -3,7 +3,7 @@
 #include "globalDefines.h"
 #include <ArduinoJson.h>
 #include "LED_Manager.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "Adafruit_SSD1306.h"
 #include <string>
 
@@ -50,8 +50,6 @@ struct MessagePrintInformation
 class MessageBase
 {
 public:
-    bool messageOpened;
-
     // Unique ID for the message
     uint32_t msgID;
 
@@ -71,20 +69,13 @@ public:
     uint32_t time;
     uint32_t date;
 
-    // Deprecated. Use IsValid() instead
-    bool isValid;
-
     MessageBase()
     {
-        isValid = false;
     }
 
     // Constructor for message created by this node
     MessageBase(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID)
     {
-        messageOpened = false;
-        isValid = true;
-
         this->time = time;
         this->date = date;
         this->recipient = recipient;
@@ -162,11 +153,6 @@ public:
 
     virtual void deserialize(JsonDocument &doc)
     {
-        if (doc[MESSAGE_TYPE_KEY].as<uint8_t>() | 0 > 0)
-        {
-            isValid = true;
-        }
-
         if (doc.containsKey(MESSAGE_TYPE_ID))
         {
             msgID = doc[MESSAGE_TYPE_ID].as<uint32_t>();
@@ -247,11 +233,9 @@ public:
     {
         MessageBase *newMsg = new MessageBase(time, date, recipient, sender, senderName, msgID);
         newMsg->bouncesLeft = bouncesLeft;
-        newMsg->isValid = isValid;
         return newMsg;
     }
 
-    // 
     virtual void GetPrintableInformation(std::vector<MessagePrintInformation> &info)
     {
         MessagePrintInformation mpi(senderName);
@@ -281,7 +265,7 @@ public:
         display->print(this->msgID, HEX);
 
         display->setCursor(110, 8);
-        printMessageAge(Navigation_Manager::getTimeDifference(this->time, this->date), display);
+        printMessageAge(NavigationUtils::GetTimeDifference(this->time, this->date), display);
     }
 
     virtual bool IsValid()

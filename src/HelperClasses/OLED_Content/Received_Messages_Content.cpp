@@ -129,7 +129,7 @@ void Received_Messages_Content::printContent()
         }
     }
 
-    printMessageAge(Navigation_Manager::getTimeDifference(msg->time, msg->date));
+    printMessageAge(NavigationUtils::GetTimeDifference(msg->time, msg->date));
 
     display->display();
 

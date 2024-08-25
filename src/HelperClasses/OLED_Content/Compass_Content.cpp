@@ -53,30 +53,23 @@ void Compass_Content::printContent()
 
     display->setCursor(0, 0);
     display->print("X:");
-    display->print(Navigation_Manager::getX());
+    display->print(NavigationUtils::GetX());
 
     display->setCursor(0, 8);
     display->print("Y:");
-    display->print(Navigation_Manager::getY());
+    display->print(NavigationUtils::GetY());
 
     display->setCursor(0, 16);
     display->print("Z:");
-    display->print(Navigation_Manager::getZ());
+    display->print(NavigationUtils::GetZ());
 
     display->setCursor(40, 0);
     display->print("  Azimuth:");
-    display->print(Navigation_Manager::InvertXAzimuth(Navigation_Manager::getAzimuth()));
-
-    char direction[4];
-    memset(direction, 0, 4);
-    Navigation_Manager::getDirection(direction);
-    display->setCursor(40, 16);
-    display->print("Direction:");
-    display->print(direction);
+    display->print(NavigationUtils::GetAzimuth());
 
     display->display();
 
-    LED_Manager::pointNorth(Navigation_Manager::InvertYAzimuth(Navigation_Manager::InvertXAzimuth(Navigation_Manager::getAzimuth())));
+    LED_Manager::pointNorth(NavigationUtils::GetAzimuth());
 }
 
 void Compass_Content::encUp()
@@ -105,6 +98,5 @@ void Compass_Content::updateCompass(TimerHandle_t xTimer)
         return;
     }
 
-    Navigation_Manager::read();
     thisInstance->printContent();
 }

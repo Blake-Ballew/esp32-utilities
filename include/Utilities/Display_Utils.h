@@ -101,12 +101,24 @@ public:
     static void setDisplayDimensions(size_t width, size_t height);
     static void setRefreshTimerID(int timerID);
     static void setDisplayCommandQueue(QueueHandle_t queue);
+    static void SetSelectButtonInputID(uint8_t inputID);
+    static void SetBackButtonInputID(uint8_t inputID);
+    static void SetFunction1ButtonInputID(uint8_t inputID);
+    static void SetFunction2ButtonInputID(uint8_t inputID);
+    static void SetEncUpInputID(uint8_t inputID);
+    static void SetEncDownInputID(uint8_t inputID);
 
     // Getters
     static Adafruit_GFX *getDisplay();
     static size_t getDisplayWidth();
     static size_t getDisplayHeight();
     static QueueHandle_t getDisplayCommandQueue();
+    static uint8_t SelectButtonInputID();
+    static uint8_t BackButtonInputID();
+    static uint8_t Function1ButtonInputID();
+    static uint8_t Function2ButtonInputID();
+    static uint8_t EncUpInputID();
+    static uint8_t EncDownInputID();
 
     // Event Handlers
     static EventHandlerT<uint8_t> &getInputRaised() { return inputRaised; }
@@ -171,6 +183,14 @@ protected:
 
     static size_t displayWidth;
     static size_t displayHeight;
+
+    // Input IDs
+    static uint8_t _SelectButtonInputID;
+    static uint8_t _BackButtonInputID;
+    static uint8_t _Function1ButtonInputID;
+    static uint8_t _Function2ButtonInputID;
+    static uint8_t _EncUpInputID;
+    static uint8_t _EncDownInputID;
 
     static int refreshTimerID;
 

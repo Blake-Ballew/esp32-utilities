@@ -20,8 +20,8 @@ void GPS_Content::printContent()
 {
     display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
-    Navigation_Manager::updateGPS();
-    TinyGPSLocation loc = Navigation_Manager::getLocation();
+    NavigationUtils::UpdateGPS();
+    TinyGPSLocation loc = NavigationUtils::GetLocation();
 
     display->setCursor(0, 8);
     display->print(" Lat:");

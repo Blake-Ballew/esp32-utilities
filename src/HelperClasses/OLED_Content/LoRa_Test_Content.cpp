@@ -96,9 +96,8 @@ void LoRa_Test_Content::printContent()
 
 uint8_t LoRa_Test_Content::sendBroadcast()
 {
-    Navigation_Manager::read();
-    uint32_t time = Navigation_Manager::getTime().value();
-    uint32_t date = Navigation_Manager::getDate().value();
+    uint32_t time = NavigationUtils::GetTime().value();
+    uint32_t date = NavigationUtils::GetDate().value();
     const char *senderName = Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>();
     MessageBase msg = MessageBase(time, date, 0, LoraUtils::UserID(), senderName, esp_random());
 

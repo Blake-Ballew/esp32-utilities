@@ -49,13 +49,13 @@ public:
             return false;
         }
 
-        std::string statusStr(status);
+        std::string statusStr(this->status);
 
-        doc[MESSAGE_TYPE_COLOR_R] = color_R;
-        doc[MESSAGE_TYPE_COLOR_G] = color_G;
-        doc[MESSAGE_TYPE_COLOR_B] = color_B;
-        doc[MESSAGE_TYPE_LAT] = lat;
-        doc[MESSAGE_TYPE_LNG] = lng;
+        doc[MESSAGE_TYPE_COLOR_R] = this->color_R;
+        doc[MESSAGE_TYPE_COLOR_G] = this->color_G;
+        doc[MESSAGE_TYPE_COLOR_B] = this->color_B;
+        doc[MESSAGE_TYPE_LAT] = this->lat;
+        doc[MESSAGE_TYPE_LNG] = this->lng;
         doc[MESSAGE_TYPE_STATUS] = statusStr;
 
         if (doc.overflowed())
@@ -70,12 +70,32 @@ public:
     {
         MessageBase::deserialize(doc);
 
-        color_R = doc[MESSAGE_TYPE_COLOR_R] | 0;
-        color_G = doc[MESSAGE_TYPE_COLOR_G] | 0;
-        color_B = doc[MESSAGE_TYPE_COLOR_B] | 255;
+        if (doc.containsKey(MESSAGE_TYPE_COLOR_R))
+            color_R = doc[MESSAGE_TYPE_COLOR_R];
+        else
+            color_R = 0;
 
-        lat = doc[MESSAGE_TYPE_LAT] | 0;
-        lng = doc[MESSAGE_TYPE_LNG] | 0;
+        if (doc.containsKey(MESSAGE_TYPE_COLOR_G))
+            color_G = doc[MESSAGE_TYPE_COLOR_G];
+        else
+            color_G = 0;
+
+        if (doc.containsKey(MESSAGE_TYPE_COLOR_B)) 
+            color_B = doc[MESSAGE_TYPE_COLOR_B];
+        else
+            color_B = 0;
+
+        if (doc.containsKey(MESSAGE_TYPE_LAT))
+            lat = doc[MESSAGE_TYPE_LAT];
+        else
+            lat = 0;
+
+        if (doc.containsKey(MESSAGE_TYPE_LNG))
+            lng = doc[MESSAGE_TYPE_LNG];
+        else
+            lng = 0;
+
+        
         strncpy(status, doc[MESSAGE_TYPE_STATUS], STATUS_LENGTH);
         status[STATUS_LENGTH] = '\0';
     }
@@ -84,16 +104,15 @@ public:
     {
         MessagePing *newMsg = new MessagePing(time, date, recipient, sender, senderName, msgID, color_R, color_G, color_B, lat, lng, status);
         newMsg->bouncesLeft = bouncesLeft;
-        newMsg->isValid = isValid;
         return newMsg;
     }
 
     // TODO: Get rid of this
     void displayMessage(Adafruit_SSD1306 *display)
     {
-        Navigation_Manager::updateGPS();
+        NavigationUtils::UpdateGPS();
 
-        uint64_t timeDiff = Navigation_Manager::getTimeDifference(this->time, this->date);
+        uint64_t timeDiff = NavigationUtils::GetTimeDifference(this->time, this->date);
 
         display->setCursor(110, 8);
         // 128display->print(F("Recv: "));

@@ -7,6 +7,12 @@ MessageBase *LoraUtils::_MyLastBroadcast = nullptr;
 
 EventHandlerT<uint32_t, bool> LoraUtils::_MessageReceived;
 
+EventHandler LoraUtils::_SavedMessageListUpdated;
+std::vector<std::string> LoraUtils::_SavedMessageList;
+
+EventHandler LoraUtils::_UserInfoListUpdated;
+std::vector<UserInfo> LoraUtils::_UserInfoList;
+
 int LoraUtils::_MessageSendQueueID = -1;
 
 uint8_t LoraUtils::_DefaultSendAttempts = 3;
@@ -114,13 +120,20 @@ void LoraUtils::SetMyLastBroadcast(MessageBase *msg) {
 
 void LoraUtils::SetReceivedMessage(uint64_t userID, MessageBase *msg) {
     if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE) {
+        bool isMsgNew = true;
+
         if (_ReceivedMessages.find(userID) != _ReceivedMessages.end())
         {
+            if (_ReceivedMessages[userID]->msgID == msg->msgID)
+            {
+                isMsgNew = false;
+            }
+
             delete _ReceivedMessages[userID];
         }
         _ReceivedMessages[userID] = msg->clone();
 
-        if (msg->messageOpened == false) 
+        if (isMsgNew) 
         {
             if (_UnreadMessages.find(userID) != _UnreadMessages.end()) 
             {
@@ -244,4 +257,98 @@ bool LoraUtils::MessagePackSanityCheck(JsonDocument &doc)
     }
 
     return result;
+}
+
+void LoraUtils::AddSavedMessage(std::string msg)
+{
+    _SavedMessageList.push_back(msg);
+
+    _SavedMessageListUpdated.Invoke();
+}
+
+void LoraUtils::DeleteSavedMessage(std::vector<std::string>::iterator &it)
+{
+    _SavedMessageList.erase(it);
+
+    _SavedMessageListUpdated.Invoke();
+}
+
+void LoraUtils::SerializeSavedMessageList(JsonDocument &doc)
+{
+    JsonArray msgArray;
+
+    if (doc.containsKey("messages"))
+    {
+        msgArray = doc["messages"].as<JsonArray>();
+    }
+    else
+    {
+        msgArray = doc.createNestedArray("messages");
+    }
+
+    for (auto msg : _SavedMessageList)
+    {
+        msgArray.add(msg);
+    }
+}   
+
+void LoraUtils::DeserializeSavedMessageList(JsonDocument &doc)
+{
+    auto msgArray = doc["messages"].as<JsonArray>();
+    _SavedMessageList.clear();
+
+    for (auto msg : msgArray)
+    {
+        _SavedMessageList.push_back(msg.as<std::string>());
+    }
+}
+
+void LoraUtils::AddUserInfo(UserInfo userInfo)
+{
+    _UserInfoList.push_back(userInfo);
+
+    _UserInfoListUpdated.Invoke();
+}
+
+void LoraUtils::DeleteUserInfo(std::vector<UserInfo>::iterator &it)
+{
+    _UserInfoList.erase(it);
+
+    _UserInfoListUpdated.Invoke();
+}
+
+void LoraUtils::SerializeUserInfoList(JsonDocument &doc)
+{
+    auto userArray = doc.createNestedArray("users");
+
+    for (auto kv : _UserInfoList)
+    {
+        auto userObj = userArray.createNestedObject();
+
+        userObj["userID"] = kv.UserID;
+        userObj["name"] = kv.Name;
+    }
+}
+
+void LoraUtils::DeserializeUserInfoList(JsonDocument &doc)
+{
+    auto userArray = doc["users"].as<JsonArray>();
+    _UserInfoList.clear();
+
+    for (auto userObj : userArray)
+    {
+        UserInfo user;
+
+        user.UserID = userObj["userID"].as<uint32_t>();
+        user.Name = userObj["name"].as<std::string>();
+        _UserInfoList.push_back(user);
+    }
+}
+
+void LoraUtils::FlashDefaultMessages()
+{
+    _SavedMessageList.clear();
+    _SavedMessageList.push_back("Meet here");
+    _SavedMessageList.push_back("Point of interest");
+    _SavedMessageListUpdated.Invoke();
 }

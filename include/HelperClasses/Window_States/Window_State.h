@@ -77,7 +77,7 @@ public:
     virtual void displayState()
     {
 #if DEBUG == 1
-        Serial.println("Window_State::displayState");
+        // Serial.println("Window_State::displayState");
 #endif
         if (renderContent != nullptr)
             renderContent->printContent();

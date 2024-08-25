@@ -440,8 +440,8 @@ void Settings_Manager::flashSettings()
 
     JsonObject Radio_Modem_Config = Radio.createNestedObject("Modem Config");
     Radio_Modem_Config["cfgType"] = 11;
-    Radio_Modem_Config["cfgVal"] = 4;
-    Radio_Modem_Config["dftVal"] = 4;
+    Radio_Modem_Config["cfgVal"] = 3;
+    Radio_Modem_Config["dftVal"] = 3;
 
     JsonArray Radio_Modem_Config_vals = Radio_Modem_Config.createNestedArray("vals");
     Radio_Modem_Config_vals.add(0);

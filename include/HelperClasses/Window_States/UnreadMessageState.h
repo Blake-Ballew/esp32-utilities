@@ -43,6 +43,24 @@ public:
                 updateMessage = false;
             }
         }
+        else if (inputID == BUTTON_3)
+        {
+            LoraUtils::MarkMessageOpened(LoraUtils::GetCurrentUnreadMessageSenderID());
+            updateMessage = true;
+            
+            if (LoraUtils::IsUnreadMessageIteratorAtEnd())
+            {
+                if (LoraUtils::GetNumUnreadMessages() == 0)
+                {
+                    Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
+                    return;
+                }
+                else
+                {
+                    LoraUtils::DecrementUnreadMessageIterator();
+                }
+            }
+        }
         
         if (updateMessage)
         {
@@ -79,8 +97,8 @@ public:
 
         switch (transferData.inputID)
         {
-            // Track message. Pass userID and messageID
-            case BUTTON_1:
+            // Track message. Pass serialized message data to tracking state.
+            case BUTTON_4:
                 {
                     auto msg = messageDisplay->DisplayMessage();
                     if (msg != nullptr)

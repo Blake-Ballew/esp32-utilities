@@ -3,13 +3,6 @@
 #include "Window_State.h"
 // #include "Saved_Locations_Content.h"
 
-struct Saved_Location
-{
-    std::string name;
-    double lat;
-    double lon;
-};
-
 namespace
 {
     const char *LOC_SELECT PROGMEM = "Select a location";
@@ -44,10 +37,10 @@ public:
             {
                 for (auto loc : (*doc)["locations"].as<JsonArray>())
                 {
-                    Saved_Location location;
-                    location.name = loc["n"].as<std::string>();
-                    location.lat = loc["la"].as<double>();
-                    location.lon = loc["lo"].as<double>();
+                    SavedLocation location;
+                    location.Name = loc["name"].as<std::string>();
+                    location.Latitude = loc["lat"].as<double>();
+                    location.Longitude = loc["lng"].as<double>();
 
                     locations.push_back(location);
                 }
@@ -67,9 +60,9 @@ public:
             doc = new DynamicJsonDocument(128);
             auto location = *locationIt;
 
-            (*doc)["name"] = location.name;
-            (*doc)["lat"] = location.lat;
-            (*doc)["lon"] = location.lon;
+            (*doc)["name"] = location.Name;
+            (*doc)["lat"] = location.Latitude;
+            (*doc)["lng"] = location.Longitude;
 
             transferData.serializedData = doc;
         }
@@ -120,7 +113,7 @@ public:
 
         if (locations.size() > 0)
         {
-            Saved_Location location = *locationIt;
+            SavedLocation location = *locationIt;
             
             TextFormat prompt;
             prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
@@ -134,7 +127,7 @@ public:
             locationText.verticalAlignment = TEXT_LINE;
             locationText.line = 3;
 
-            Display_Utils::printFormattedText(location.name.c_str(), locationText);
+            Display_Utils::printFormattedText(location.Name.c_str(), locationText);
         }
         else
         {
@@ -149,6 +142,6 @@ public:
     }
 
 private:
-    std::vector<Saved_Location> locations;
-    std::vector<Saved_Location>::iterator locationIt;
+    std::vector<SavedLocation> locations;
+    std::vector<SavedLocation>::iterator locationIt;
 };

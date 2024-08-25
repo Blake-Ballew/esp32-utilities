@@ -2,7 +2,7 @@
 
 #include "OLED_Content.h"
 #include "LoraUtils.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 #include "Settings_Manager.h"
 #include "MessagePing.h"
 
@@ -105,12 +105,11 @@ public:
 
     void sendPing()
     {
-        Navigation_Manager::read();
-        Navigation_Manager::updateGPS();
+        NavigationUtils::UpdateGPS();
 
         uint32_t time, date;
-        time = Navigation_Manager::getTime().value();
-        date = Navigation_Manager::getDate().value();
+        time = NavigationUtils::GetTime().value();
+        date = NavigationUtils::GetDate().value();
 
         uint64_t recipient = msg == nullptr ? 0 : msg->sender;
         uint64_t sender = LoraUtils::UserID();
@@ -122,7 +121,7 @@ public:
         uint8_t G = Settings_Manager::settings["User"]["Theme Green"]["cfgVal"].as<uint8_t>();
         uint8_t B = Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"].as<uint8_t>();
 
-        TinyGPSLocation coords = Navigation_Manager::getLocation();
+        TinyGPSLocation coords = NavigationUtils::GetLocation();
 
 #if USE_FAKE_GPS_COORDS == 0
         double lat = coords.lat();

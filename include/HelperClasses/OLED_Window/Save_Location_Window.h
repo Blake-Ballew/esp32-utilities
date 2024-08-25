@@ -4,7 +4,7 @@
 #include "globalDefines.h"
 #include "Edit_States.h"
 #include "Settings_Manager.h"
-#include "Navigation_Manager.h"
+#include "NavigationUtils.h"
 
 class Save_Location_Window : public OLED_Window
 {
@@ -56,7 +56,7 @@ public:
             strcpy(newString, (*transferData.serializedData)["return"].as<const char *>());
             newString[strlen((*transferData.serializedData)["return"]) + 1] = '\0';
 
-            auto coords = Navigation_Manager::getLocation();
+            auto coords = NavigationUtils::GetLocation();
             display->clearDisplay();
 
             if (!coords.isValid()) 
@@ -68,19 +68,15 @@ public:
             }
             else
             {
-                auto success = Settings_Manager::addCoordinate((const char *)newString, coords.lat(), coords.lng());
-                
+                SavedLocation newLocation;
+                newLocation.Name = newString;
+                newLocation.Latitude = coords.lat();
+                newLocation.Longitude = coords.lng();
 
-                if (success) 
-                {
-                    display->setCursor(Display_Utils::centerTextHorizontal("Location Saved!"), Display_Utils::centerTextVertical());
-                    display->print("Location Saved!");
-                }
-                else
-                {
-                    display->setCursor(Display_Utils::centerTextHorizontal("Locations Full!"), Display_Utils::centerTextVertical());
-                    display->print("Locations Full!");
-                }
+                NavigationUtils::AddSavedLocation(newLocation);                
+
+                display->setCursor(Display_Utils::centerTextHorizontal("Location Saved!"), Display_Utils::centerTextVertical());
+                display->print("Location Saved!");
             }
 
             display->display();
