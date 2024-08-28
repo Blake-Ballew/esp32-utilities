@@ -318,23 +318,14 @@ void Display_Manager::goBack(uint8_t inputID)
 
 void Display_Manager::select(uint8_t inputID)
 {
-    if (currentWindow->currentState != nullptr && currentWindow->currentState->renderContent != nullptr)
+    if (currentWindow != nullptr)
     {
-        if (currentWindow->currentState->renderContent->type == ContentType::LIST)
+        auto callbackID = currentWindow->GetCallbackIDFromSelect(inputID);
+
+        if (callbackID != ACTION_NONE)
         {
-            OLED_Content_List *list = (OLED_Content_List *)currentWindow->currentState->renderContent;
-#if DEBUG == 1
-            // Serial.print("Display_Manager::select found resourceID: ");
-            // Serial.println(list->getCurrentNode()->resourceID);
-#endif
-            processEventCallback(list->getCurrentNode()->resourceID, inputID);
+            processEventCallback(callbackID, inputID);
         }
-#if DEBUG == 1
-        // else
-        // {
-        //     Serial.println("Display_Manager::select: Content type is not list");
-        // }
-#endif
     }
 }
 
@@ -478,8 +469,7 @@ void Display_Manager::flashDefaultSettings(uint8_t inputID)
 void Display_Manager::rebootDevice(uint8_t inputID)
 {
     display.clearDisplay();
-    display.setCursor(Display_Utils::centerTextHorizontal(12), Display_Utils::centerTextVertical());
-    display.println("Rebooting...");
+    Display_Utils::printCenteredText("Rebooting...");
     display.display();
     delay(3000);
     ESP.restart();
@@ -509,12 +499,16 @@ void Display_Manager::quickActionMenu(uint8_t inputID)
 {
     Menu_Window *newWindow = new Menu_Window(currentWindow);
 
-    newWindow->addMenuItem("All Messages", ACTION_GENERATE_STATUSES_WINDOW);
-    newWindow->addMenuItem("Save Current Location", ACTION_SAVE_LOCATION_WINDOW);
+    Edit_String_Content *stringContent = new Edit_String_Content();
+    newWindow->PushToContentList(stringContent);
+
+    SaveStatusMessageState *msgState = new SaveStatusMessageState(stringContent);
+    SaveLocationState *locationState = new SaveLocationState(stringContent);
+
+    newWindow->addMenuItem("Create Status Message", ACTION_GENERATE_STATUSES_WINDOW, msgState);
+    newWindow->addMenuItem("Save Current Location", ACTION_SAVE_LOCATION_WINDOW, locationState);
     newWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
-    newWindow->addMenuItem("Silent Mode", ACTION_TOGGLE_SILENT_MODE);
-    newWindow->addMenuItem("Shutdown", ACTION_SHUTDOWN_DEVICE);
-    newWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
+    newWindow->addMenuItem("Toggle Silent Mode", ACTION_TOGGLE_SILENT_MODE);
 
     Display_Manager::attachNewWindow(newWindow);
 
@@ -558,7 +552,7 @@ void Display_Manager::openSOS()
 
     Text_Display_Content *txtContent2 = new Text_Display_Content(textData);
 
-    Repeat_Message_State *repeat = new Repeat_Message_State(txtContent2, 0, 15);
+    Repeat_Message_State *repeat = new Repeat_Message_State(txtContent2, 0, 15, true);
     SOS_Window *sosWindow = new SOS_Window(currentWindow, repeat, lock);
 
     Display_Manager::attachNewWindow(sosWindow);

@@ -15,6 +15,9 @@ namespace
     const uint8_t DEFAULT_NODE_ID = 1;
     const char *USER_LIST_FILENAME PROGMEM = "/SavedUsers.msgpk";
     const char *MESSAGE_LIST_FILENAME PROGMEM = "/SavedMessages.msgpk";
+    const size_t MESSAGE_RECEIVE_TIMEOUT_MS = 10;
+    const size_t RECEIVE_THREAD_SLEEP_MS = 1;
+    const size_t NUM_REBROADCAST_ATTEMPTS = 1;
 }
 
 // Struct to manage message pointers waiting to send
@@ -118,7 +121,7 @@ public:
                 uint8_t flags;
                 uint8_t len = sizeof(buffer);
 
-                _manager->recvfromAck(buffer, &len, &from, &to, &id, &flags);
+                _manager->recvfromAckTimeout(buffer, &len, MESSAGE_RECEIVE_TIMEOUT_MS, &from, &to, &id, &flags);
                 #if DEBUG == 1
                 // Serial.println("Raw bytes:");
                 // for (size_t i = 0; i < len; i++)
@@ -175,7 +178,7 @@ public:
                     if (msg->sender == LoraUtils::UserID())
                     {
                         #if DEBUG == 1
-                        Serial.println("Message was sent from this node and came back");
+                        // Serial.println("Message was sent from this node and came back");
                         #endif
                         delete msg;
                         continue;
@@ -184,7 +187,7 @@ public:
                     if (fwd)
                     {
                         msg->bouncesLeft--;
-                        LoraUtils::SendMessage(msg, 1); 
+                        LoraUtils::SendMessage(msg, NUM_REBROADCAST_ATTEMPTS); 
 
                         _lastReceivedMessages[msg->sender] = msg->msgID;
                     }
@@ -193,7 +196,7 @@ public:
                     if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
                     {
                         #if DEBUG == 1
-                        Serial.println("Message directed to this node or broadcast");
+                        // Serial.println("Message directed to this node or broadcast");
                         #endif
                         // Handle the message
                         auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
@@ -206,7 +209,7 @@ public:
                 }
             }
 
-            vTaskDelay(pdMS_TO_TICKS(10));
+            vTaskDelay(pdMS_TO_TICKS(RECEIVE_THREAD_SLEEP_MS));
         }
     }
 
@@ -314,7 +317,7 @@ public:
 
                     if (msgTimer->msg->sender == LoraUtils::UserID())
                     {
-                        // Update the last broadcast message. It will be deleted when overwritten
+                        // Update the last broadcast message.
                         LoraUtils::SetMyLastBroadcast(msgTimer->msg);
                     }
 
@@ -423,7 +426,7 @@ protected:
         if (msg == nullptr)
         {
             #if DEBUG == 1
-            Serial.println("Message is null");
+            // Serial.println("Message is null");
             #endif
             return false;
         }
@@ -435,7 +438,7 @@ protected:
         if (senderID == LoraUtils::UserID())
         {
             #if DEBUG == 1
-            Serial.println("Message came from this node");
+            // Serial.println("Message came from this node");
             #endif
             return false;
         }
@@ -443,7 +446,7 @@ protected:
         if (msg->bouncesLeft == 0)
         {
             #if DEBUG == 1
-            Serial.println("Message has no bounces left");
+            // Serial.println("Message has no bounces left");
             #endif
             return false;
         }
@@ -454,14 +457,14 @@ protected:
             if (_lastReceivedMessages[senderID] == msgID)
             {
                 #if DEBUG == 1
-                Serial.println("Message has already been received");
+                // Serial.println("Message has already been received");
                 #endif
                 return false;
             }
             else
             {
                 #if DEBUG == 1
-                Serial.println("Message has not been received. Resending");
+                // Serial.println("Message has not been received. Resending");
                 #endif
                 return true;
             }
@@ -469,7 +472,7 @@ protected:
         else
         {
             #if DEBUG == 1
-            Serial.println("Message from new user. Resending");
+            // Serial.println("Message from new user. Resending");
             #endif
             return true;
         }

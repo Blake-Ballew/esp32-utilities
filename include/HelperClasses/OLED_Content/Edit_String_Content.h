@@ -8,7 +8,6 @@ public:
     Edit_String_Content()
     {
         type = ContentType::EDIT_STRING;
-        currStr = nullptr;
     }
 
     ~Edit_String_Content()
@@ -17,10 +16,6 @@ public:
         Serial.println("Edit_String_Content destructor");
 #endif
         stop();
-        if (currStr != nullptr)
-        {
-            delete[] currStr;
-        }
     }
 
     void printContent()
@@ -28,17 +23,13 @@ public:
 #if DEBUG == 1
         Serial.println("Edit_String_Content::printContent");
 #endif
-        if (currStr == nullptr)
-        {
-            return;
-        }
 
         // Clear content area
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
         // Print string
         display->setCursor(Display_Utils::centerTextHorizontal(cursorPos + 1), Display_Utils::selectTextLine(3));
-        display->print(currStr);
+        display->print(currStr.c_str());
         if (displayCursor)
         {
             display->print('_');
@@ -93,29 +84,24 @@ public:
         System_Utils::stopTimer(refreshTimerID);
     }
 
-    void setString(const char *str, size_t maxLen, size_t pos)
+    void setString(std::string str, size_t maxLen)
     {
 #if DEBUG == 1
-        Serial.printf("Edit_String_Content::setString(%s, %d, %d)\n", str, maxLen, pos);
+        Serial.print("Editing string: ");
+        Serial.println(str.c_str());
 #endif
-        if (currStr != nullptr)
-        {
-#if DEBUG == 1
-            Serial.println("Edit_String_Content::setString - deleting old char[]");
-#endif
-            delete[] currStr;
-        }
-#if DEBUG == 1
-        Serial.println("Edit_String_Content::setString - new char[]: ");
-#endif
-        currStr = new char[maxLen + 1];
-#if DEBUG == 1
-        Serial.println("Edit_String_Content::setString - copying memory ");
-#endif
-        memcpy(currStr, str, maxLen);
-        currStr[maxLen] = '\0';
+
+        currStr = str;
         currStrLen = maxLen;
-        cursorPos = pos;
+        cursorPos = str.length();
+        cursorCharPos = 0;
+    }
+
+    void setString(size_t maxLen)
+    {
+        currStr.clear();
+        currStrLen = maxLen;
+        cursorPos = 0;
         cursorCharPos = 0;
     }
 
@@ -127,7 +113,7 @@ public:
             if (cursorPos > 0)
             {
                 cursorPos--;
-                currStr[cursorPos] = '\0';
+                currStr.erase(cursorPos, 1);
             }
         }
 
@@ -136,19 +122,20 @@ public:
         {
             if (cursorPos < currStrLen)
             {
-                currStr[cursorPos] = legalChars[cursorCharPos];
+                currStr.append(1, legalChars[cursorCharPos]);
                 cursorPos++;
-                currStr[cursorPos] = '\0';
             }
         }
     }
 
-    const char *getString() { return currStr; }
+    std::string getString() { return currStr; }
 
     void clearString()
     {
-        delete[] currStr;
-        currStr = nullptr;
+        currStr.clear();
+        currStrLen = 0;
+        cursorPos = 0;
+        cursorCharPos = 0;
     }
 
 private:
@@ -156,7 +143,7 @@ private:
 
     size_t cursorCharPos = 0;
     size_t cursorPos = 0;
-    char *currStr;
+    std::string currStr;
     size_t currStrLen;
 
     const size_t timerPeriodMS = 500;

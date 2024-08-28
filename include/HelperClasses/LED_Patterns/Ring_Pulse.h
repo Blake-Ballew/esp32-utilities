@@ -46,6 +46,9 @@ public:
 
     bool iterateFrame()
     {
+        #if DEBUG == 1
+        // Serial.println("Ring Pulse");
+        #endif
         if (beginIdx == -1 || endIdx == -1)
         {
             return true;

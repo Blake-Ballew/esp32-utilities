@@ -74,6 +74,9 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
+#if DEBUG == 1
+        Serial.println("UnreadMessageState::enterState()");
+#endif
         if (renderContent != nullptr)
         {
             renderContent->start();
@@ -86,6 +89,10 @@ public:
         {
             messageDisplay->SetDisplayMessage(msg);
         }
+
+        #if DEBUG == 1
+        Serial.println("UnreadMessageState::enterState() - Done");
+        #endif
     }
 
     void exitState(State_Transfer_Data &transferData)

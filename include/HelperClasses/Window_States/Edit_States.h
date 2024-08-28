@@ -429,12 +429,15 @@ public:
             if (doc->containsKey("cfgVal") && doc->containsKey("maxLen"))
             {
 #if DEBUG == 1
-                Serial.println("Edit_String_State::enterState: cfgVal and maxLen found");
+                Serial.print("Edit_String_State::enterState: cfgVal -  ");
+                Serial.println((*doc)["cfgVal"].as<std::string>().c_str());
+                Serial.print("Edit_String_State::enterState: maxLen -  ");
+                Serial.println((*doc)["maxLen"].as<size_t>());
 #endif
-                const char *str = (*doc)["cfgVal"].as<const char *>();
-                int maxLength = (*doc)["maxLen"].as<size_t>();
+                auto str = (*doc)["cfgVal"].as<std::string>();
+                size_t maxLength = (*doc)["maxLen"].as<size_t>();
 
-                editStringContent->setString(str, maxLength, strlen(str));
+                editStringContent->setString(str, maxLength);
             }
         }
 

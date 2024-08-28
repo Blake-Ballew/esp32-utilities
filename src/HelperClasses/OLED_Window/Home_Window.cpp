@@ -15,15 +15,20 @@ Home_Window::Home_Window() : OLED_Window()
     trackingState = new Tracking_State(messageDisplay);
     selectMessageState = new Select_Message_State();
     selectLocationState = new Select_Location_State();
+    selectionState = new SelectKeyValueState();
+    saveLocationState = new SaveLocationState();
 
     contentList.push_back(homeContent);
     contentList.push_back(messageDisplay);
+    contentList.push_back(saveLocationState->renderContent);
 
     stateList.push_back(homeState);
     stateList.push_back(trackingState);
     stateList.push_back(unreadMessageState);
     stateList.push_back(selectMessageState);
     stateList.push_back(selectLocationState);
+    stateList.push_back(selectionState);
+    stateList.push_back(saveLocationState);
 
     setInitialState(homeState);
 
@@ -32,10 +37,12 @@ Home_Window::Home_Window() : OLED_Window()
 
     unreadMessageState->setAdjacentState(BUTTON_4, trackingState);
     unreadMessageState->setAdjacentState(BUTTON_2, selectLocationState);
+    unreadMessageState->setAdjacentState(BUTTON_1, selectionState);
 
     unreadMessageState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
     unreadMessageState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
     unreadMessageState->assignInput(BUTTON_3, ACTION_DEFER_CALLBACK_TO_WINDOW, "Mark Read");
+    unreadMessageState->assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Save");
 
     selectLocationState->setAdjacentState(BUTTON_4, selectMessageState);
     selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
@@ -181,6 +188,88 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
             newState = homeState;
         }
     }
+    else if (oldState == unreadMessageState && newState == selectionState)
+    {
+        transferData.serializedData = new DynamicJsonDocument(256);
+
+        JsonArray msgArray = (*transferData.serializedData).createNestedArray("items");
+        msgArray[0]["key"] = "Message";
+        msgArray[0]["value"] = 0;
+
+        msgArray[1]["key"] = "Location";
+        msgArray[1]["value"] = 1;
+
+        msgArray[2]["key"] = "User Information";
+        msgArray[2]["value"] = 2;
+
+        (*transferData.serializedData)["prompt"] = "Save:";
+    }
+    else if (oldState == selectionState && transferData.serializedData != nullptr)
+    {
+        DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
+
+        if (doc->containsKey("return"))
+        {
+            MessageBase *currentPointedMessage = LoraUtils::GetCurrentUnreadMessage();
+
+            if (currentPointedMessage != nullptr
+            && currentPointedMessage->GetInstanceMessageType() == MessagePing::MessageType())
+            {
+                MessagePing *pingMsg = (MessagePing *)currentPointedMessage;
+                switch ((*doc)["return"].as<int>())
+                {
+                    // Save Message
+                    case 0:
+                    {
+                        LoraUtils::AddSavedMessage(pingMsg->status);
+                        Display_Utils::printCenteredText("Message saved", true);
+                        display->display();
+                        vTaskDelay(pdMS_TO_TICKS(2000));
+                        break;
+                    }
+
+                    // Save Location
+                    case 1:
+                    {
+                        newState = saveLocationState;
+                        stateStack.push(unreadMessageState);
+                        if (transferData.serializedData != nullptr)
+                        {
+                            delete transferData.serializedData;
+                        }
+                        
+                        transferData.serializedData = new DynamicJsonDocument(256);
+
+                        (*transferData.serializedData)["cfgVal"] = pingMsg->status;
+                        (*transferData.serializedData)["maxLen"] = STATUS_LENGTH;
+                        (*transferData.serializedData)["lat"] = pingMsg->lat;
+                        (*transferData.serializedData)["lon"] = pingMsg->lng;
+                        
+                        break;
+                    }
+
+                    // Save User Information
+                    case 2:
+                    {
+                        UserInfo userInfo;
+                        std::string username(pingMsg->senderName);
+                        userInfo.Name = username;
+                        userInfo.UserID = pingMsg->sender;
+                        LoraUtils::AddUserInfo(userInfo);
+                        Display_Utils::printCenteredText("User info saved", true);
+                        display->display();
+                        vTaskDelay(pdMS_TO_TICKS(2000));
+                        break;
+                    }
+
+                    default:
+                    break;
+                }
+
+                delete currentPointedMessage;
+            }
+        }
+    } 
 
     if (newState == selectLocationState)
     {

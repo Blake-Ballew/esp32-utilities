@@ -12,6 +12,8 @@ namespace
     const char *MESSAGE_TYPE_STATUS PROGMEM = "s";
 }
 
+const size_t STATUS_LENGTH = 23;
+
 class MessagePing : public MessageBase
 {
 public:
@@ -162,7 +164,7 @@ public:
     static MessageBase *MessageFactory(uint8_t *buffer, size_t len)
     {
         #if DEBUG == 1
-        Serial.println("MessagePing::MessageFactory");
+        // Serial.println("MessagePing::MessageFactory");
         #endif
         MessageBase *msg = new MessagePing();
         StaticJsonDocument<MSG_BASE_SIZE> doc;

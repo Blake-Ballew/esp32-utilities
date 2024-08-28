@@ -24,6 +24,8 @@
 #include "OTA_Update_Window.h"
 #include "LoraUtils.h"
 #include "NavigationUtils.h"
+#include "SaveStatusMessageState.h"
+#include "SaveLocationState.h"
 
 #include "Lock_State.h"
 

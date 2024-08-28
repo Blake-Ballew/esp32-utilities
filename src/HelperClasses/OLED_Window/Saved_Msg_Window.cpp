@@ -53,7 +53,7 @@ void Saved_Msg_Window::execBtnCallback(uint8_t inputID)
         {
             if (newMsg != nullptr)
             {
-                memcpy(newMsg, editContent->getString(), Settings_Manager::maxMsgLength + 1);
+                memcpy(newMsg, editContent->getString().c_str(), Settings_Manager::maxMsgLength + 1);
                 editContent->stop();
 #if DEBUG == 1
                 Serial.printf("Message Saving: %s\n", newMsg);
@@ -101,9 +101,7 @@ void Saved_Msg_Window::execBtnCallback(uint8_t inputID)
     {
         if (this->content->type == ContentType::SAVED_MSG)
         {
-            newMsg = new char[Settings_Manager::maxMsgLength + 1];
-            memset(newMsg, 0, Settings_Manager::maxMsgLength + 1);
-            editContent->setString(newMsg, Settings_Manager::maxMsgLength, 0);
+            editContent->setString(newMsg, Settings_Manager::maxMsgLength);
             content = editContent;
             content->printContent();
             assignButton(ACTION_DEFER_CALLBACK_TO_WINDOW, 1, "Backspace", 9);

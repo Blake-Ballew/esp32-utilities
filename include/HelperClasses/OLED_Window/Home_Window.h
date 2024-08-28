@@ -8,6 +8,8 @@
 #include "Saved_Locations_Content.h"
 #include "Saved_Messages_Content.h"
 #include "LoraMessageDisplay.h"
+#include "SelectKeyValueState.h"
+#include "SaveLocationState.h"
 #include <string>
 
 // #include "Received_Messages_State.h"
@@ -28,16 +30,10 @@ public:
     Home_Window(OLED_Window *parent);
     Home_Window();
 
-    // void Pause();
-    // void Resume();
-
     void encUp() {}
     void encDown() {}
 
-    // void drawWindow() override;
-
     void drawWindow();
-    // void execBtnCallback(uint8_t inputID);
 
     void transferState(State_Transfer_Data &transferData) override;
 
@@ -50,6 +46,8 @@ private:
     Select_Message_State *selectMessageState;
     Select_Location_State *selectLocationState;
     UnreadMessageState *unreadMessageState;
+    SelectKeyValueState *selectionState;
+    SaveLocationState *saveLocationState;
 
     // Message info
     bool sendDirect;

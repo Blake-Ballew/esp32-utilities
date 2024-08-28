@@ -72,6 +72,7 @@ public:
         return &this->currentState->buttonCallbacks[inputID];
     }
 
+    // TODO: delete this
     virtual void switchContent(OLED_Content *content, bool copyButtons)
     {
         if (content == nullptr)
@@ -215,6 +216,8 @@ public:
         currentState->enterState(transferData);
     }
 
+    virtual uint32_t GetCallbackIDFromSelect(uint8_t inputID) { return ACTION_NONE; }
+
     // void execBtnCallback(uint8_t buttonNumber, void *arg);
 
     virtual ~OLED_Window();
@@ -228,6 +231,9 @@ public:
     uint32_t btn4CallbackID = 0;
 
     // ArduinoJson::JsonDocument callbackData;
+
+    void PushToStateList(Window_State *state) { stateList.push_back(state); }
+    void PushToContentList(OLED_Content *content) { contentList.push_back(content); }
 
 protected:
     // Exits the old state and sends its transfer data to the new state

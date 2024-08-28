@@ -63,7 +63,7 @@ void Settings_Content::printContent()
     case (uint8_t)JSON_VARIANT_TYPE_INTEGER:
     {
         this->display->setCursor((OLED_WIDTH / 2) - 24, OLED_HEIGHT / 2 - 4);
-        this->display->print(currentNode.variant.as<int>());
+        this->display->print(currentNode.variant.as<int64_t>());
         break;
     }
     case (uint8_t)JSON_VARIANT_TYPE_FLOAT:

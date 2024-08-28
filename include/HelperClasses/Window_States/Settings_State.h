@@ -106,6 +106,7 @@ public:
                     Settings_Manager::writeSettingsToEEPROM();
                     Display_Utils::sendCallbackCommand(ACTION_REBOOT_DEVICE);
                     settingsSaved = false;
+                    return;
                 }
 
                 Display_Utils::sendCallbackCommand(ACTION_BACK);

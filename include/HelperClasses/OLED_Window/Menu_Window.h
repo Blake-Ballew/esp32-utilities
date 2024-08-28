@@ -74,6 +74,23 @@ public:
         }
     }
 
+    void callFunctionState(uint8_t inputID)
+    {
+        if (menuState->getAdjacentState() != nullptr)
+        {
+            stateStack.push(currentState);
+
+            State_Transfer_Data transferData;
+            transferData.inputID = inputID;
+            transferData.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
+            transferData.serializedData = nullptr;
+            transferData.oldState = currentState;
+            transferData.newState = menuState->getAdjacentState();
+
+            transferState(transferData);
+        }
+    }
+
     void addMenuItem(const char *text, uint32_t callbackID, Window_State *adjacentState, bool addAdjacentState = true)
     {
         menuState->addMenuItem(text, callbackID, adjacentState);

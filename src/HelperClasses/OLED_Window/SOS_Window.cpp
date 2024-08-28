@@ -43,7 +43,7 @@ void SOS_Window::execBtnCallback(uint8_t inputID)
         MessagePing *ping = createOkayMessage();
 
         // Send message
-
+        LoraUtils::SendMessage(ping, 1);
 
         delete ping;
     }
@@ -68,14 +68,11 @@ void SOS_Window::transferState(State_Transfer_Data &transferData)
         // Send SOS message
         MessagePing *ping = createSosMessage();
 
-        // transferData.serializedData = new ArduinoJson::DynamicJsonDocument(512);
-        // ping->serialize(*transferData.serializedData);
-        // transferData.serializedData->shrinkToFit();
+        transferData.serializedData = new ArduinoJson::DynamicJsonDocument(512);
+        ping->serialize(*transferData.serializedData);
+        transferData.serializedData->shrinkToFit();
 
-        // delete ping;
-
-        // Send message
-        LoraUtils::SendMessage(ping, 0);
+        delete ping;
     }
 
     transferData.newState->enterState(transferData);
@@ -98,13 +95,13 @@ MessagePing *SOS_Window::createSosMessage()
     MessagePing *ping = new MessagePing(
         NavigationUtils::GetTime().value(),
         NavigationUtils::GetDate().value(),
-        0,
+        0,   // Recipient
         LoraUtils::UserID(),
         Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
-        0,
-        255,
-        0,
-        0,
+        0,   // MsgID
+        255, // Red
+        0,   // Green
+        0,   // Blue
         NavigationUtils::GetLocation().lat(),
         NavigationUtils::GetLocation().lng(),
         "SOS"

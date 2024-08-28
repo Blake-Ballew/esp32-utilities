@@ -12,7 +12,6 @@
 #define MSG_BASE_SIZE 512
 
 #define NAME_LENGTH 12
-#define STATUS_LENGTH 32
 
 namespace
 {

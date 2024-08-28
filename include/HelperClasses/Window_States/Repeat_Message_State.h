@@ -9,7 +9,7 @@
 #include "Ring_Pulse.h"
 #include "LED_Utils.h"
 
-#define MESSAGE_REPEAT_INTERVAL_MS 15000
+#define MESSAGE_REPEAT_INTERVAL_MS 60000
 
 class Repeat_Message_State : public Window_State
 {
@@ -49,10 +49,17 @@ public:
         {
             delete message;
         }
+
+        LED_Utils::disablePattern(ringPulseID);
+        LED_Utils::loopPattern(ringPulseID, 0);
+        LED_Utils::resetPattern(ringPulseID);
     }
 
     void enterState(State_Transfer_Data &transferData)
     {
+        #if DEBUG == 1
+        Serial.println("Enter Repeat Message State");
+        #endif
         Window_State::enterState(transferData);
         
         if (transferData.serializedData != nullptr)
@@ -68,6 +75,9 @@ public:
 
             if (messageType == MessagePing::MessageType()) 
             {
+                #if DEBUG == 1
+                Serial.println("Repeat_Message_State::enterState: MessagePing");
+                #endif
                 MessagePing *ping = new MessagePing();
                 ping->deserialize(*doc);
                 message = ping;
@@ -81,7 +91,17 @@ public:
                 cfg["gOverride"] = msgG;
                 cfg["bOverride"] = msgB;
 
+                #if DEBUG == 1
+                Serial.print("RingPulseID: ");
+                Serial.println(ringPulseID);
+                #endif
+
+                LED_Utils::setAnimationLengthMS(ringPulseID, 3000);
                 LED_Utils::configurePattern(ringPulseID, cfg);
+
+                LED_Utils::enablePattern(ringPulseID);
+                LED_Utils::loopPattern(ringPulseID, -1);
+                
             }
 
             if (message != nullptr)
@@ -93,6 +113,10 @@ public:
 
     void exitState(State_Transfer_Data &transferData)
     {
+        LED_Utils::disablePattern(ringPulseID);
+        LED_Utils::loopPattern(ringPulseID, 0);
+        LED_Utils::resetPattern(ringPulseID);
+
         if (message != nullptr)
         {
             delete message;
@@ -100,6 +124,30 @@ public:
         }
 
         Display_Utils::disableRefreshTimer();
+    }
+
+    void displayState()
+    {
+        Window_State::displayState();
+
+        if (message != nullptr)
+        {
+            if (newMsgID)
+            {
+                message->msgID = esp_random();
+            }
+
+            if (message->GetInstanceMessageType() == MessagePing::MessageType())
+            {
+                MessagePing *ping = (MessagePing *)message;
+                ping->lat = NavigationUtils::GetLocation().lat();
+                ping->lng = NavigationUtils::GetLocation().lng();
+                ping->time = NavigationUtils::GetTime().value();
+                ping->date = NavigationUtils::GetDate().value();
+            }
+
+            LoraUtils::SendMessage(message, 1);
+        }
     }
 
     void PauseState()

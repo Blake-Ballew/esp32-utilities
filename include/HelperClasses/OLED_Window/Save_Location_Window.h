@@ -98,5 +98,5 @@ public:
     }
 
 protected:
-        Edit_String_State *editStringState;
+    Edit_String_State *editStringState;
 };

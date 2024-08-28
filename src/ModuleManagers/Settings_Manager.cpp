@@ -564,6 +564,10 @@ JsonVariantType Settings_Manager::getVariantType(ArduinoJson::JsonVariant varian
     {
         return JSON_VARIANT_TYPE_BOOLEAN;
     }
+    else if (variant.is<uint32_t>())
+    {
+        return JSON_VARIANT_TYPE_INTEGER;
+    }
     else if (variant.is<int>())
     {
         return JSON_VARIANT_TYPE_INTEGER;
