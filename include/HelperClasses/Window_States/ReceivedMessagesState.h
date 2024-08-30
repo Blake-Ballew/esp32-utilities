@@ -7,13 +7,15 @@
 #include "Display_Utils.h"
 #include "LoraMessageDisplay.h"
 
-class UnreadMessageState : public Window_State
+class ReceivedMessagesState : public Window_State
 {
 public:
-    UnreadMessageState(LoraMessageDisplay *loraDisplay) 
+    ReceivedMessagesState(LoraMessageDisplay *loraDisplay) 
     {
         messageDisplay = loraDisplay;
         renderContent = messageDisplay;
+
+        assignInput(BUTTON_3, ACTION_BACK, "Back");
 
         if (SolidRing::RegisteredPatternID() == -1)
         {
@@ -34,7 +36,7 @@ public:
         LED_Utils::enablePattern(_SolidRingPatternID);
     }
 
-    ~UnreadMessageState() {}
+    ~ReceivedMessagesState() {}
 
     void processInput(uint8_t inputID) 
     {
@@ -42,48 +44,30 @@ public:
 
         if (inputID == ENC_UP)
         {
-            if (LoraUtils::IsUnreadMessageIteratorAtBeginning())
+            if (LoraUtils::IsMessageIteratorAtBeginning())
             {
                 Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
                 return;
             }
             
-            LoraUtils::DecrementUnreadMessageIterator();
+            LoraUtils::DecrementMessageIterator();
             updateMessage = true;
         }
         else if (inputID == ENC_DOWN)
         {
-            LoraUtils::IncrementUnreadMessageIterator();
+            LoraUtils::IncrementMessageIterator();
             updateMessage = true;
 
-            if (LoraUtils::IsUnreadMessageIteratorAtEnd())
+            if (LoraUtils::IsMessageIteratorAtEnd())
             {
-                LoraUtils::DecrementUnreadMessageIterator();
+                LoraUtils::DecrementMessageIterator();
                 updateMessage = false;
-            }
-        }
-        else if (inputID == BUTTON_3)
-        {
-            LoraUtils::MarkMessageOpened(LoraUtils::GetCurrentUnreadMessageSenderID());
-            updateMessage = true;
-            
-            if (LoraUtils::IsUnreadMessageIteratorAtEnd())
-            {
-                if (LoraUtils::GetNumUnreadMessages() == 0)
-                {
-                    Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
-                    return;
-                }
-                else
-                {
-                    LoraUtils::DecrementUnreadMessageIterator();
-                }
             }
         }
         
         if (updateMessage)
         {
-            MessageBase *msg = LoraUtils::GetCurrentUnreadMessage();
+            MessageBase *msg = LoraUtils::GetCurrentMessage();
             if (msg != nullptr)
             {
                 messageDisplay->SetDisplayMessage(msg);
@@ -94,23 +78,23 @@ public:
     void enterState(State_Transfer_Data &transferData)
     {
 #if DEBUG == 1
-        Serial.println("UnreadMessageState::enterState()");
+        Serial.println("ReceivedMessageState::enterState()");
 #endif
         if (renderContent != nullptr)
         {
             renderContent->start();
         }
 
-        LoraUtils::ResetUnreadMessageIterator();
+        LoraUtils::ResetMessageIterator();
 
-        MessageBase *msg = LoraUtils::GetCurrentUnreadMessage();
+        MessageBase *msg = LoraUtils::GetCurrentMessage();
         if (msg != nullptr)
         {
             messageDisplay->SetDisplayMessage(msg);
         }
 
         #if DEBUG == 1
-        Serial.println("UnreadMessageState::enterState() - Done");
+        Serial.println("ReceivedMessageState::enterState() - Done");
         #endif
     }
 
@@ -157,27 +141,46 @@ public:
 
     void displayState()
     {
-        Window_State::displayState();
-
-        if (messageDisplay->DisplayMessage()->GetInstanceMessageType() == MessagePing::MessageType())
+        if (LoraUtils::GetNumMessages() == 0)
         {
-            MessagePing *ping = (MessagePing *)messageDisplay->DisplayMessage();
-
-            StaticJsonDocument<128> doc;
-            doc["rOverride"] = ping->color_R;
-            doc["gOverride"] = ping->color_G;
-            doc["bOverride"] = ping->color_B;
-
-            #if DEBUG == 1
-            // Serial.println("LoraMessageDisplay::printContent(): Configuring SolidRing");
-            #endif
-            LED_Utils::configurePattern(_SolidRingPatternID, doc);
-
-            #if DEBUG == 1
-            // Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
-            #endif
-            LED_Utils::iteratePattern(_SolidRingPatternID);
+            Display_Utils::printCenteredText("No messages");
         }
+        else
+        {
+            MessageBase *msg = LoraUtils::GetCurrentMessage();
+            if (msg != nullptr)
+            {
+                messageDisplay->SetDisplayMessage(msg);
+            }
+            #if DEBUG == 1
+            else
+            {
+                Serial.println("ReceivedMessageState::displayState() - Message is null");
+            }
+            #endif
+
+            if (messageDisplay->DisplayMessage()->GetInstanceMessageType() == MessagePing::MessageType())
+            {
+                MessagePing *ping = (MessagePing *)messageDisplay->DisplayMessage();
+
+                StaticJsonDocument<128> doc;
+                doc["rOverride"] = ping->color_R;
+                doc["gOverride"] = ping->color_G;
+                doc["bOverride"] = ping->color_B;
+
+                #if DEBUG == 1
+                // Serial.println("LoraMessageDisplay::printContent(): Configuring SolidRing");
+                #endif
+                LED_Utils::configurePattern(_SolidRingPatternID, doc);
+
+                #if DEBUG == 1
+                // Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
+                #endif
+                LED_Utils::iteratePattern(_SolidRingPatternID);
+            }
+        }
+
+        Window_State::displayState();
     }
 
 protected:

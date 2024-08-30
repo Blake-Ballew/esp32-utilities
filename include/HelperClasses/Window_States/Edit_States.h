@@ -422,19 +422,26 @@ public:
 #endif
         Window_State::enterState(transferData);
 
+        editStringContent->clearString();
+
         if (transferData.serializedData != nullptr)
         {
             ArduinoJson::DynamicJsonDocument *doc = transferData.serializedData;
             // Extract values if found and call editString
-            if (doc->containsKey("cfgVal") && doc->containsKey("maxLen"))
+            if (doc->containsKey("maxLen"))
             {
 #if DEBUG == 1
-                Serial.print("Edit_String_State::enterState: cfgVal -  ");
-                Serial.println((*doc)["cfgVal"].as<std::string>().c_str());
-                Serial.print("Edit_String_State::enterState: maxLen -  ");
-                Serial.println((*doc)["maxLen"].as<size_t>());
+                // Serial.print("Edit_String_State::enterState: cfgVal -  ");
+                // Serial.println((*doc)["cfgVal"].as<std::string>().c_str());
+                // Serial.print("Edit_String_State::enterState: maxLen -  ");
+                // Serial.println((*doc)["maxLen"].as<size_t>());
 #endif
-                auto str = (*doc)["cfgVal"].as<std::string>();
+                std::string str;
+                if (doc->containsKey("cfgVal"))
+                {
+                    str = (*doc)["cfgVal"].as<std::string>();
+                }
+                
                 size_t maxLength = (*doc)["maxLen"].as<size_t>();
 
                 editStringContent->setString(str, maxLength);

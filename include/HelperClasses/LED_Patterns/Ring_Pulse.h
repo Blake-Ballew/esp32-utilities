@@ -92,8 +92,7 @@ public:
 
         if (currMS >= animationMS)
         {
-            // Reset the pattern
-            resetPattern(); 
+            clearPattern();
             return true;
         }
         else

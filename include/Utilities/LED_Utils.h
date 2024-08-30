@@ -55,22 +55,13 @@ public:
     // Sets the tick rate for the LED patterns
     static void setTickRate(size_t ms);
 
-    // Timer function to iterate patterns. Updates FastLED at the end
+    // Task to iterate patterns. Updates FastLED at the end
     // Returns false if there is no more work to do and the timer can be stopped
     // Otherwise, returns true
-    static void iteratePatterns();
+    static void iteratePatterns(void *pvParameters);
 
     // Function to iterate a single pattern once
     static void iteratePattern(int patternID);
-
-    // Sets the patternTimerID
-    static void setPatternTimerID(int timerID);
-
-    // Starts the pattern timer
-    static void startPatternTimer();
-
-    // Stops the pattern timer
-    static void stopPatternTimer();
 
     // Sets the user's theme color
     // This is used by patterns that don't have their own color configuration
@@ -79,11 +70,14 @@ public:
     // Sets the InputID to LED index map
     static void setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins);
     static std::unordered_map<uint8_t, uint8_t> &InputIdLedPins();
+
+    static void SetIteratePatternTaskHandle(TaskHandle_t handle) { _IteratePatternsTaskHandle = handle; }
     
 protected:
     static std::unordered_map<uint8_t, uint8_t> inputIdLedPins;
 
     static std::unordered_map<int, LED_Pattern_Status> registeredPatterns;
-    static int patternTimerID;
     static int nextPatternID;
+    static size_t _PatternTickRateMS;
+    static TaskHandle_t _IteratePatternsTaskHandle;
 };

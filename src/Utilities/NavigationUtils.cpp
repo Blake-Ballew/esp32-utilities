@@ -282,11 +282,18 @@ void NavigationUtils::AddSavedLocation(SavedLocation location)
     _SavedLocationsUpdated.Invoke();
 }
 
-void NavigationUtils::RemoveSavedLocation(std::vector<SavedLocation>::iterator locationIt)
+void NavigationUtils::RemoveSavedLocation(std::vector<SavedLocation>::iterator &locationIt)
 {
-    _SavedLocations.erase(locationIt);
+    locationIt = _SavedLocations.erase(locationIt);
 
     _SavedLocationsUpdated.Invoke();
+}
+
+void NavigationUtils::UpdateSavedLocation(std::vector<SavedLocation>::iterator &locationIt, SavedLocation location)
+{
+    locationIt->Name = location.Name;
+    locationIt->Latitude = location.Latitude;
+    locationIt->Longitude = location.Longitude;
 }
 
 void NavigationUtils::SerializeSavedLocations(JsonDocument &doc)

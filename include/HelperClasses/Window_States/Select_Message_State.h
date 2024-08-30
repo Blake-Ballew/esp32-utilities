@@ -2,6 +2,8 @@
 
 #include "Window_State.h"
 #include "Saved_Messages_Content.h"
+#include "ScrollWheel.h"
+#include "LED_Utils.h"
 #include <vector>
 #include <string>
 
@@ -36,6 +38,9 @@ public:
     {
         Window_State::enterState(transferData);
 
+        _ScrollWheelPatternID = ScrollWheel::RegisteredPatternID();
+        LED_Utils::enablePattern(_ScrollWheelPatternID);
+
         _Messages.clear();
 
         if (transferData.serializedData != nullptr)
@@ -56,6 +61,8 @@ public:
     void exitState(State_Transfer_Data &transferData)
     {
         Window_State::exitState(transferData);
+
+        LED_Utils::disablePattern(_ScrollWheelPatternID);
 
         if (_MessageIt != _Messages.end() && transferData.inputID == BUTTON_4)
         {
@@ -106,6 +113,17 @@ public:
     {
         if (_Messages.size() > 0)
         {
+
+            if (_ScrollWheelPatternID > -1)
+            {
+                StaticJsonDocument<128> doc;
+
+                doc["numItems"] = _Messages.size();
+                doc["currItem"] = std::distance(_Messages.begin(), _MessageIt);
+                LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
+                LED_Utils::iteratePattern(_ScrollWheelPatternID);
+            }
+
             TextFormat prompt;
             prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
             prompt.verticalAlignment = TEXT_LINE;
@@ -137,4 +155,6 @@ private:
     std::vector<std::string> _Messages;
     std::vector<std::string>::iterator _MessageIt;
     uint64_t userID;
+
+    int _ScrollWheelPatternID;
 };

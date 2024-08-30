@@ -1,23 +1,23 @@
 #pragma once
 
 #include "Window_State.h"
-#include "NavigationUtils.h"
+#include "LoraUtils.h"
 #include "ScrollWheel.h"
 #include "LED_Utils.h"
 #include "MessagePing.h"
 
-// Displays a list of saved locations
+// Displays a list of saved status messages
 // Inputs:
-//   ENC_UP: Select next location
-//   ENC_DOWN: Select previous location
+//   ENC_UP: Select next message
+//   ENC_DOWN: Select previous message
 //   BUTTON_3: Return
 //   BUTTON_4: Edit
 //   BUTTON_1: Delete
-//   BUTTON_2: Create new saved location
-class Saved_Locations_State : public Window_State
+//   BUTTON_2: Create new message
+class SavedStatusMsgListState : public Window_State
 {
 public:
-    Saved_Locations_State()
+    SavedStatusMsgListState() : Window_State()
     {
         assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
         assignInput(ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
@@ -28,7 +28,7 @@ public:
         assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Create");
     }
 
-    ~Saved_Locations_State()
+    ~SavedStatusMsgListState()
     {
 
     }
@@ -44,14 +44,12 @@ public:
         if (transferData.serializedData != nullptr && transferData.serializedData->containsKey("return"))
         {
             auto newStr = (*transferData.serializedData)["return"].as<std::string>();
-            SavedLocation location = *_SelectedLocationIt;
-            location.Name = newStr;
 
-            NavigationUtils::UpdateSavedLocation(_SelectedLocationIt, location);
+            LoraUtils::UpdateSavedMessage(_SelectedMessageIt, newStr);
         }
         else
         {
-            _SelectedLocationIt = NavigationUtils::GetSavedLocationsBegin();
+            _SelectedMessageIt = LoraUtils::SavedMessageListBegin();
         }
     }
 
@@ -65,7 +63,7 @@ public:
         {
             DynamicJsonDocument *doc = new DynamicJsonDocument(128);
 
-            (*doc)["cfgVal"] = _SelectedLocationIt->Name;
+            (*doc)["cfgVal"] = *_SelectedMessageIt;
             (*doc)["maxLen"] = STATUS_LENGTH;
 
             transferData.serializedData = doc;
@@ -83,31 +81,31 @@ public:
     {
         if (inputID == ENC_DOWN)
         {
-            _SelectedLocationIt++;
+            _SelectedMessageIt++;
 
-            if (_SelectedLocationIt == NavigationUtils::GetSavedLocationsEnd())
+            if (_SelectedMessageIt == LoraUtils::SavedMessageListEnd())
             {
-                _SelectedLocationIt = NavigationUtils::GetSavedLocationsBegin();
+                _SelectedMessageIt = LoraUtils::SavedMessageListBegin();
             }
         }
 
         if (inputID == ENC_UP)
         {
-            if (_SelectedLocationIt == NavigationUtils::GetSavedLocationsBegin())
+            if (_SelectedMessageIt == LoraUtils::SavedMessageListBegin())
             {
-                _SelectedLocationIt = NavigationUtils::GetSavedLocationsEnd();
+                _SelectedMessageIt = LoraUtils::SavedMessageListEnd();
             }
 
-            _SelectedLocationIt--;
+            _SelectedMessageIt--;
         }
 
         if (inputID == BUTTON_1)
         {
-            NavigationUtils::RemoveSavedLocation(_SelectedLocationIt);
+            LoraUtils::DeleteSavedMessage(_SelectedMessageIt);
 
-            if (_SelectedLocationIt == NavigationUtils::GetSavedLocationsEnd() && NavigationUtils::GetSavedLocationsSize() > 0)
+            if (_SelectedMessageIt == LoraUtils::SavedMessageListEnd() && LoraUtils::GetSavedMessageListSize() > 0)
             {
-                _SelectedLocationIt--;
+                _SelectedMessageIt--;
             }
         }
     }
@@ -116,29 +114,30 @@ public:
     {
         Window_State::displayState();
 
-        if (NavigationUtils::GetSavedLocationsSize() > 0) 
+        if (LoraUtils::GetSavedMessageListSize() > 0) 
         {
-            auto location = *_SelectedLocationIt;
-            Display_Utils::printCenteredText(location.Name.c_str(), true);
+            auto msgStr = *_SelectedMessageIt;
+            Display_Utils::printCenteredText(msgStr.c_str(), true);
 
             if (_ScrollWheelPatternID > -1)
             {
                 StaticJsonDocument<128> doc;
-                doc["numItems"] = NavigationUtils::GetSavedLocationsSize();
-                doc["currItem"] = std::distance(NavigationUtils::GetSavedLocationsBegin(), _SelectedLocationIt);
+                doc["numItems"] = LoraUtils::GetSavedMessageListSize();
+                doc["currItem"] = std::distance(LoraUtils::SavedMessageListBegin(), _SelectedMessageIt);
 
                 LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
                 LED_Utils::iteratePattern(_ScrollWheelPatternID);
             }
-        } 
+        }
         else
         {
-            Display_Utils::printCenteredText("No Saved Locations", true);
+            Display_Utils::printCenteredText("No Saved Messages", true);
         }
         
     }
 
 protected:
-    std::vector<SavedLocation>::iterator _SelectedLocationIt;
-    int _ScrollWheelPatternID = -1;
+
+    std::vector<std::string>::iterator _SelectedMessageIt;
+    int _ScrollWheelPatternID;
 };

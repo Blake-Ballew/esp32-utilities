@@ -14,13 +14,13 @@
 #include "Compass_Window.h"
 #include "GPS_Window.h"
 #include "LoRa_Test_Window.h"
-#include "Statuses_Window.h"
+#include "ReceivedMessagesWindow.h"
 #include "Ping_Window.h"
 #include "Home_Window.h"
 #include "SOS_Window.h"
-#include "Saved_Msg_Window.h"
+#include "EditStatusMessagesWindow.h"
+#include "EditSavedLocationsWindow.h"
 #include "Menu_Window.h"
-#include "Save_Location_Window.h"
 #include "OTA_Update_Window.h"
 #include "LoraUtils.h"
 #include "NavigationUtils.h"
@@ -96,9 +96,9 @@ public:
     static void switchWindowState(uint8_t inputID);
     static void callFunctionalWindowState(uint8_t inputID);
     static void returnFromFunctionWindowState(uint8_t inputID);
-    static void openSaveLocationWindow(uint8_t inputID);
     static void lockDevice(uint8_t inputID);
     static void openOTAWindow(uint8_t inputID);
+    static void openSavedLocationsWindow(uint8_t inputID);
 
     #ifdef USE_BLE
     static void initializeBle(uint8_t inputID);

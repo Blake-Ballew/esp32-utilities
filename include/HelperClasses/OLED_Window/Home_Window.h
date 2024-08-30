@@ -3,13 +3,11 @@
 #include "OLED_Window.h"
 #include "Home_Content.h"
 #include "Tracking_Content.h"
-#include "Ping_Content.h"
 #include "Received_Messages_Content.h"
 #include "Saved_Locations_Content.h"
 #include "Saved_Messages_Content.h"
 #include "LoraMessageDisplay.h"
-#include "SelectKeyValueState.h"
-#include "SaveLocationState.h"
+
 #include <string>
 
 // #include "Received_Messages_State.h"
@@ -17,6 +15,8 @@
 #include "Home_State.h"
 #include "Select_Message_State.h"
 #include "Select_Location_State.h"
+#include "SelectKeyValueState.h"
+#include "SaveLocationState.h"
 #include "Tracking_State.h"
 
 namespace

@@ -268,9 +268,14 @@ void LoraUtils::AddSavedMessage(std::string msg)
 
 void LoraUtils::DeleteSavedMessage(std::vector<std::string>::iterator &it)
 {
-    _SavedMessageList.erase(it);
+    it = _SavedMessageList.erase(it);
 
     _SavedMessageListUpdated.Invoke();
+}
+
+void LoraUtils::UpdateSavedMessage(std::vector<std::string>::iterator &it, std::string msg)
+{
+    *it = msg;
 }
 
 void LoraUtils::SerializeSavedMessageList(JsonDocument &doc)
@@ -312,8 +317,16 @@ void LoraUtils::AddUserInfo(UserInfo userInfo)
 
 void LoraUtils::DeleteUserInfo(std::vector<UserInfo>::iterator &it)
 {
-    _UserInfoList.erase(it);
+    it = _UserInfoList.erase(it);
 
+    _UserInfoListUpdated.Invoke();
+}
+
+void LoraUtils::UpdateUserInfo(std::vector<UserInfo>::iterator &it, UserInfo userInfo)
+{
+    it->Name = userInfo.Name;
+    it->UserID = userInfo.UserID;
+    
     _UserInfoListUpdated.Invoke();
 }
 

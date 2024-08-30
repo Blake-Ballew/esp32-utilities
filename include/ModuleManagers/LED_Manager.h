@@ -31,8 +31,6 @@ public:
     static void init(size_t numLeds);
     static CRGB *leds;
 
-    static void ledTimerCallback(TimerHandle_t xTimer);
-
     // Initialize InputID to LED index mapping
     static void InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx);
 
@@ -56,7 +54,7 @@ public:
 
 private:
     static bool flashlightOn;
-    static int patternTimerID;
+    static int patternTaskID;
     static TimerHandle_t patternTimer;
     static StaticTimer_t patternTimerBuffer;
 

@@ -230,6 +230,8 @@ public:
     static std::vector<std::string>::iterator SavedMessageListEnd() { return _SavedMessageList.end(); }
     static void AddSavedMessage(std::string message);
     static void DeleteSavedMessage(std::vector<std::string>::iterator &it);
+    static void UpdateSavedMessage(std::vector<std::string>::iterator &it, std::string message);
+    static size_t GetSavedMessageListSize() { return _SavedMessageList.size(); }
 
     static void SerializeSavedMessageList(JsonDocument &doc);
     static void DeserializeSavedMessageList(JsonDocument &doc);
@@ -240,6 +242,7 @@ public:
     static std::vector<UserInfo>::iterator UserInfoListEnd() { return _UserInfoList.end(); }
     static void AddUserInfo(UserInfo userInfo);
     static void DeleteUserInfo(std::vector<UserInfo>::iterator &it);
+    static void UpdateUserInfo(std::vector<UserInfo>::iterator &it, UserInfo userInfo);
 
     static void SerializeUserInfoList(JsonDocument &doc);
     static void DeserializeUserInfoList(JsonDocument &doc);

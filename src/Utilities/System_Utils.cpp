@@ -417,6 +417,18 @@ void System_Utils::deleteTask(int taskID)
     }
 }
 
+TaskHandle_t System_Utils::getTask(int taskID)
+{
+    if (systemTasks.find(taskID) != systemTasks.end())
+    {
+        return systemTasks[taskID];
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 bool System_Utils::enableWiFi()
 {
     enableRadio(ADC_WIFI);

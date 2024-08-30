@@ -119,6 +119,7 @@ public:
     static void suspendTask(int taskID);
     static void resumeTask(int taskID);
     static void deleteTask(int taskID);
+    static TaskHandle_t getTask(int taskID);
 
     // Bluetooth functionality
     #ifdef USE_BLE

@@ -10,48 +10,46 @@ public:
     Menu_Window(OLED_Window *parent) : OLED_Window(parent)
     {
         menuState = new Menu_State();
-        currentState = menuState;
-
+        setInitialState(menuState);
         
-
         stateList.push_back(currentState);
     }
 
     ~Menu_Window() {}
     
-    void callFunctionState(uint8_t inputID)
-    {
-        if (currentState == nullptr)
-        {
-            return;
-        }
+    // void callFunctionState(uint8_t inputID)
+    // {
+    //     if (currentState == nullptr)
+    //     {
+    //         return;
+    //     }
 
-        // get next state
+    //     // get next state
 
-        auto itNextState = currentState->adjacentStates.find(inputID);
+    //     auto itNextState = currentState->adjacentStates.find(inputID);
 
-        if (itNextState == currentState->adjacentStates.end())
-        {
-            return;
-        }
+    //     if (itNextState == currentState->adjacentStates.end())
+    //     {
+    //         return;
+    //     }
 
-        // Save current state
-        stateStack.push(currentState);
+    //     // Save current state
+    //     stateStack.push(currentState);
 
-        // Get next state
-        Window_State *prevState = currentState;
-        Window_State *newState = menuState->getAdjacentState();
+    //     // Get next state
+    //     Window_State *prevState = currentState;
+    //     Window_State *newState = menuState->getAdjacentState();
 
-        // Setup transfer data
-        State_Transfer_Data transferData;
-        transferData.inputID = inputID;
-        transferData.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
-        transferData.serializedData = nullptr;
-        transferData.oldState = prevState;
-        transferData.newState = newState;
+    //     // Setup transfer data
+    //     State_Transfer_Data transferData;
+    //     transferData.inputID = inputID;
+    //     transferData.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
+    //     transferData.serializedData = nullptr;
+    //     transferData.oldState = prevState;
+    //     transferData.newState = newState;
 
-        transferState(transferData);
-    }
+    //     transferState(transferData);
+    // }
 
     CallbackData *getCallbackDataByInputID(uint8_t inputID) 
     {

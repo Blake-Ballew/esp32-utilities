@@ -40,9 +40,11 @@ public:
     static EventHandler &SavedLocationsUpdated() { return _SavedLocationsUpdated; }
 
     static void AddSavedLocation(SavedLocation location);
-    static void RemoveSavedLocation(std::vector<SavedLocation>::iterator locationIt);
+    static void RemoveSavedLocation(std::vector<SavedLocation>::iterator &locationIt);
+    static void UpdateSavedLocation(std::vector<SavedLocation>::iterator &locationIt, SavedLocation location);
     static std::vector<SavedLocation>::iterator GetSavedLocationsBegin() { return _SavedLocations.begin(); }
     static std::vector<SavedLocation>::iterator GetSavedLocationsEnd() { return _SavedLocations.end(); }
+    static size_t GetSavedLocationsSize() { return _SavedLocations.size(); }
 
     static void SerializeSavedLocations(JsonDocument &doc);
     static void DeserializeSavedLocations(JsonDocument &doc);

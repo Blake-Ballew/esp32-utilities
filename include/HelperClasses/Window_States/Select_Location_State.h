@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Window_State.h"
-// #include "Saved_Locations_Content.h"
+#include "ScrollWheel.h"
+#include "LED_Utils.h"
+#include "NavigationUtils.h"
 
 namespace
 {
@@ -18,6 +20,8 @@ public:
         assignInput(BUTTON_4, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Select");
         assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
         assignInput(ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
+
+        _ScrollWheelPatternID = ScrollWheel::RegisteredPatternID();
     }
 
     ~Select_Location_State()
@@ -27,6 +31,9 @@ public:
     void enterState(State_Transfer_Data &transferData)
     {
         Window_State::enterState(transferData);
+
+        _ScrollWheelPatternID = ScrollWheel::RegisteredPatternID();
+        LED_Utils::enablePattern(_ScrollWheelPatternID);
 
         locations.clear();
 
@@ -54,6 +61,8 @@ public:
     {
         Window_State::exitState(transferData);
         DynamicJsonDocument *doc = nullptr;
+
+        LED_Utils::disablePattern(_ScrollWheelPatternID);
 
         if (locationIt != locations.end() && transferData.inputID == BUTTON_4)
         {
@@ -113,6 +122,16 @@ public:
 
         if (locations.size() > 0)
         {
+            if (_ScrollWheelPatternID > -1)
+            {
+                StaticJsonDocument<128> doc;
+
+                doc["numItems"] = locations.size();
+                doc["currItem"] = std::distance(locations.begin(), locationIt);
+                LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
+                LED_Utils::iteratePattern(_ScrollWheelPatternID);
+            }
+
             SavedLocation location = *locationIt;
             
             TextFormat prompt;
@@ -144,4 +163,6 @@ public:
 private:
     std::vector<SavedLocation> locations;
     std::vector<SavedLocation>::iterator locationIt;
+
+    int _ScrollWheelPatternID;
 };

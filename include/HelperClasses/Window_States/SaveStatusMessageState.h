@@ -2,6 +2,7 @@
 
 #include "Edit_States.h"
 #include "LoraUtils.h"
+#include "MessagePing.h"
 
 class SaveStatusMessageState : public Edit_String_State
 {
@@ -21,6 +22,13 @@ public:
         #if DEBUG == 1
         Serial.println("SaveStatusMessageState::enterState");
         #endif
+
+        if (transferData.serializedData == nullptr)
+        {
+            transferData.serializedData = new DynamicJsonDocument(64);
+
+            (*transferData.serializedData)["maxLen"] = STATUS_LENGTH;
+        }
 
         Edit_String_State::enterState(transferData);
     }

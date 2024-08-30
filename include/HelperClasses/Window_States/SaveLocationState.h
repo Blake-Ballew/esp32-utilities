@@ -2,6 +2,7 @@
 
 #include "Edit_States.h"
 #include "NavigationUtils.h"
+#include "MessagePing.h"
 
 class SaveLocationState : public Edit_String_State
 {
@@ -21,6 +22,16 @@ public:
         #if DEBUG == 1
         Serial.println("SaveLocationState::enterState");
         #endif
+
+        if (transferData.serializedData == nullptr)
+        {
+            lat = NavigationUtils::GetLocation().lat();
+            lon = NavigationUtils::GetLocation().lng();
+
+            transferData.serializedData = new DynamicJsonDocument(64);
+
+            (*transferData.serializedData)["maxLen"] = STATUS_LENGTH;
+        }
 
         Edit_String_State::enterState(transferData);
 

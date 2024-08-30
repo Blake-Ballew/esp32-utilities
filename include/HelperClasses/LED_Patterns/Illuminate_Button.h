@@ -33,6 +33,9 @@ public:
 
     bool iterateFrame()
     {
+        #if DEBUG == 1
+            Serial.println("Illuminate_Button::iterateFrame");
+        #endif
         for (auto kvp : inputIdLedPins)
         {
             if (inputIdState[kvp.first])

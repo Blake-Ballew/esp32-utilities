@@ -3,8 +3,10 @@
 std::unordered_map<uint8_t, uint8_t> LED_Utils::inputIdLedPins;
 
 std::unordered_map<int, LED_Pattern_Status> LED_Utils::registeredPatterns;
-int LED_Utils::patternTimerID = -1;
 int LED_Utils::nextPatternID = 0;
+size_t LED_Utils::_PatternTickRateMS = 50;
+
+TaskHandle_t LED_Utils::_IteratePatternsTaskHandle = nullptr;
 
 int LED_Utils::registerPattern(LED_Pattern_Interface *pattern)
 {
@@ -71,38 +73,12 @@ void LED_Utils::configurePattern(int patternID, JsonDocument &config)
 
 void LED_Utils::loopPattern(int patternID, int numLoops)
 {
-    if (registeredPatterns.find(patternID) == registeredPatterns.end() || patternTimerID == -1)
+    if (registeredPatterns.find(patternID) == registeredPatterns.end())
     {
-        return;
-    }
-
-    // Ensure pattern is enabled
-    if (!registeredPatterns[patternID].enabled)
-    {
-        #if DEBUG == 1
-        Serial.println("Pattern not enabled");
-        #endif
         return;
     }
 
     registeredPatterns[patternID].loopsRemaining = numLoops;
-
-    if (numLoops != 0 && !System_Utils::isTimerActive(patternTimerID))
-    {
-        startPatternTimer();
-    }
-    else if (numLoops == 0)
-    {
-        for (auto &pattern : registeredPatterns)
-        {
-            if (pattern.second.loopsRemaining != 0)
-            {
-                return;
-            }
-        }
-
-        stopPatternTimer();
-    }
 }
 
 void LED_Utils::enablePattern(int patternID)
@@ -149,74 +125,73 @@ void LED_Utils::setTickRate(size_t ms)
 {
     LED_Pattern_Interface::setTickRate(ms);
 
-    if (patternTimerID != -1)
-    {
-        System_Utils::changeTimerPeriod(patternTimerID, ms);
-    }
+    _PatternTickRateMS = ms;
+
+    // if (patternTimerID != -1)
+    // {
+    //     System_Utils::changeTimerPeriod(patternTimerID, ms);
+    // }
 }
 
-void LED_Utils::iteratePatterns()
+void LED_Utils::iteratePatterns(void *pvParameters)
 {
-    bool workToDo = false;
-
-    for (auto &pattern : registeredPatterns)
+    while (true)
     {
-        if (pattern.second.loopsRemaining == 0 || !pattern.second.enabled)
+        // Iterate all patterns that are enable with work to do
+        for (auto &pattern : registeredPatterns)
         {
-            continue;
-        }
-
-        if (pattern.second.pattern->iterateFrame())
-        {
-            if (pattern.second.loopsRemaining > 0)
+            if (pattern.second.loopsRemaining == 0 || !pattern.second.enabled)
             {
-                pattern.second.loopsRemaining--;
+                continue;
+            }
+
+            if (pattern.second.pattern->iterateFrame())
+            {
+                if (pattern.second.loopsRemaining > 0)
+                {
+                    pattern.second.loopsRemaining--;
+                }
             }
         }
 
-        if (pattern.second.loopsRemaining != 0)
+        // Check task notification for single iteration
+        uint32_t notificationPatternID;
+        auto notificationReady = xTaskNotifyWait(0, ULONG_MAX, &notificationPatternID, 0);
+        int patternID = (int)notificationPatternID;
+
+        if (notificationReady == pdTRUE && registeredPatterns.find(patternID) != registeredPatterns.end())
         {
-            workToDo = true;
+            // Clear the notification
+            xTaskNotifyStateClear(_IteratePatternsTaskHandle);
+            
+            #if DEBUG == 1
+            // Serial.println("LED_Utils::iteratePatterns: Single iteration");
+            #endif
+            if (registeredPatterns[patternID].enabled)
+            {
+                registeredPatterns[patternID].pattern->iterateFrame();
+            }
         }
-    }
 
-    FastLED.show();
+        FastLED.show();
 
-    if (!workToDo)
-    {
-        stopPatternTimer();
+        vTaskDelay(pdMS_TO_TICKS(_PatternTickRateMS));
     }
 }
 
 void LED_Utils::iteratePattern(int patternID)
 {
-    if (registeredPatterns.find(patternID) == registeredPatterns.end())
+    #if DEBUG == 1
+    // Serial.println("LED_Utils::iteratePattern");
+    #endif
+    if (_IteratePatternsTaskHandle != nullptr && patternID > -1)
     {
-        return;
+        #if DEBUG == 1
+        // Serial.println("LED_Utils::iteratePattern: Sending notification");
+        #endif
+        uint32_t notificationPatternID = (uint32_t)patternID;
+        xTaskNotify(_IteratePatternsTaskHandle, notificationPatternID, eSetValueWithOverwrite);
     }
-
-    if (!registeredPatterns[patternID].enabled)
-    {
-        return;
-    }
-
-    registeredPatterns[patternID].pattern->iterateFrame();
-    FastLED.show();
-}
-
-void LED_Utils::setPatternTimerID(int timerID)
-{
-    patternTimerID = timerID;
-}
-
-void LED_Utils::startPatternTimer()
-{
-    System_Utils::startTimer(patternTimerID);
-}
-
-void LED_Utils::stopPatternTimer()
-{
-    System_Utils::stopTimer(patternTimerID);
 }
 
 void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)

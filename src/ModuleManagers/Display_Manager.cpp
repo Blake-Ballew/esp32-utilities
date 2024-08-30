@@ -207,8 +207,8 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_CALL_FUNCTIONAL_WINDOW_STATE, callFunctionalWindowState);
     registerCallback(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, returnFromFunctionWindowState);
     registerCallback(ACTION_SWITCH_WINDOW_STATE, switchWindowState);
-    registerCallback(ACTION_SAVE_LOCATION_WINDOW, openSaveLocationWindow);
     registerCallback(ACTION_OPEN_OTA_WINDOW, openOTAWindow);
+    registerCallback(ACTION_OPEN_SAVED_LOCATIONS_WINDOW, openSavedLocationsWindow);
 
     #ifdef USE_BLE
     registerCallback(ACTION_INIT_BLE, initializeBle);
@@ -220,27 +220,6 @@ void Display_Manager::initializeCallbacks()
     Serial.println("Display_Manager::initializeCallbacks: done");
 #endif
 }
-
-// std::vector<uint8_t> Display_Manager::getInputsFromNotification(uint32_t notification)
-// {
-//     std::vector<uint8_t> inputs;
-//     for (auto it : Display_Manager::inputMap)
-//     {
-//         if (notification & it.first)
-//         {
-//             inputs.push_back(it.second);
-//         }
-//     }
-//     return inputs;
-// }
-
-// void Display_Manager::callFunctionWindowState(uint8_t inputID)
-// {
-//     if (currentWindow != nullptr)
-//     {
-//         currentWindow->callFunctionState(inputID);
-//     }
-// }
 
 void Display_Manager::returnFromFunctionWindowState(uint8_t inputID)
 {
@@ -283,11 +262,6 @@ void Display_Manager::registerInputCallback(uint8_t inputID, inputCallbackPointe
 {
     Display_Manager::inputCallbackMap[inputID] = callback;
 }
-
-// void Display_Manager::registerInput(uint32_t resourceID, uint8_t inputID)
-// {
-//     Display_Manager::inputMap[resourceID] = inputID;
-// }
 
 void Display_Manager::displayLowBatteryShutdownNotice()
 {
@@ -378,24 +352,25 @@ void Display_Manager::generateSettingsWindow(uint8_t inputID)
 
 void Display_Manager::generateStatusesWindow(uint8_t inputID)
 {
-    Statuses_Window *window = new Statuses_Window(currentWindow);
+    ReceivedMessagesWindow *window = new ReceivedMessagesWindow(currentWindow);
     Display_Manager::attachNewWindow(window);
 
-    // window->drawWindow();
+    window->drawWindow();
 }
 
 void Display_Manager::generateMenuWindow(uint8_t inputID)
 {
     Menu_Window *menuWindow = new Menu_Window(currentWindow);
 
-    menuWindow->addMenuItem("Messages", ACTION_GENERATE_STATUSES_WINDOW);
-    menuWindow->addMenuItem("Saved Messages", ACTION_OPEN_SAVED_MESSAGES_WINDOW);
+    menuWindow->addMenuItem("Edit Status Messages", ACTION_OPEN_SAVED_MESSAGES_WINDOW);
+    menuWindow->addMenuItem("Edit Saved Locations", ACTION_OPEN_SAVED_LOCATIONS_WINDOW);
+    menuWindow->addMenuItem("Received Messages", ACTION_GENERATE_STATUSES_WINDOW);
     menuWindow->addMenuItem("Settings", ACTION_GENERATE_SETTINGS_WINDOW);
     menuWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
-    menuWindow->addMenuItem("Compass", ACTION_GENERATE_COMPASS_WINDOW);
-    menuWindow->addMenuItem("GPS", ACTION_GENERATE_GPS_WINDOW);
+    menuWindow->addMenuItem("Debug Compass", ACTION_GENERATE_COMPASS_WINDOW);
+    menuWindow->addMenuItem("Debug GPS", ACTION_GENERATE_GPS_WINDOW);
     // menuWindow->addMenuItem("LoRa Test", ACTION_GENERATE_LORA_TEST_WINDOW);
-    menuWindow->addMenuItem("Flash Settings", ACTION_FLASH_DEFAULT_SETTINGS);
+    menuWindow->addMenuItem("Flash Default Settings", ACTION_FLASH_DEFAULT_SETTINGS);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
     menuWindow->addMenuItem("Shutdown Device", ACTION_SHUTDOWN_DEVICE);
 
@@ -406,28 +381,6 @@ void Display_Manager::generateMenuWindow(uint8_t inputID)
     menuWindow->addMenuItem("OTA Update", ACTION_OPEN_OTA_WINDOW);
 
     Display_Manager::attachNewWindow(menuWindow);
-
-
-    // OLED_Window *newWindow = Display_Manager::attachNewWindow();
-    // Select_Content_List_State *state = new Select_Content_List_State();
-    // newWindow->currentState = state;
-
-    // state->assignInput(BUTTON_3, ACTION_BACK, "Back");
-    // state->assignInput(BUTTON_4, ACTION_SELECT, "Select");
-
-    // OLED_Content_List *list = new OLED_Content_List(&display);
-    // state->renderContent = list;
-
-    // list->addNode(new Content_Node(ACTION_GENERATE_STATUSES_WINDOW, "Messages", 8));
-    // list->addNode(new Content_Node(ACTION_OPEN_SAVED_MESSAGES_WINDOW, "Saved Messages", 15));
-    // list->addNode(new Content_Node(ACTION_GENERATE_SETTINGS_WINDOW, "Settings", 8));
-    // list->addNode(new Content_Node(ACTION_TOGGLE_FLASHLIGHT, "Flashlight", 10));
-    // list->addNode(new Content_Node(ACTION_GENERATE_COMPASS_WINDOW, "Compass", 7));
-    // list->addNode(new Content_Node(ACTION_GENERATE_GPS_WINDOW, "GPS", 3));
-    // // list->addNode(new Content_Node(ACTION_GENERATE_LORA_TEST_WINDOW, "LoRa Test", 9));
-    // list->addNode(new Content_Node(ACTION_FLASH_DEFAULT_SETTINGS, "Flash Settings", 15));
-    // list->addNode(new Content_Node(ACTION_REBOOT_DEVICE, "Reboot Device", 14));
-    // list->addNode(new Content_Node(ACTION_SHUTDOWN_DEVICE, "Shutdown Device", 15));
 
     currentWindow->drawWindow();
 }
@@ -505,8 +458,8 @@ void Display_Manager::quickActionMenu(uint8_t inputID)
     SaveStatusMessageState *msgState = new SaveStatusMessageState(stringContent);
     SaveLocationState *locationState = new SaveLocationState(stringContent);
 
-    newWindow->addMenuItem("Create Status Message", ACTION_GENERATE_STATUSES_WINDOW, msgState);
-    newWindow->addMenuItem("Save Current Location", ACTION_SAVE_LOCATION_WINDOW, locationState);
+    newWindow->addMenuItem("Create Status Message", ACTION_CALL_FUNCTIONAL_WINDOW_STATE, msgState);
+    newWindow->addMenuItem("Save Current Location", ACTION_CALL_FUNCTIONAL_WINDOW_STATE, locationState);
     newWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
     newWindow->addMenuItem("Toggle Silent Mode", ACTION_TOGGLE_SILENT_MODE);
 
@@ -562,11 +515,10 @@ void Display_Manager::openSOS()
 
 void Display_Manager::openSavedMsg(uint8_t inputID)
 {
-    OLED_Window *newWindow = new Saved_Msg_Window(currentWindow);
+    OLED_Window *newWindow = new EditStatusMessagesWindow(currentWindow);
     Display_Manager::attachNewWindow(newWindow);
 
     currentWindow->drawWindow();
-    vTaskDelay(pdMS_TO_TICKS(200));
 }
 
 void Display_Manager::switchWindowState(uint8_t inputID)
@@ -595,14 +547,6 @@ void Display_Manager::processMessageReceived()
     }
 }
 
-
-void Display_Manager::openSaveLocationWindow(uint8_t inputID)
-{
-    Save_Location_Window *window = new Save_Location_Window(currentWindow);
-    Display_Manager::attachNewWindow(window);
-    window->drawWindow();
-}
-
 void Display_Manager::enableLockScreen(size_t timeoutMS)
 {
     if (timeoutMS > 0) 
@@ -629,6 +573,13 @@ void Display_Manager::lockDevice(uint8_t inputID)
 void Display_Manager::openOTAWindow(uint8_t inputID)
 {
     OTA_Update_Window *window = new OTA_Update_Window(currentWindow);
+    Display_Manager::attachNewWindow(window);
+    window->drawWindow();
+}
+
+void Display_Manager::openSavedLocationsWindow(uint8_t inputID)
+{
+    EditSavedLocationsWindow *window = new EditSavedLocationsWindow(currentWindow);
     Display_Manager::attachNewWindow(window);
     window->drawWindow();
 }

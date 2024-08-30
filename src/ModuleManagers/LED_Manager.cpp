@@ -9,7 +9,7 @@ uint8_t LED_Manager::b = 255;
 
 int LED_Manager::buttonFlashPatternID = -1;
 
-int LED_Manager::patternTimerID = -1;
+int LED_Manager::patternTaskID = -1;
 
 void LED_Manager::init(size_t numLeds)
 {
@@ -21,12 +21,9 @@ void LED_Manager::init(size_t numLeds)
     FastLED.clear();
     FastLED.show();
 
-    patternTimerID = System_Utils::registerTimer("LED Timer", LED_MS_PER_FRAME, ledTimerCallback);
-    #if DEBUG == 1
-    Serial.print("Pattern Timer ID: ");
-    Serial.println(patternTimerID);
-    #endif
-    LED_Utils::setPatternTimerID(patternTimerID);
+    patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 5, 1);
+    LED_Utils::SetIteratePatternTaskHandle(System_Utils::getTask(patternTaskID));
+
     LED_Utils::setTickRate(LED_MS_PER_FRAME);
 
     r = Settings_Manager::settings["User"]["Theme Red"]["cfgVal"] | 0;
@@ -36,11 +33,6 @@ void LED_Manager::init(size_t numLeds)
     LED_Utils::setThemeColor(r, g, b);
 
     // patternTimer = xTimerCreateStatic("Pattern Timer", 17, true, NULL, updatePattern, &patternTimerBuffer);
-}
-
-void LED_Manager::ledTimerCallback(TimerHandle_t xTimer)
-{
-    LED_Utils::iteratePatterns();
 }
 
 void LED_Manager::InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)

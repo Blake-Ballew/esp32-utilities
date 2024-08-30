@@ -1,7 +1,8 @@
 #pragma once
 
 #include "OLED_Content.h"
-#include "MessageBase.h"
+#include "MessagePing.h"
+#include "LED_Utils.h"
 
 class LoraMessageDisplay : public OLED_Content
 {

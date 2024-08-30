@@ -2,6 +2,8 @@
 
 #include "globalDefines.h"
 #include "Window_State.h"
+#include "ScrollWheel.h"
+#include "LED_Utils.h"
 #include <list>
 
 struct MenuItem
@@ -55,6 +57,20 @@ public:
     {
     }
 
+    void enterState(State_Transfer_Data &transferData)
+    {
+        Window_State::enterState(transferData);
+        
+        _ScrollWheelPatternID = ScrollWheel::RegisteredPatternID();
+        LED_Utils::enablePattern(_ScrollWheelPatternID);
+    }
+
+    void exitState(State_Transfer_Data &transferData)
+    {
+        Window_State::exitState(transferData);
+        LED_Utils::disablePattern(_ScrollWheelPatternID);
+    }
+
     void processInput(uint8_t inputID)
     {
         switch (inputID)
@@ -94,6 +110,20 @@ public:
             return;
         }
 
+        if (_ScrollWheelPatternID > -1)
+        {
+            StaticJsonDocument<64> doc;
+
+            doc["numItems"] = menuItems.size();
+            doc["currItem"] = std::distance(menuItems.begin(), currentMenuItem);
+
+            #if DEBUG == 1
+            serializeJson(doc, Serial);
+            #endif
+            LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
+            LED_Utils::iteratePattern(_ScrollWheelPatternID);
+        }
+
         #if DEBUG == 1
         Serial.println("Rendering menu items");
         #endif
@@ -101,18 +131,18 @@ public:
         const char *text = currentMenuItem->text;
 
         #if DEBUG == 1
-        Serial.print("Text: ");
-        Serial.println(text);
-        Serial.println("Setting cursor");
+        // Serial.print("Text: ");
+        // Serial.println(text);
+        // Serial.println("Setting cursor");
         #endif
         display->setCursor(Display_Utils::centerTextHorizontal(text), Display_Utils::centerTextVertical());
         #if DEBUG == 1
-        Serial.println("Printing text");
+        // Serial.println("Printing text");
         #endif
         display->print(text);
 
         #if DEBUG == 1
-        Serial.println("Rendered menu item");
+        // Serial.println("Rendered menu item");
         #endif
 
         if (menuItems.size() > 1) 
@@ -159,4 +189,6 @@ public:
 protected:
     std::list<MenuItem> menuItems;
     std::list<MenuItem>::iterator currentMenuItem;
+
+    int _ScrollWheelPatternID;
 };

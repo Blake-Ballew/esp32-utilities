@@ -192,24 +192,19 @@ void OLED_Window::execBtnCallback(uint8_t inputID)
 
 OLED_Window::~OLED_Window()
 {
-    if (content != nullptr)
-    {
-        for (auto &it : stateList)
-        {
-            delete it;
-        }
-
-        for (auto &it : contentList)
-        {
-            delete it;
-        }
-    }
-
     if (currentState != nullptr)
     {
         currentState->exitState();
-        delete currentState;
-        currentState = nullptr;
+    }
+
+    for (auto &it : stateList)
+    {
+        delete it;
+    }
+
+    for (auto &it : contentList)
+    {
+        delete it;
     }
 
     LED_Manager::clearRing();
