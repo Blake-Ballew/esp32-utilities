@@ -23,7 +23,7 @@ Settings_Window::Settings_Window(OLED_Window *parent) : OLED_Window(parent)
     contentList.push_back(editFloatState->renderContent);
     contentList.push_back(editEnumState->renderContent);
 
-    if (Settings_Manager::settings.isNull())
+    if (FilesystemUtils::SettingsFile().isNull())
     {
         Settings_Manager::flashSettings();
     }

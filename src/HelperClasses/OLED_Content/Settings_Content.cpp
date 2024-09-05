@@ -11,7 +11,7 @@ Settings_Content::Settings_Content(JsonDocument &settings)
 
 Settings_Content::Settings_Content()
 {
-    Settings_Content(Settings_Manager::settings);
+    Settings_Content(FilesystemUtils::SettingsFile());
 }
 
 Settings_Content::~Settings_Content()

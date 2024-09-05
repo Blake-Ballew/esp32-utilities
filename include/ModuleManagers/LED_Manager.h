@@ -28,7 +28,7 @@ LED Mappings:
 class LED_Manager
 {
 public:
-    static void init(size_t numLeds);
+    static void init(size_t numLeds, uint8_t cpuCore);
     static CRGB *leds;
 
     // Initialize InputID to LED index mapping

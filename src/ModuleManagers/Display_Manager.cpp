@@ -196,7 +196,7 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_GENERATE_COMPASS_WINDOW, generateCompassWindow);
     registerCallback(ACTION_GENERATE_GPS_WINDOW, generateGPSWindow);
     registerCallback(ACTION_GENERATE_LORA_TEST_WINDOW, generateLoRaTestWindow);
-    registerCallback(ACTION_SEND_PING, generatePingWindow);
+    // registerCallback(ACTION_SEND_PING, generatePingWindow);
     registerCallback(ACTION_FLASH_DEFAULT_SETTINGS, flashDefaultSettings);
     registerCallback(ACTION_REBOOT_DEVICE, rebootDevice);
     registerCallback(ACTION_TOGGLE_FLASHLIGHT, toggleFlashlight);
@@ -320,18 +320,18 @@ void Display_Manager::generateHomeWindow(uint8_t inputID)
     currentWindow->drawWindow();
 }
 
-void Display_Manager::generatePingWindow(uint8_t inputID)
-{
-    MessageBase *msg;
+// void Display_Manager::generatePingWindow(uint8_t inputID)
+// {
+//     MessageBase *msg;
 
-    if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::STATUS)
-    {
-        msg = ((Received_Messages_Content *)currentWindow->content)->getCurrentMessage();
-        Ping_Window *w = new Ping_Window(currentWindow, msg);
-        Display_Manager::attachNewWindow(w);
-        w->drawWindow();
-    }
-}
+//     if (currentWindow->content != nullptr && currentWindow->content->type == ContentType::STATUS)
+//     {
+//         msg = ((Received_Messages_Content *)currentWindow->content)->getCurrentMessage();
+//         Ping_Window *w = new Ping_Window(currentWindow, msg);
+//         Display_Manager::attachNewWindow(w);
+//         w->drawWindow();
+//     }
+// }
 /*
 void Display_Manager::generatePingWindowBroadcast(void *arg)
 {

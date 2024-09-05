@@ -97,7 +97,7 @@ MessagePing *SOS_Window::createSosMessage()
         NavigationUtils::GetDate().value(),
         0,   // Recipient
         LoraUtils::UserID(),
-        Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+        LoraUtils::UserName().c_str(),
         0,   // MsgID
         255, // Red
         0,   // Green
@@ -119,7 +119,7 @@ MessagePing *SOS_Window::createOkayMessage()
         NavigationUtils::GetDate().value(),
         0,
         LoraUtils::UserID(),
-        Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+        LoraUtils::UserName().c_str(),
         0,
         0,
         255,

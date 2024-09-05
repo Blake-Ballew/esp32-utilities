@@ -15,7 +15,7 @@
 #include "GPS_Window.h"
 #include "LoRa_Test_Window.h"
 #include "ReceivedMessagesWindow.h"
-#include "Ping_Window.h"
+// #include "Ping_Window.h"
 #include "Home_Window.h"
 #include "SOS_Window.h"
 #include "EditStatusMessagesWindow.h"
@@ -80,7 +80,7 @@ public:
     static void select(uint8_t inputID);
     static void generateHomeWindow(uint8_t inputID);
     static void generateSettingsWindow(uint8_t inputID);
-    static void generatePingWindow(uint8_t inputID);
+    // static void generatePingWindow(uint8_t inputID);
     static void generateStatusesWindow(uint8_t inputID);
     static void generateMenuWindow(uint8_t inputID);
     static void generateCompassWindow(uint8_t inputID);

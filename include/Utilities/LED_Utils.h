@@ -66,6 +66,9 @@ public:
     // Sets the user's theme color
     // This is used by patterns that don't have their own color configuration
     static void setThemeColor(uint8_t r, uint8_t g, uint8_t b);
+    static void setThemeColor(CRGB color);
+
+    static CRGB ThemeColor();
 
     // Sets the InputID to LED index map
     static void setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins);
@@ -74,6 +77,7 @@ public:
     static void SetIteratePatternTaskHandle(TaskHandle_t handle) { _IteratePatternsTaskHandle = handle; }
     
 protected:
+    static CRGB _ThemeColor;
     static std::unordered_map<uint8_t, uint8_t> inputIdLedPins;
 
     static std::unordered_map<int, LED_Pattern_Status> registeredPatterns;

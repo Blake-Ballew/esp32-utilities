@@ -47,40 +47,6 @@ public:
         _manager = new RHReliableDatagram(*_driver, 1);
         _manager->setTimeout(10000);
 
-        if (Settings_Manager::settings != nullptr)
-        {
-            uint32_t userID = Settings_Manager::settings["User"]["UserID"].as<uint32_t>();
-
-#if DEBUG == 1
-            Serial.print("UserID: 0x");
-
-            Serial.println(userID, HEX);
-#endif
-
-            LoraUtils::SetUserID(userID);
-
-            LoraUtils::SetNodeID(DEFAULT_NODE_ID);
-            _freq = Settings_Manager::settings["Radio"]["Frequency"]["cfgVal"] | 915.0f;
-            size_t cfgIdx = Settings_Manager::settings["Radio"]["Modem Config"]["cfgVal"].as<size_t>();
-
-            // TODO: break different radio types into separate functions
-            // if (typeid(RadioType) == typeid(RH_RF95))
-            // {
-            auto modemConfig = (RH_RF95::ModemConfigChoice)Settings_Manager::settings["Radio"]["Modem Config"]["vals"].as<JsonArray>()[cfgIdx].as<uint32_t>();
-            _driver->setModemConfig(modemConfig);
-            // }
-
-            _transmitRetries = Settings_Manager::settings["Radio"]["Broadcast Retries"]["cfgVal"].as<uint8_t>();
-        }
-        else
-        {
-            _freq = 915.0f;
-            _transmitRetries = 3;
-        }
-
-        _driver->setFrequency(_freq);
-        _driver->setTxPower(_txPower);
-
         if(!_manager->init())
         {
             Serial.println("Radio Manager failed to initialize");
@@ -225,7 +191,7 @@ public:
             vTaskDelete(NULL);
         }
 
-        const size_t SEND_THREAD_TICK_MS = 250;
+        const size_t SEND_THREAD_TICK_MS = 500;
         const size_t MAX_SEND_DELAY_TICKS = 15;
 
         // Map of messages to ticks until send
@@ -343,7 +309,7 @@ public:
                 }
             }
 
-            vTaskDelay(SEND_THREAD_TICK_MS / portTICK_PERIOD_MS);      
+            vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_TICK_MS));      
         }
     }
 
@@ -484,7 +450,6 @@ protected:
     uint8_t _intPin;
     float _freq;
     uint8_t _txPower;
-    uint8_t _transmitRetries;
 
     // Queue for messages to send
     QueueHandle_t _sendQueue;

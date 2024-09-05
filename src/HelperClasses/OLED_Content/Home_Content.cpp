@@ -34,7 +34,7 @@ void Home_Content::printContent()
             hour -= 4;
         }
 
-        if (Settings_Manager::settings["Device"]["24HTime"].as<bool>())
+        if (FilesystemUtils::SettingsFile()["24H Time"].as<bool>())
         {
             display->setCursor(Display_Utils::alignTextRight(5), Display_Utils::selectTextLine(2));
             display->printf("%02d:%02d", hour, time.minute());

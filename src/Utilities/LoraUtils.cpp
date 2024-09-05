@@ -18,6 +18,7 @@ int LoraUtils::_MessageSendQueueID = -1;
 uint8_t LoraUtils::_DefaultSendAttempts = 3;
 
 uint32_t LoraUtils::_UserID = 0;
+std::string LoraUtils::_UserName = "User";
 uint8_t LoraUtils::_NodeID = 0;
 
 StaticSemaphore_t LoraUtils::_MessageAccessMutexBuffer;

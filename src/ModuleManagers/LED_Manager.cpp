@@ -11,7 +11,7 @@ int LED_Manager::buttonFlashPatternID = -1;
 
 int LED_Manager::patternTaskID = -1;
 
-void LED_Manager::init(size_t numLeds)
+void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
 {
     leds = new CRGB[numLeds];
     LED_Utils::setLeds(leds, numLeds);
@@ -21,16 +21,10 @@ void LED_Manager::init(size_t numLeds)
     FastLED.clear();
     FastLED.show();
 
-    patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 5, 1);
+    patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 5, cpuCore);
     LED_Utils::SetIteratePatternTaskHandle(System_Utils::getTask(patternTaskID));
 
     LED_Utils::setTickRate(LED_MS_PER_FRAME);
-
-    r = Settings_Manager::settings["User"]["Theme Red"]["cfgVal"] | 0;
-    g = Settings_Manager::settings["User"]["Theme Green"]["cfgVal"] | 0;
-    b = Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"] | 255;
-
-    LED_Utils::setThemeColor(r, g, b);
 
     // patternTimer = xTimerCreateStatic("Pattern Timer", 17, true, NULL, updatePattern, &patternTimerBuffer);
 }

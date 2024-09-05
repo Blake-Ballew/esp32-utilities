@@ -1,6 +1,7 @@
 #include "System_Utils.h"
 
 bool System_Utils::silentMode = true;
+bool System_Utils::time24Hour = false;
 
 std::unordered_map<int, TimerHandle_t> System_Utils::systemTimers;
 int System_Utils::nextTimerID = 0;
@@ -431,9 +432,9 @@ TaskHandle_t System_Utils::getTask(int taskID)
 
 bool System_Utils::enableWiFi()
 {
-    enableRadio(ADC_WIFI);
+    enableRadio();
     WiFi.disconnect(false);  // Reconnect the network
-    WiFi.mode(WIFI_STA);    // Switch WiFi off
+    WiFi.mode(WIFI_STA);    // Switch WiFi on
  
     WiFi.begin("ESP32-OTA", "e65v41ev");
  
@@ -519,7 +520,7 @@ void System_Utils::gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t g
 
 void System_Utils::disableWiFi()
 {
-    disableRadio(ADC_WIFI);
+    disableRadio();
     WiFi.disconnect(true);  // Disconnect from the network
     WiFi.mode(WIFI_OFF);    // Switch WiFi off
 }
@@ -529,22 +530,14 @@ IPAddress System_Utils::getLocalIP()
     return WiFi.localIP();
 }
 
-void System_Utils::enableRadio(uint8_t adcUser)
+void System_Utils::enableRadio()
 {
-    if (adcUsers.find(adcUser) != adcUsers.end() && !adcUsers[adcUser])
-    {
-        adcUsers[adcUser] = true;
-        adc_power_acquire();
-    }
+    WiFi.setSleep(false);
 }
 
-void System_Utils::disableRadio(uint8_t adcUser)
+void System_Utils::disableRadio()
 {
-    if (adcUsers.find(adcUser) != adcUsers.end() && adcUsers[adcUser])
-    {
-        adcUsers[adcUser] = false;
-        adc_power_release();
-    }
+    WiFi.setSleep(true);
 }
 
 bool System_Utils::initializeOTA()

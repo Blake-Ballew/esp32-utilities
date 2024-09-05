@@ -4,13 +4,14 @@
 #include "Window_State.h"
 #include "Settings_Content.h"
 #include "Settings_Manager.h"
+#include "FilesystemUtils.h"
 
 class Settings_State : public Window_State
 {
 public:
     Settings_State()
     {
-        settingsContent = new Settings_Content(Settings_Manager::settings);
+        settingsContent = new Settings_Content(FilesystemUtils::SettingsFile());
         renderContent = settingsContent;
 
         strcpy(upOneLevel.displayText, "<-");

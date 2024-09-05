@@ -60,6 +60,7 @@ public:
     // Getters
     static int MessageSendQueueID() { return _MessageSendQueueID; }
     static uint32_t UserID() { return _UserID; }
+    static std::string UserName() { return _UserName; }
     static uint8_t NodeID() { return _NodeID; }
     static EventHandlerT<uint32_t, bool> &MessageReceived() { return _MessageReceived; }
     static uint8_t DefaultSendAttempts() { return _DefaultSendAttempts; }
@@ -69,6 +70,7 @@ public:
     // Setters
     static void SetMessageSendQueueID(int id) { _MessageSendQueueID = id; }
     static void SetUserID(uint32_t id) { _UserID = id; }
+    static void SetUserName(std::string name) { _UserName = name; } 
     static void SetNodeID(uint8_t id) { _NodeID = id; }
     static void SetDefaultSendAttempts(uint8_t num) { _DefaultSendAttempts = num; }
 
@@ -280,6 +282,9 @@ protected:
 
     // UserID of this device
     static uint32_t _UserID;
+
+    // User Name
+    static std::string _UserName;
     
     // NodeID of this device
     static uint8_t _NodeID;

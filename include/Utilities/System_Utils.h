@@ -39,9 +39,6 @@ namespace
     // BLEDescriptor BLE_DESCRIPTOR_RECEIVE_MSGPACK_UUID(BLEUUID((uint16_t)0x2903));
 }
 
-const uint8_t ADC_WIFI = 0;
-const uint8_t ADC_BT = 1;
-
 enum DebugCommand
 {
     DISPLAY_CONTENTS = 0,
@@ -52,6 +49,7 @@ class System_Utils
 {
 public:
     static bool silentMode;
+    static bool time24Hour;
     // static Adafruit_SSD1306 *OLEDdisplay;
 
     static void init();
@@ -137,8 +135,8 @@ public:
     static IPAddress getLocalIP();
 
     // 2.4Ghz Radio functionality
-    static void enableRadio(uint8_t adcUser);
-    static void disableRadio(uint8_t adcUser);
+    static void enableRadio();
+    static void disableRadio();
 
     // OTA Firmware Update
     static bool otaInitialized;

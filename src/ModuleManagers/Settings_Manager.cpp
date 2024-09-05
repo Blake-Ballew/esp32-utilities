@@ -15,8 +15,6 @@ void Settings_Manager::init()
 #endif
     // #if UPLOAD_SETTINGS != 1
     readSettingsFromEEPROM();
-    readMessagesFromEEPROM();
-    readCoordsFromEEPROM();
 
     Serial.println("SPIFFS Info:");
     Serial.printf("Total Bytes: %u\n", SPIFFS.totalBytes());

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FilesystemUtils.h"
 #include "Settings_Manager.h"
 #include "OLED_Content.h"
 #include <ArduinoJson.h>

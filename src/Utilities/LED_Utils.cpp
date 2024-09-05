@@ -1,6 +1,7 @@
 #include "LED_Utils.h"
 
 std::unordered_map<uint8_t, uint8_t> LED_Utils::inputIdLedPins;
+CRGB LED_Utils::_ThemeColor;
 
 std::unordered_map<int, LED_Pattern_Status> LED_Utils::registeredPatterns;
 int LED_Utils::nextPatternID = 0;
@@ -79,6 +80,7 @@ void LED_Utils::loopPattern(int patternID, int numLoops)
     }
 
     registeredPatterns[patternID].loopsRemaining = numLoops;
+    vTaskResume(_IteratePatternsTaskHandle);
 }
 
 void LED_Utils::enablePattern(int patternID)
@@ -99,6 +101,7 @@ void LED_Utils::disablePattern(int patternID)
     }
 
     registeredPatterns[patternID].enabled = false;
+    registeredPatterns[patternID].pattern->clearPattern();
 }
 
 void LED_Utils::clearPattern(int patternID)
@@ -137,6 +140,8 @@ void LED_Utils::iteratePatterns(void *pvParameters)
 {
     while (true)
     {
+        bool workToDo = false;
+        
         // Iterate all patterns that are enable with work to do
         for (auto &pattern : registeredPatterns)
         {
@@ -151,6 +156,11 @@ void LED_Utils::iteratePatterns(void *pvParameters)
                 {
                     pattern.second.loopsRemaining--;
                 }
+            }
+
+            if (pattern.second.loopsRemaining != 0)
+            {
+                workToDo = true;
             }
         }
 
@@ -174,6 +184,11 @@ void LED_Utils::iteratePatterns(void *pvParameters)
         }
 
         FastLED.show();
+        
+        if (!workToDo)
+        {
+            vTaskSuspend(_IteratePatternsTaskHandle);
+        }
 
         vTaskDelay(pdMS_TO_TICKS(_PatternTickRateMS));
     }
@@ -186,9 +201,7 @@ void LED_Utils::iteratePattern(int patternID)
     #endif
     if (_IteratePatternsTaskHandle != nullptr && patternID > -1)
     {
-        #if DEBUG == 1
-        // Serial.println("LED_Utils::iteratePattern: Sending notification");
-        #endif
+        vTaskResume(_IteratePatternsTaskHandle);
         uint32_t notificationPatternID = (uint32_t)patternID;
         xTaskNotify(_IteratePatternsTaskHandle, notificationPatternID, eSetValueWithOverwrite);
     }
@@ -196,7 +209,21 @@ void LED_Utils::iteratePattern(int patternID)
 
 void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)
 {
-    LED_Pattern_Interface::setThemeColor(r, g, b);
+    LED_Pattern_Interface::setThemeColor(r, g, b);\
+
+    _ThemeColor = CRGB(r, g, b);
+}
+
+void LED_Utils::setThemeColor(CRGB color)
+{
+    LED_Pattern_Interface::setThemeColor(color.r, color.g, color.b);
+
+    _ThemeColor = color;
+}
+
+CRGB LED_Utils::ThemeColor()
+{
+    return _ThemeColor;
 }
 
 void LED_Utils::setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins)

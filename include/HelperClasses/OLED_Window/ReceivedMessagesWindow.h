@@ -124,16 +124,18 @@ public:
                 const char *message = (*doc)["message"].as<const char *>();
                 // Send message
 
+                auto color = LED_Utils::ThemeColor();
+
                 MessagePing *newMsg = new MessagePing(
                     NavigationUtils::GetTime().value(),
                     NavigationUtils::GetDate().value(),
                     recipientID,
                     LoraUtils::UserID(),
-                    Settings_Manager::settings["User"]["Name"]["cfgVal"].as<const char *>(),
+                    LoraUtils::UserName().c_str(),
                     0,
-                    Settings_Manager::settings["User"]["Theme Red"]["cfgVal"].as<uint8_t>(),
-                    Settings_Manager::settings["User"]["Theme Green"]["cfgVal"].as<uint8_t>(),
-                    Settings_Manager::settings["User"]["Theme Blue"]["cfgVal"].as<uint8_t>(),
+                    color.r,
+                    color.g,
+                    color.b,
                     latitude,
                     longitude,
                     message);

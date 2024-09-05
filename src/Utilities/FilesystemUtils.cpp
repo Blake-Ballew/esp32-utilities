@@ -1,5 +1,7 @@
 #include "FilesystemUtils.h"
 
+DynamicJsonDocument FilesystemUtils::_SettingsFile(2048); 
+
 void FilesystemUtils::Init()
 {
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
@@ -21,6 +23,11 @@ FilesystemReturnCode FilesystemUtils::ReadFile(std::string filename, JsonDocumen
     deserializeMsgPack(doc, file); 
     file.close();
 
+    if (doc.overflowed())
+    {
+        return FilesystemReturnCode::READ_BUFFER_OVERFLOW;
+    }
+
     return FilesystemReturnCode::FILESYSTEM_OK;
 }
 
@@ -41,4 +48,9 @@ FilesystemReturnCode FilesystemUtils::WriteFile(std::string filename, JsonDocume
     }
 
     return FilesystemReturnCode::FILESYSTEM_OK;
+}
+
+FilesystemReturnCode FilesystemUtils::LoadSettingsFile(std::string filename)
+{
+    return ReadFile(filename, _SettingsFile);
 }
