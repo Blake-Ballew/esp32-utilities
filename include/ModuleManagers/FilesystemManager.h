@@ -9,4 +9,8 @@ public:
     FilesystemManager() {}
     ~FilesystemManager() {}
 
+    void Init()
+    {
+        FilesystemUtils::Init();
+    }
 };

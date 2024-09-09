@@ -12,6 +12,7 @@ enum FilesystemReturnCode
     READ_BUFFER_OVERFLOW = 1,
     FILE_NOT_FOUND = 2,
     WRITE_FAILED = 3,
+    READ_ERROR = 4
 };
 
 // Static class with helper functions for interacting with the SPIFFS filesystem
@@ -38,11 +39,22 @@ public:
     static FilesystemReturnCode WriteSettingsFile(std::string filename, JsonDocument &doc) 
     {
         auto returncode = WriteFile(filename, doc);
-        if (returncode == FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode == FilesystemReturnCode::FILESYSTEM_OK && &doc != &_SettingsFile)
         {
-            _SettingsFile = doc;
+            _SettingsFile.set(doc.as<JsonObject>());
         }
         return returncode;
+    }
+
+    static FilesystemReturnCode WriteSettingsFileToFlash()
+    {
+        if (_SettingsFilename.length() == 0 || _SettingsFile.isNull())
+        {
+            return FilesystemReturnCode::WRITE_FAILED;
+        }
+
+        _SettingsUpdated.Invoke();
+        return WriteFile(_SettingsFilename, _SettingsFile);
     }
 
     // SettingsUpdated event handler getter
@@ -51,6 +63,7 @@ public:
 protected:
     // Settings File
     static DynamicJsonDocument _SettingsFile;
+    static std::string _SettingsFilename;
 
     // Event handler for settings file updates
     static EventHandler _SettingsUpdated;

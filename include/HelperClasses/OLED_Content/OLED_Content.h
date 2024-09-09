@@ -49,6 +49,18 @@ struct CallbackData
         callbackID = data.callbackID;
         strcpy(displayText, data.displayText);
     }
+
+    // == operator
+    bool operator==(const CallbackData &data)
+    {
+        return callbackID == data.callbackID && strcmp(displayText, data.displayText) == 0;
+    }
+
+    // != operator
+    bool operator!=(const CallbackData &data)
+    {
+        return callbackID != data.callbackID || strcmp(displayText, data.displayText) != 0;
+    }
 };
 
 // Abstract class for OLED content

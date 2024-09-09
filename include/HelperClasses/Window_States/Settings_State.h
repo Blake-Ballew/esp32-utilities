@@ -26,6 +26,9 @@ public:
         strcpy(editItem.displayText, "Edit");
         editItem.callbackID = ACTION_CALL_FUNCTIONAL_WINDOW_STATE;
 
+        strcpy(toggleBool.displayText, "Toggle");
+        toggleBool.callbackID = ACTION_DEFER_CALLBACK_TO_WINDOW;
+
         assignInput(BUTTON_3, exitSettings);
 
         assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
@@ -104,10 +107,8 @@ public:
                 // save settings if any have changed
                 if (settingsSaved)
                 {
-                    Settings_Manager::writeSettingsToEEPROM();
-                    Display_Utils::sendCallbackCommand(ACTION_REBOOT_DEVICE);
+                    FilesystemUtils::WriteSettingsFileToFlash();
                     settingsSaved = false;
-                    return;
                 }
 
                 Display_Utils::sendCallbackCommand(ACTION_BACK);
@@ -116,10 +117,20 @@ public:
         }
         case BUTTON_4:
         {
-            if (buttonCallbacks.find(BUTTON_4) != buttonCallbacks.end() && buttonCallbacks[BUTTON_4].callbackID == ACTION_DEFER_CALLBACK_TO_WINDOW)
+            
+            if (buttonCallbacks.find(BUTTON_4) != buttonCallbacks.end())
             {
-                settingsContent->pushVariant();
-                updateInputs();
+                if (buttonCallbacks[BUTTON_4] == toggleBool)
+                {
+                    auto boolObj = settingsContent->getSelectionVariant();
+                    boolObj.set(!boolObj.as<bool>());
+                    settingsSaved = true;
+                }
+                else if (buttonCallbacks[BUTTON_4].callbackID == ACTION_DEFER_CALLBACK_TO_WINDOW)
+                {
+                    settingsContent->pushVariant();
+                    updateInputs();
+                }
             }
             break;
         }
@@ -179,6 +190,7 @@ protected:
     CallbackData selectItem;
     CallbackData exitSettings;
     CallbackData editItem;
+    CallbackData toggleBool;
 
     void updateInputs()
     {
@@ -196,6 +208,10 @@ protected:
                 selectionVarType == JsonVariantType::JSON_VARIANT_CONFIGURABLE_ENUM)
             {
                 assignInput(BUTTON_4, editItem);
+            }
+            else if (selectionVarType == JsonVariantType::JSON_VARIANT_TYPE_BOOLEAN)
+            {
+                assignInput(BUTTON_4, toggleBool);
             }
             else
             {

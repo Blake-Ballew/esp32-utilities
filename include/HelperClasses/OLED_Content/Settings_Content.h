@@ -50,6 +50,7 @@ public:
     JsonVariantType getVariantType();
     JsonVariantType getSelectionVariantType();
     JsonVariant getCurrentVariant();
+    JsonVariant getSelectionVariant();
 
     void saveReturnValueFromEditState(JsonVariant returnData);
     DynamicJsonDocument *getEditStateInput();

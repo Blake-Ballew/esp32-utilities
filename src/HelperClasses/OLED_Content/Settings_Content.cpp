@@ -2,8 +2,7 @@
 
 Settings_Content::Settings_Content(JsonDocument &settings)
 {
-    this->type = ContentType::SETTINGS;
-    ArduinoJson::JsonVariant variant = settings.as<ArduinoJson::JsonVariant>();
+    ArduinoJson::JsonVariant variant = settings;
     currentNode.variant = variant;
     currentNode.type = Settings_Manager::getVariantType(variant);
     currentNode.idx = 0;
@@ -306,6 +305,10 @@ JsonVariantType Settings_Content::getVariantType()
 JsonVariantType Settings_Content::getSelectionVariantType()
 {
     auto variantType = currentNode.type;
+    #if DEBUG == 1
+    Serial.print("Current node variant type: ");
+    Serial.println(variantType);
+    #endif
     switch (variantType)
     {
     case JsonVariantType::JSON_VARIANT_TYPE_OBJECT:
@@ -328,6 +331,28 @@ JsonVariantType Settings_Content::getSelectionVariantType()
 JsonVariant Settings_Content::getCurrentVariant()
 {
     return currentNode.variant;
+}
+
+JsonVariant Settings_Content::getSelectionVariant()
+{
+    auto variantType = currentNode.type;
+    switch (variantType)
+    {
+    case JsonVariantType::JSON_VARIANT_TYPE_OBJECT:
+    {
+        ArduinoJson::JsonObject::iterator it = currentNode.variant.as<ArduinoJson::JsonObject>().begin();
+        it += currentNode.idx;
+        return it->value();
+    }
+    case JsonVariantType::JSON_VARIANT_TYPE_ARRAY:
+    {
+        ArduinoJson::JsonArray::iterator it = currentNode.variant.as<ArduinoJson::JsonArray>().begin();
+        it += currentNode.idx;
+        return *it;
+    }
+    default:
+        return JsonVariant();
+    }
 }
 
 void Settings_Content::saveReturnValueFromEditState(JsonVariant returnData)

@@ -1,6 +1,9 @@
 #include "FilesystemUtils.h"
 
 DynamicJsonDocument FilesystemUtils::_SettingsFile(2048); 
+std::string FilesystemUtils::_SettingsFilename = "";
+
+EventHandler FilesystemUtils::_SettingsUpdated;
 
 void FilesystemUtils::Init()
 {
@@ -13,11 +16,16 @@ void FilesystemUtils::Init()
 
 FilesystemReturnCode FilesystemUtils::ReadFile(std::string filename, JsonDocument &doc)
 {   
+    if (!SPIFFS.exists(filename.c_str()))
+    {
+        return FilesystemReturnCode::FILE_NOT_FOUND;
+    }
+
     File file = SPIFFS.open(filename.c_str(), FILE_READ);
 
     if (!file)
     {
-        return FilesystemReturnCode::FILE_NOT_FOUND;
+        return FilesystemReturnCode::READ_ERROR;
     }
 
     deserializeMsgPack(doc, file); 
@@ -52,5 +60,13 @@ FilesystemReturnCode FilesystemUtils::WriteFile(std::string filename, JsonDocume
 
 FilesystemReturnCode FilesystemUtils::LoadSettingsFile(std::string filename)
 {
-    return ReadFile(filename, _SettingsFile);
+    _SettingsFile.clear();
+    auto returncode = ReadFile(filename, _SettingsFile);
+
+    if (returncode == FilesystemReturnCode::FILESYSTEM_OK)
+    {
+        _SettingsFilename = filename;
+    }
+
+    return returncode;
 }
