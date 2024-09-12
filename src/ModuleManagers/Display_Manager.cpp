@@ -197,7 +197,7 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_GENERATE_GPS_WINDOW, generateGPSWindow);
     registerCallback(ACTION_GENERATE_LORA_TEST_WINDOW, generateLoRaTestWindow);
     // registerCallback(ACTION_SEND_PING, generatePingWindow);
-    registerCallback(ACTION_FLASH_DEFAULT_SETTINGS, flashDefaultSettings);
+    // registerCallback(ACTION_FLASH_DEFAULT_SETTINGS, flashDefaultSettings);
     registerCallback(ACTION_REBOOT_DEVICE, rebootDevice);
     registerCallback(ACTION_TOGGLE_FLASHLIGHT, toggleFlashlight);
     registerCallback(ACTION_SHUTDOWN_DEVICE, shutdownDevice);
@@ -446,6 +446,9 @@ void Display_Manager::shutdownDevice(uint8_t inputID)
 void Display_Manager::toggleSilentMode(uint8_t inputID)
 {
     System_Utils::silentMode = !System_Utils::silentMode;
+
+    FilesystemUtils::SettingsFile()["Silent Mode"] = System_Utils::silentMode;
+    FilesystemUtils::WriteSettingsFileToFlash();
 }
 
 void Display_Manager::quickActionMenu(uint8_t inputID)
@@ -470,6 +473,13 @@ void Display_Manager::quickActionMenu(uint8_t inputID)
 
 void Display_Manager::openSOS()
 {
+    if (currentWindow != nullptr &&
+        currentWindow->currentState != nullptr &&
+        !currentWindow->currentState->allowInterrupts)
+    {
+        return;
+    }
+
     Lock_State *lock = new Lock_State();
     lock->assignInput(BUTTON_3, ACTION_BACK, "Back");
 

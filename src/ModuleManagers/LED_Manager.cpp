@@ -21,12 +21,12 @@ void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
     FastLED.clear();
     FastLED.show();
 
-    patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 5, cpuCore);
+    patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 1, cpuCore);
     LED_Utils::SetIteratePatternTaskHandle(System_Utils::getTask(patternTaskID));
 
     LED_Utils::setTickRate(LED_MS_PER_FRAME);
 
-    // patternTimer = xTimerCreateStatic("Pattern Timer", 17, true, NULL, updatePattern, &patternTimerBuffer);
+    LED_Pattern_Interface::SetThemeColor(LED_Utils::ThemeColor());
 }
 
 void LED_Manager::InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)

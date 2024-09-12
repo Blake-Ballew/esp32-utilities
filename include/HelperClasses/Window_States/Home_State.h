@@ -14,6 +14,7 @@ public:
         assignInput(ENC_DOWN, ACTION_SWITCH_WINDOW_STATE);
         assignInput(BUTTON_1, ACTION_GENERATE_QUICK_ACTION_MENU, "Actions");
         assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Broadcast");
+        assignInput(BUTTON_3, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Lock");
         assignInput(BUTTON_4, ACTION_GENERATE_MENU_WINDOW, "Main Menu");
     }
 

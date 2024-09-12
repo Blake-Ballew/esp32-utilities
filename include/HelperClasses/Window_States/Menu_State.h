@@ -71,6 +71,20 @@ public:
         LED_Utils::disablePattern(_ScrollWheelPatternID);
     }
 
+    void Pause()
+    {
+        LED_Utils::disablePattern(_ScrollWheelPatternID);
+    }
+
+    void Resume()
+    {
+        #if DEBUG == 1
+        // Serial.println("Menu_State::Resume");
+        #endif
+        LED_Utils::enablePattern(_ScrollWheelPatternID);
+        LED_Utils::iteratePattern(_ScrollWheelPatternID);
+    }
+
     void processInput(uint8_t inputID)
     {
         switch (inputID)
@@ -97,7 +111,7 @@ public:
     void displayState()
     {
         #if DEBUG == 1
-        Serial.println("Menu_State::displayState");
+        // Serial.println("Menu_State::displayState");
         #endif
         
         Window_State::displayState();
@@ -105,7 +119,7 @@ public:
         if (menuItems.size() == 0 || currentMenuItem == menuItems.end())
         {
             #if DEBUG == 1
-            Serial.println("No menu items");
+            // Serial.println("No menu items");
             #endif
             return;
         }
@@ -118,14 +132,14 @@ public:
             doc["currItem"] = std::distance(menuItems.begin(), currentMenuItem);
 
             #if DEBUG == 1
-            serializeJson(doc, Serial);
+            // serializeJson(doc, Serial);
             #endif
             LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
             LED_Utils::iteratePattern(_ScrollWheelPatternID);
         }
 
         #if DEBUG == 1
-        Serial.println("Rendering menu items");
+        // Serial.println("Rendering menu items");
         #endif
 
         const char *text = currentMenuItem->text;

@@ -4,6 +4,7 @@
 #include "Saved_Locations_State.h"
 #include "SaveLocationState.h"
 #include "Edit_States.h"
+#include "Tracking_State.h"
 
 class EditSavedLocationsWindow : public OLED_Window
 {
@@ -19,13 +20,15 @@ public:
         editStringState = new Edit_String_State(editStringContent);
         stateList.push_back(editStringState);
 
-        saveLocationState = new SaveLocationState(editStringContent);
-        stateList.push_back(saveLocationState);
+        trackingState = new Tracking_State();
+        stateList.push_back(trackingState);
 
         setInitialState(savedLocationsState);
 
         savedLocationsState->setAdjacentState(BUTTON_4, editStringState);
-        savedLocationsState->setAdjacentState(BUTTON_2, saveLocationState);
+        savedLocationsState->setAdjacentState(BUTTON_2, trackingState);
+
+        trackingState->assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
     }
 
     ~EditSavedLocationsWindow() {}
@@ -34,4 +37,5 @@ protected:
     Saved_Locations_State *savedLocationsState;
     Edit_String_State *editStringState;
     SaveLocationState *saveLocationState;
+    Tracking_State *trackingState;
 };

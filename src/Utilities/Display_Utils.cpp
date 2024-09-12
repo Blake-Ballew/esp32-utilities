@@ -10,6 +10,7 @@ int Display_Utils::refreshTimerID = -1;
 QueueHandle_t Display_Utils::displayCommandQueue = nullptr;
 
 EventHandlerT<uint8_t> Display_Utils::inputRaised;
+EventHandler Display_Utils::_UpdateDisplay;
 
 // Input IDs
 uint8_t Display_Utils::_SelectButtonInputID = 0;
@@ -79,13 +80,16 @@ uint8_t Display_Utils::EncDownInputID() { return _EncDownInputID; }
 // Clears the content area. The content area is the area between the top and bottom text lines.
 void Display_Utils::clearContentArea() { display->fillRect(0, 8, displayWidth, displayHeight - 16, BLACK); }
 
+// Clears the entire display
+void Display_Utils::clearDisplay() { display->fillScreen(BLACK); }
+
 // Prints the given string in the center of the display.
 // If clearDisplay is true, the content area will be cleared first
 void Display_Utils::printCenteredText(const char *text, bool clearDisplay)
 {
     if (clearDisplay)
     {
-        clearContentArea();
+        Display_Utils::clearContentArea();
     }
     display->setCursor(centerTextHorizontal(text), centerTextVertical());
     display->print(text);
@@ -163,7 +167,7 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
 uint16_t Display_Utils::alignTextLeft(int distanceFrom) { return distanceFrom * 6; }
 
 // Returns the X cursor position for aligning text to the right using the length of the text
-uint16_t Display_Utils::alignTextRight(size_t textSize, int distanceFrom) { return (displayWidth - (textSize * 6) - (distanceFrom * 6)); }
+uint16_t Display_Utils::alignTextRight(size_t textSize, int distanceFrom ) { return (displayWidth - (textSize * 6) - (distanceFrom * 6)); }
 
 // Returns the X cursor position for aligning text to the right using the length of the string
 uint16_t Display_Utils::alignTextRight(const char *text, int distanceFrom) { return alignTextRight(strlen(text), distanceFrom); }

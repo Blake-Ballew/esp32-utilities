@@ -54,12 +54,12 @@ public:
     CallbackData *getCallbackDataByInputID(uint8_t inputID) 
     {
         #if DEBUG == 1
-        Serial.println("Menu_Window::getCallbackDataByInputID");
+        // Serial.println("Menu_Window::getCallbackDataByInputID");
         #endif
         CallbackData *callbackData = OLED_Window::getCallbackDataByInputID(inputID);
 
         #if DEBUG == 1
-        Serial.printf("Menu_Window::getCallbackDataByInputID: inputID: %d\n", inputID);
+        // Serial.printf("Menu_Window::getCallbackDataByInputID: inputID: %d\n", inputID);
         #endif
 
         if (callbackData != nullptr && callbackData->callbackID == ACTION_SELECT) {

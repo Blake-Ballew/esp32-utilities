@@ -101,7 +101,7 @@ void LED_Utils::disablePattern(int patternID)
     }
 
     registeredPatterns[patternID].enabled = false;
-    registeredPatterns[patternID].pattern->clearPattern();
+    clearPattern(patternID);
 }
 
 void LED_Utils::clearPattern(int patternID)
@@ -117,6 +117,8 @@ void LED_Utils::clearPattern(int patternID)
     {
         loopPattern(patternID, 0);
     }
+
+    FastLED.show();
 }
 
 void LED_Utils::setLeds(CRGB *leds, size_t numLeds)
@@ -145,6 +147,8 @@ void LED_Utils::iteratePatterns(void *pvParameters)
         // Iterate all patterns that are enable with work to do
         for (auto &pattern : registeredPatterns)
         {
+            taskYIELD();
+            
             if (pattern.second.loopsRemaining == 0 || !pattern.second.enabled)
             {
                 continue;
@@ -209,19 +213,26 @@ void LED_Utils::iteratePattern(int patternID)
 
 void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)
 {
-    LED_Pattern_Interface::setThemeColor(r, g, b);\
-
-    _ThemeColor = CRGB(r, g, b);
+    _ThemeColor.r = r;
+    _ThemeColor.g = g;
+    _ThemeColor.b = b;
 }
 
-void LED_Utils::setThemeColor(CRGB color)
+void LED_Utils:: setThemeColor(CRGB color)
 {
-    LED_Pattern_Interface::setThemeColor(color.r, color.g, color.b);
-
+    #if DEBUG == 1
+        // Serial.print("LED_Utils::setThemeColor: ");
+        // Serial.print(color.r);
+        // Serial.print(", ");
+        // Serial.print(color.g);
+        // Serial.print(", ");
+        // Serial.println(color.b);
+    #endif
     _ThemeColor = color;
+    LED_Pattern_Interface::SetThemeColor(_ThemeColor);
 }
 
-CRGB LED_Utils::ThemeColor()
+CRGB &LED_Utils::ThemeColor()
 {
     return _ThemeColor;
 }

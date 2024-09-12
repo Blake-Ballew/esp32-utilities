@@ -25,6 +25,9 @@ public:
 
     OLED_Content *renderContent = nullptr;
 
+    // Hints to the OS that the window should not be changed unexpectedly
+    bool allowInterrupts = true;
+
     // map inputID to callback struct
     // This will be assigned by this class in the constructor
     std::map<uint8_t, CallbackData> buttonCallbacks;
@@ -73,6 +76,10 @@ public:
         if (renderContent != nullptr)
             renderContent->stop();
     }
+
+    virtual void Pause() {}
+
+    virtual void Resume() {}
 
     virtual void displayState()
     {

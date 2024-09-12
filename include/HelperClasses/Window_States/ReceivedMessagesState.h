@@ -113,10 +113,28 @@ public:
             case BUTTON_4:
                 {
                     auto msg = messageDisplay->DisplayMessage();
-                    if (msg != nullptr)
+                    if (msg != nullptr && msg->GetInstanceMessageType() == MessagePing::MessageType())
                     {
                         DynamicJsonDocument *doc = new DynamicJsonDocument(512);
-                        msg->serialize(*doc);
+                        MessagePing *ping = (MessagePing *)msg;
+                        std::vector<MessagePrintInformation> info;
+                        
+                        (*doc)["lat"] = ping->lat;
+                        (*doc)["lon"] = ping->lng;
+
+                        (*doc)["color_R"] = ping->color_R;
+                        (*doc)["color_G"] = ping->color_G;
+                        (*doc)["color_B"] = ping->color_B;
+
+                        ping->GetPrintableInformation(info);
+
+                        auto displayArray = doc->createNestedArray("displayTxt");
+
+                        for (auto &i : info)
+                        {
+                            displayArray.add(i.txt);
+                        }
+
                         transferData.serializedData = doc;
                     }
                     break;

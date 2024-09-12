@@ -59,7 +59,7 @@ public:
         for (int i = beginIdx; i <= endIdx; i++)
         {
             float ledBrightness = _CalculateLEDPointBrightness(i);
-            leds[i] = CRGB(LED_Pattern_Interface::r * ledBrightness, LED_Pattern_Interface::g * ledBrightness, LED_Pattern_Interface::b * ledBrightness);
+            leds[i] = CRGB(themeColor.r * ledBrightness, themeColor.g * ledBrightness, themeColor.b * ledBrightness);
         }
 
         return true;

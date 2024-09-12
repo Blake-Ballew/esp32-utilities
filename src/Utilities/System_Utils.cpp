@@ -85,7 +85,7 @@ void System_Utils::shutdownBatteryWarning()
 void System_Utils::enableInterruptsInvoke()
 {
     #if DEBUG == 1
-    Serial.println("Enabling interrupts");
+    // Serial.println("Enabling interrupts");
     #endif
     enableInterrupts.Invoke();
 }
@@ -93,7 +93,7 @@ void System_Utils::enableInterruptsInvoke()
 void System_Utils::disableInterruptsInvoke()
 {
     #if DEBUG == 1
-    Serial.println("Disabling interrupts");
+    // Serial.println("Disabling interrupts");
     #endif
     disableInterrupts.Invoke();
 }
@@ -101,7 +101,7 @@ void System_Utils::disableInterruptsInvoke()
 void System_Utils::systemShutdownInvoke()
 {
     #if DEBUG == 1
-    Serial.println("Shutting down system");
+    // Serial.println("Shutting down system");
     #endif
     systemShutdown.Invoke();
 }
@@ -109,8 +109,8 @@ void System_Utils::systemShutdownInvoke()
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)
 {
 #if DEBUG == 1
-    Serial.print("Registering timer: ");
-    Serial.println(timerName);
+    // Serial.print("Registering timer: ");
+    // Serial.println(timerName);
 #endif
 
     TimerHandle_t handle = xTimerCreate(timerName, periodMS, pdTRUE, (void *)0, callback);
@@ -129,8 +129,8 @@ int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCal
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback, StaticTimer_t &timerBuffer)
 {
 #if DEBUG == 1
-    Serial.print("Registering static timer: ");
-    Serial.println(timerName);
+    // Serial.print("Registering static timer: ");
+    // Serial.println(timerName);
 #endif
     TimerHandle_t handle = xTimerCreateStatic(timerName, periodMS, pdTRUE, (void *)0, callback, &timerBuffer);
 
@@ -148,8 +148,8 @@ int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCal
 void System_Utils::deleteTimer(int timerID)
 {
 #if DEBUG == 1
-    Serial.print("Deleting timer: ");
-    Serial.println(timerID);
+    // Serial.print("Deleting timer: ");
+    // Serial.println(timerID);
 #endif
 
     if (systemTimers.find(timerID) != systemTimers.end())
@@ -162,8 +162,8 @@ void System_Utils::deleteTimer(int timerID)
 bool System_Utils::isTimerActive(int timerID)
 {
 #if DEBUG == 1
-    Serial.print("Checking if timer is active: ");
-    Serial.println(timerID);
+    // Serial.print("Checking if timer is active: ");
+    // Serial.println(timerID);
 #endif
     if (systemTimers.find(timerID) != systemTimers.end())
     {
@@ -175,8 +175,8 @@ bool System_Utils::isTimerActive(int timerID)
 void System_Utils::startTimer(int timerID)
 {
 #if DEBUG == 1
-    Serial.print("Starting timer: ");
-    Serial.println(timerID);
+    // Serial.print("Starting timer: ");
+    // Serial.println(timerID);
 #endif
 
     if (systemTimers.find(timerID) != systemTimers.end())
@@ -188,8 +188,8 @@ void System_Utils::startTimer(int timerID)
 void System_Utils::stopTimer(int timerID)
 {
 #if DEBUG == 1
-    Serial.print("Stopping timer: ");
-    Serial.println(timerID);
+    // Serial.print("Stopping timer: ");
+    // Serial.println(timerID);
 #endif
 
     if (systemTimers.find(timerID) != systemTimers.end())
@@ -201,8 +201,8 @@ void System_Utils::stopTimer(int timerID)
 void System_Utils::resetTimer(int timerID)
 {
 #if DEBUG == 1
-    Serial.print("Resetting timer: ");
-    Serial.println(timerID);
+    // Serial.print("Resetting timer: ");
+    // Serial.println(timerID);
 #endif
 
     if (systemTimers.find(timerID) != systemTimers.end())
@@ -214,8 +214,8 @@ void System_Utils::resetTimer(int timerID)
 void System_Utils::changeTimerPeriod(int timerID, size_t timerPeriodMS)
 {
 #if DEBUG == 1
-    Serial.print("Changing timer period: ");
-    Serial.println(timerID);
+    // Serial.print("Changing timer period: ");
+    // Serial.println(timerID);
 #endif
 
     if (systemTimers.find(timerID) != systemTimers.end())

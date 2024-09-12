@@ -25,7 +25,7 @@ public:
         assignInput(BUTTON_3, ACTION_BACK, "Back");
         assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Edit");
         assignInput(BUTTON_1, ACTION_DEFER_CALLBACK_TO_WINDOW, "Delete");
-        assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Create");
+        assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
     }
 
     ~Saved_Locations_State()
@@ -70,10 +70,21 @@ public:
 
             transferData.serializedData = doc;
         }
+        // Output location coordinates and name
         else if (transferData.inputID == BUTTON_2)
         {
-            DynamicJsonDocument *doc = new DynamicJsonDocument(128);
-            (*doc)["maxLen"] = STATUS_LENGTH;
+            DynamicJsonDocument *doc = new DynamicJsonDocument(256);
+            
+            (*doc)["lat"] = _SelectedLocationIt->Latitude;
+            (*doc)["lon"] = _SelectedLocationIt->Longitude;
+
+            (*doc)["color_R"] = LED_Utils::ThemeColor().r;
+            (*doc)["color_G"] = LED_Utils::ThemeColor().g;
+            (*doc)["color_B"] = LED_Utils::ThemeColor().b;
+
+            auto displayArr = (*doc).createNestedArray("displayTxt");
+
+            displayArr.add(_SelectedLocationIt->Name);
 
             transferData.serializedData = doc;
         }

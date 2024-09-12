@@ -68,7 +68,7 @@ public:
     static void setThemeColor(uint8_t r, uint8_t g, uint8_t b);
     static void setThemeColor(CRGB color);
 
-    static CRGB ThemeColor();
+    static CRGB &ThemeColor();
 
     // Sets the InputID to LED index map
     static void setInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIdLedPins);

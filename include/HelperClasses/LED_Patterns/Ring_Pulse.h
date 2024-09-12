@@ -81,7 +81,7 @@ public:
         }
         else
         {
-            color = CRGB(r * brightness, g * brightness, b * brightness);
+            color = CRGB(themeColor.r * brightness, themeColor.g * brightness, themeColor.b * brightness);
         }
 
         // Set the color for the entire ring

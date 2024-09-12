@@ -110,26 +110,26 @@ public:
     }
 
     // TODO: Get rid of this
-    void displayMessage(Adafruit_SSD1306 *display)
-    {
-        NavigationUtils::UpdateGPS();
+    // void displayMessage(Adafruit_SSD1306 *display)
+    // {
+    //     NavigationUtils::UpdateGPS();
 
-        uint64_t timeDiff = NavigationUtils::GetTimeDifference(this->time, this->date);
+    //     uint64_t timeDiff = NavigationUtils::GetTimeDifference(this->time, this->date);
 
-        display->setCursor(110, 8);
-        // 128display->print(F("Recv: "));
+    //     display->setCursor(110, 8);
+    //     // 128display->print(F("Recv: "));
 
-        // Greater than one day
-        printMessageAge(timeDiff, display);
+    //     // Greater than one day
+    //     printMessageAge(timeDiff, display);
 
-        display->setCursor(0, 8);
-        display->print(this->senderName);
+    //     display->setCursor(0, 8);
+    //     display->print(this->senderName);
 
-        display->setCursor(0, 16);
-        display->print(this->status);
+    //     display->setCursor(0, 16);
+    //     display->print(this->status);
 
-        LED_Manager::lightRing(this->color_R, this->color_G, this->color_B);
-    }
+    //     LED_Manager::lightRing(this->color_R, this->color_G, this->color_B);
+    // }
 
     void GetPrintableInformation(std::vector<MessagePrintInformation> &info)
     {

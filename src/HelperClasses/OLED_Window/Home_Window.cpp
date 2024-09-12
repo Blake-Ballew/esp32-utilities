@@ -6,17 +6,18 @@ Home_Window::Home_Window(OLED_Window *parent) : OLED_Window(parent)
 }
 
 Home_Window::Home_Window() : OLED_Window()
-{
+{    
     homeContent = new Home_Content(display);
     messageDisplay = new LoraMessageDisplay();
 
     unreadMessageState = new UnreadMessageState(messageDisplay);
     homeState = new Home_State(homeContent);
-    trackingState = new Tracking_State(messageDisplay);
+    trackingState = new Tracking_State();
     selectMessageState = new Select_Message_State();
     selectLocationState = new Select_Location_State();
     selectionState = new SelectKeyValueState();
     saveLocationState = new SaveLocationState();
+    lockState = new Lock_State();
 
     contentList.push_back(homeContent);
     contentList.push_back(messageDisplay);
@@ -33,6 +34,7 @@ Home_Window::Home_Window() : OLED_Window()
     setInitialState(homeState);
 
     homeState->setAdjacentState(BUTTON_2, selectLocationState);
+    homeState->setAdjacentState(BUTTON_3, lockState);
     homeState->setAdjacentState(ENC_DOWN, unreadMessageState);
 
     unreadMessageState->setAdjacentState(BUTTON_4, trackingState);

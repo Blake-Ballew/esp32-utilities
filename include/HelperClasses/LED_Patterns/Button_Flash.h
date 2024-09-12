@@ -44,7 +44,7 @@ public:
             float brightness = 1.0 - (float)(xTaskGetTickCount() - startTime) / (float)animationMS;
             if (inputIdLedPins[inputID] < numLeds) 
             {
-                leds[inputIdLedPins[inputID]] = CRGB(r * brightness, g * brightness, b * brightness);
+                leds[inputIdLedPins[inputID]] = CRGB(themeColor.r * brightness, themeColor.g * brightness, themeColor.b * brightness);
             }
         }
         else 

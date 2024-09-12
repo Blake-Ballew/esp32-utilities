@@ -19,6 +19,8 @@ public:
         int endLedIdx,
         bool newMsgID = false)
     {
+        allowInterrupts = false;
+
         this->newMsgID = newMsgID;
         message = nullptr;
         assignInput(BUTTON_3, ACTION_BACK, "Back");

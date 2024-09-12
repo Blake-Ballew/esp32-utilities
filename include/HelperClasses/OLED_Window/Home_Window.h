@@ -18,6 +18,7 @@
 #include "SelectKeyValueState.h"
 #include "SaveLocationState.h"
 #include "Tracking_State.h"
+#include "Lock_State.h"
 
 namespace
 {
@@ -48,6 +49,7 @@ private:
     UnreadMessageState *unreadMessageState;
     SelectKeyValueState *selectionState;
     SaveLocationState *saveLocationState;
+    Lock_State *lockState;
 
     // Message info
     bool sendDirect;

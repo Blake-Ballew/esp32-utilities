@@ -40,7 +40,7 @@ public:
         {
             if (inputIdState[kvp.first])
             {
-                leds[kvp.second] = CRGB(r, g, b);
+                leds[kvp.second] = themeColor;
             }
             else
             {
@@ -58,8 +58,6 @@ public:
             leds[kvp.second] = CRGB(0, 0, 0);
             inputIdState[kvp.first] = false;
         }
-
-        resetPattern();
     }
 
     void SetRegisteredPatternID(int patternID) { registeredPatternID = patternID; }

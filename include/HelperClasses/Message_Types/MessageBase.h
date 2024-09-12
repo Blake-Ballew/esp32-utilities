@@ -254,56 +254,58 @@ public:
     }
 
     // TODO: Get rid of this
-    virtual void displayMessage(Adafruit_SSD1306 *display)
-    {
-        display->setCursor(0, 8);
-        display->print(this->senderName);
+    // virtual void displayMessage(Adafruit_SSD1306 *display)
+    // {
+    //     display->setCursor(0, 8);
+    //     display->print(this->senderName);
 
-        display->setCursor(0, 16);
-        display->print(F("MsgID: "));
-        display->print(this->msgID, HEX);
+    //     display->setCursor(0, 16);
+    //     display->print(F("MsgID: "));
+    //     display->print(this->msgID, HEX);
 
-        display->setCursor(110, 8);
-        printMessageAge(NavigationUtils::GetTimeDifference(this->time, this->date), display);
-    }
+    //     display->setCursor(110, 8);
+    //     printMessageAge(NavigationUtils::GetTimeDifference(this->time, this->date), display);
+    // }
 
     virtual bool IsValid()
     {
         return (msgID != 0 && sender != 0);
     }
 
-    static void printMessageAge(uint64_t timeDiff, Adafruit_SSD1306 *display)
+    static std::string GetMessageAge(uint64_t timeDiff)
     {
         uint8_t diffHours = (timeDiff & 0xFF000000) >> 24;
         uint8_t diffMinutes = (timeDiff & 0xFF0000) >> 16;
 
 #if DEBUG == 1
-        Serial.print("Time diff: ");
-        Serial.println(timeDiff);
-        Serial.print("Hours: ");
-        Serial.println(diffHours);
-        Serial.print("Minutes: ");
-        Serial.println(diffMinutes);
+        // Serial.print("Time diff: ");
+        // Serial.println(timeDiff);
+        // Serial.print("Hours: ");
+        // Serial.println(diffHours);
+        // Serial.print("Minutes: ");
+        // Serial.println(diffMinutes);
 #endif
+
+        std::string ageStr;
 
         if (timeDiff > 0xFFFFFFFF)
         {
-            display->print(">1d");
+            ageStr = ">1d";
         }
         else if (diffHours > 0)
         {
-            display->print(diffHours);
-            display->print(F("h"));
-        }
+            ageStr = std::to_string(diffHours) + "h";
+        }    
         else if (diffMinutes > 0)
         {
-            display->print(diffMinutes);
-            display->print(F("m"));
+            ageStr = std::to_string(diffMinutes) + "m";
         }
         else
         {
-            display->print(F("<1m"));
+            ageStr = "<1m";
         }
+
+        return ageStr;
     }
 
     static MessageBase *MessageFactory(uint8_t *buffer, size_t len) 

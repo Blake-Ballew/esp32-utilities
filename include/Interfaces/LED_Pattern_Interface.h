@@ -56,19 +56,17 @@ public:
     // This is so different modules can use the same pattern without re-registering it
     virtual void SetRegisteredPatternID(int patternID) = 0;
 
-    static void setThemeColor(uint8_t r, uint8_t g, uint8_t b) {
-        r = r;
-        g = g;
-        b = b;
+    static void SetThemeColor(CRGB &color) {
+        themeColor = color;
     }
+
+    static CRGB &ThemeColor() { return themeColor; }
 
 protected:
     static CRGB *leds;
     static size_t numLeds;
     static size_t msPerTick;
-    static uint8_t r;
-    static uint8_t g;
-    static uint8_t b;
+    static CRGB &themeColor;
 
     // Length of an animation loop
     size_t animationTicks;

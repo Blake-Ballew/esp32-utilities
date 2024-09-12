@@ -16,22 +16,18 @@ class Lock_State : public Window_State
 public:
     Lock_State()
     {
+        allowInterrupts = false;
+
         inputSequence = {BUTTON_3, BUTTON_4};
         currentInput = inputSequence.begin();
 
-        if (Illuminate_Button::RegisteredPatternID() == -1) 
-        {
-            LED_Pattern_Interface *illuminate = new Illuminate_Button(LED_Utils::InputIdLedPins());
-            illuminateID = LED_Utils::registerPattern(illuminate);
-        }
-        else 
-        {
-            illuminateID = Illuminate_Button::RegisteredPatternID();
-        }
+        
     }
 
     void enterState(State_Transfer_Data &transferData)
     {
+        illuminateID = Illuminate_Button::RegisteredPatternID();
+        
         Window_State::enterState(transferData);
         
         LED_Utils::disablePattern(Button_Flash::RegisteredPatternID());
@@ -55,6 +51,14 @@ public:
 
     void processInput(uint8_t inputID)
     {
+        if (buttonCallbacks.find(inputID) != buttonCallbacks.end() &&
+            buttonCallbacks[inputID].callbackID == ACTION_BACK)
+            {
+                resetLock();
+                LED_Utils::clearPattern(illuminateID);
+                return;
+            }
+
         if (inputID == *currentInput)
         {
             #if DEBUG == 1
@@ -71,7 +75,7 @@ public:
             
             if (currentInput == inputSequence.end())
             {
-                LED_Utils::configurePattern(illuminateID, cfg);
+                LED_Utils::configurePattern(illuminateID, cfg); 
                 LED_Utils::iteratePattern(illuminateID);
 
                 unlock();
@@ -119,6 +123,7 @@ protected:
     void unlock() 
     {
         Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 
     // Window_State *nextState;

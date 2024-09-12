@@ -33,17 +33,30 @@ public:
     virtual void execBtnCallback(uint8_t inputID);
     virtual void Pause()
     {
-        if (currentState != nullptr && currentState->renderContent != nullptr)
+        if (currentState != nullptr)
         {
-            currentState->renderContent->stop();
+            currentState->Pause();
+            if (currentState->renderContent != nullptr)
+            {
+                currentState->renderContent->stop();
+            }
         }
+
+        isPaused = true;
     }
+
     virtual void Resume()
     {
-        if (currentState != nullptr && currentState->renderContent != nullptr)
+        if (currentState != nullptr)
         {
-            currentState->renderContent->start();
+            currentState->Resume();
+            if (currentState->renderContent != nullptr) 
+            {
+                currentState->renderContent->start();
+            }
         }
+
+        isPaused = false;
     }
 
     virtual void encUp()
@@ -223,7 +236,6 @@ public:
     virtual ~OLED_Window();
 
     bool isPaused = false;
-    bool allowInterrupts = false;
 
     uint32_t btn1CallbackID = 0;
     uint32_t btn2CallbackID = 0;

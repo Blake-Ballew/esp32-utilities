@@ -63,9 +63,18 @@ public:
         for (size_t i = 0; i < displayInfo.size(); i++)
         {
             // TODO: Define bounds of content area
-            display->setCursor(Display_Utils::alignTextLeft(), Display_Utils::selectTextLine(i + 2));
+            display->setCursor(Display_Utils::centerTextHorizontal(displayInfo[i].txt), Display_Utils::selectTextLine(i + 2));
             display->print(displayInfo[i].txt);
         }
+
+        auto messageAge = NavigationUtils::GetTimeDifference(
+            _DisplayMessage->time,
+            _DisplayMessage->date
+        );
+
+        auto ageStr = _DisplayMessage->GetMessageAge(messageAge);
+        display->setCursor(Display_Utils::alignTextRight(ageStr.c_str()), Display_Utils::selectTextLine(2));
+        display->print(ageStr.c_str());
 
         // display->display();
     }

@@ -107,6 +107,7 @@ public:
     static void SetFunction2ButtonInputID(uint8_t inputID);
     static void SetEncUpInputID(uint8_t inputID);
     static void SetEncDownInputID(uint8_t inputID);
+    static void SetUpdateDisplay(EventHandler &handler) { _UpdateDisplay = handler; }
 
     // Getters
     static Adafruit_GFX *getDisplay();
@@ -119,6 +120,7 @@ public:
     static uint8_t Function2ButtonInputID();
     static uint8_t EncUpInputID();
     static uint8_t EncDownInputID();
+    static EventHandler &UpdateDisplay() { return _UpdateDisplay; }
 
     // Event Handlers
     static EventHandlerT<uint8_t> &getInputRaised() { return inputRaised; }
@@ -127,6 +129,9 @@ public:
 
     // Clears the content area. The content area is the area between the top and bottom text lines.
     static void clearContentArea();
+
+    // Clears the entire display
+    static void clearDisplay();
 
     // Prints the given string in the center of the display.
     // If clearDisplay is true, the content area will be cleared first
@@ -198,4 +203,5 @@ protected:
 
     // Event handlers
     static EventHandlerT<uint8_t> inputRaised;
+    static EventHandler _UpdateDisplay;
 };

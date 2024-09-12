@@ -22,7 +22,7 @@ public:
         LoraMessageDisplay *messageDisplay = new LoraMessageDisplay();
         
         receivedMessagesState = new ReceivedMessagesState(messageDisplay);
-        trackingState = new Tracking_State(messageDisplay);
+        trackingState = new Tracking_State();
         selectMessageState = new Select_Message_State();
         selectLocationState = new Select_Location_State();
         selectionState = new SelectKeyValueState();

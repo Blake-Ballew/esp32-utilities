@@ -83,26 +83,22 @@ public:
             leds[i] = CRGB(0, 0, 0);
         }
 
-        uint8_t rOut, gOut, bOut;
+        CRGB outColor;
 
         if (rOverride == 0 && gOverride == 0 && bOverride == 0)
         {
-            rOut = r;
-            gOut = g;
-            bOut = b;
+            outColor = themeColor;
         }
         else
         {
-            rOut = rOverride;
-            gOut = gOverride;
-            bOut = bOverride;
+            outColor = CRGB(rOverride, gOverride, bOverride);
         }
 
         for (int i = beginIdx; i <= endIdx; i++)
         {
             float brightness = GetLEDPointBrightness(i);
 
-            leds[i] = CRGB(rOut * brightness, gOut * brightness, bOut * brightness);
+            leds[i] = CRGB(outColor.r * brightness, outColor.g * brightness, outColor.b * brightness);
         }
 
         return true;
