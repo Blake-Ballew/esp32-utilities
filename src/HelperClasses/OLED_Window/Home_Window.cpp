@@ -9,6 +9,7 @@ Home_Window::Home_Window() : OLED_Window()
 {    
     homeContent = new Home_Content(display);
     messageDisplay = new LoraMessageDisplay();
+    textDisplay = new Text_Display_Content();
 
     unreadMessageState = new UnreadMessageState(messageDisplay);
     homeState = new Home_State(homeContent);
@@ -18,6 +19,8 @@ Home_Window::Home_Window() : OLED_Window()
     selectionState = new SelectKeyValueState();
     saveLocationState = new SaveLocationState();
     lockState = new Lock_State();
+    displaySentMessageState = new DisplaySentMessageState();
+    repeatMessageState = new Repeat_Message_State(textDisplay);
 
     contentList.push_back(homeContent);
     contentList.push_back(messageDisplay);
@@ -30,16 +33,22 @@ Home_Window::Home_Window() : OLED_Window()
     stateList.push_back(selectLocationState);
     stateList.push_back(selectionState);
     stateList.push_back(saveLocationState);
+    stateList.push_back(lockState);
+    stateList.push_back(displaySentMessageState);
 
     setInitialState(homeState);
 
     homeState->setAdjacentState(BUTTON_2, selectLocationState);
     homeState->setAdjacentState(BUTTON_3, lockState);
     homeState->setAdjacentState(ENC_DOWN, unreadMessageState);
+    homeState->setAdjacentState(ENC_UP, displaySentMessageState);
 
     unreadMessageState->setAdjacentState(BUTTON_4, trackingState);
     unreadMessageState->setAdjacentState(BUTTON_2, selectLocationState);
     unreadMessageState->setAdjacentState(BUTTON_1, selectionState);
+
+    displaySentMessageState->setAdjacentState(BUTTON_4, repeatMessageState);
+    displaySentMessageState->setAdjacentState(ENC_DOWN, homeState);
 
     unreadMessageState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
     unreadMessageState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
@@ -50,6 +59,19 @@ Home_Window::Home_Window() : OLED_Window()
     selectLocationState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Select");
 
     trackingState->assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
+
+    displaySentMessageState->assignInput(ENC_DOWN, ACTION_SWITCH_WINDOW_STATE);
+
+    repeatMessageState->assignInput(BUTTON_3, ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE, "Back");
+
+    std::vector<TextDrawData> repeatMsgTextData;
+    TextFormat repeatMsgPrompt;
+    repeatMsgPrompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+    repeatMsgPrompt.verticalAlignment = ALIGN_CENTER_VERTICAL;
+
+    repeatMsgTextData.push_back({"Retransmiting...", repeatMsgPrompt});
+
+    textDisplay->SetTextData(repeatMsgTextData);
 }
 
 void Home_Window::drawWindow()
@@ -164,6 +186,15 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
                 latitude,
                 longitude,
                 message);
+
+            if (useCurrLocation)
+            {
+                newMsg->IsLive = true;
+            }
+            else
+            {
+                newMsg->IsLive = false;
+            }
 
             uint8_t returnCode;
 

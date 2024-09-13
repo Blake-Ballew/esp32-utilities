@@ -66,6 +66,7 @@ public:
     static uint8_t DefaultSendAttempts() { return _DefaultSendAttempts; }
     static size_t GetNumMessages() { return _ReceivedMessages.size(); }
     static size_t GetNumUnreadMessages() { return _UnreadMessages.size(); }
+    static bool MyLastBroacastExists() { return _MyLastBroadcast != nullptr; }
 
     // Setters
     static void SetMessageSendQueueID(int id) { _MessageSendQueueID = id; }

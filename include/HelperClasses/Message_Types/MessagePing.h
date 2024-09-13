@@ -10,6 +10,7 @@ namespace
     const char *MESSAGE_TYPE_LAT PROGMEM = "a";
     const char *MESSAGE_TYPE_LNG PROGMEM = "o";
     const char *MESSAGE_TYPE_STATUS PROGMEM = "s";
+    const char *MESSAGE_TYPE_IS_LIVE PROGMEM = "L";
 }
 
 const size_t STATUS_LENGTH = 23;
@@ -19,7 +20,7 @@ class MessagePing : public MessageBase
 public:
     MessagePing() : MessageBase()
     {
-        
+        this->IsLive = false;
     }
 
     MessagePing(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
@@ -31,6 +32,8 @@ public:
 
         this->lat = lat;
         this->lng = lng;
+
+        this->IsLive = false;
 
         size_t strLen = strlen(status);
         if (strLen > STATUS_LENGTH)
@@ -59,6 +62,7 @@ public:
         doc[MESSAGE_TYPE_LAT] = this->lat;
         doc[MESSAGE_TYPE_LNG] = this->lng;
         doc[MESSAGE_TYPE_STATUS] = statusStr;
+        doc[MESSAGE_TYPE_IS_LIVE] = this->IsLive;
 
         if (doc.overflowed())
         {
@@ -97,39 +101,23 @@ public:
         else
             lng = 0;
 
+        if (doc.containsKey(MESSAGE_TYPE_IS_LIVE))
+            IsLive = doc[MESSAGE_TYPE_IS_LIVE];
+        else
+            IsLive = false;
+
         
         strncpy(status, doc[MESSAGE_TYPE_STATUS], STATUS_LENGTH);
         status[STATUS_LENGTH] = '\0';
     }
 
-    MessageBase *clone()
+    MessageBase *clone() override
     {
         MessagePing *newMsg = new MessagePing(time, date, recipient, sender, senderName, msgID, color_R, color_G, color_B, lat, lng, status);
         newMsg->bouncesLeft = bouncesLeft;
+        newMsg->IsLive = this->IsLive;
         return newMsg;
     }
-
-    // TODO: Get rid of this
-    // void displayMessage(Adafruit_SSD1306 *display)
-    // {
-    //     NavigationUtils::UpdateGPS();
-
-    //     uint64_t timeDiff = NavigationUtils::GetTimeDifference(this->time, this->date);
-
-    //     display->setCursor(110, 8);
-    //     // 128display->print(F("Recv: "));
-
-    //     // Greater than one day
-    //     printMessageAge(timeDiff, display);
-
-    //     display->setCursor(0, 8);
-    //     display->print(this->senderName);
-
-    //     display->setCursor(0, 16);
-    //     display->print(this->status);
-
-    //     LED_Manager::lightRing(this->color_R, this->color_G, this->color_B);
-    // }
 
     void GetPrintableInformation(std::vector<MessagePrintInformation> &info)
     {
@@ -197,6 +185,9 @@ public:
     double lng;
 
     char status[STATUS_LENGTH + 1];
+
+    // Flag that indicates if the message is a live location
+    bool IsLive;
 
 protected:
     static uint8_t _MessageType;

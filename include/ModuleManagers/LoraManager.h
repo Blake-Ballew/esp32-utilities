@@ -281,11 +281,11 @@ public:
 
                     msgTimer->numSendAttempts--;
 
-                    if (msgTimer->msg->sender == LoraUtils::UserID())
-                    {
-                        // Update the last broadcast message.
-                        LoraUtils::SetMyLastBroadcast(msgTimer->msg);
-                    }
+                    // if (msgTimer->msg->sender == LoraUtils::UserID())
+                    // {
+                    //     // Update the last broadcast message.
+                    //     LoraUtils::SetMyLastBroadcast(msgTimer->msg);
+                    // }
 
                     if (msgTimer->numSendAttempts > 0)
                     {

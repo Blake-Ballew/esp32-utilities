@@ -7,6 +7,7 @@
 #include "Saved_Locations_Content.h"
 #include "Saved_Messages_Content.h"
 #include "LoraMessageDisplay.h"
+#include "Text_Display_Content.h"
 
 #include <string>
 
@@ -19,6 +20,8 @@
 #include "SaveLocationState.h"
 #include "Tracking_State.h"
 #include "Lock_State.h"
+#include "DisplaySentMessageState.h"
+#include "Repeat_Message_State.h"
 
 namespace
 {
@@ -41,6 +44,7 @@ public:
 private:
     Home_Content *homeContent;
     LoraMessageDisplay *messageDisplay;
+    Text_Display_Content *textDisplay;
 
     Home_State *homeState;
     Tracking_State *trackingState;
@@ -50,6 +54,8 @@ private:
     SelectKeyValueState *selectionState;
     SaveLocationState *saveLocationState;
     Lock_State *lockState;
+    DisplaySentMessageState *displaySentMessageState;
+    Repeat_Message_State *repeatMessageState;
 
     // Message info
     bool sendDirect;

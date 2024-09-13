@@ -9,15 +9,12 @@
 #include "Ring_Pulse.h"
 #include "LED_Utils.h"
 
-#define MESSAGE_REPEAT_INTERVAL_MS 60000
+#define MESSAGE_REPEAT_INTERVAL_MS 30000
 
 class Repeat_Message_State : public Window_State
 {
 public:
-    Repeat_Message_State(Text_Display_Content *content,
-        int beginLedIdx,
-        int endLedIdx,
-        bool newMsgID = false)
+    Repeat_Message_State(Text_Display_Content *content, bool newMsgID = false)
     {
         allowInterrupts = false;
 
@@ -27,22 +24,7 @@ public:
         textContent = content;
         renderContent = textContent;
 
-        if (Ring_Pulse::RegisteredPatternID() == -1) 
-        {
-            Ring_Pulse *pulse = new Ring_Pulse();
-            
-            ringPulseID = LED_Utils::registerPattern(pulse);
-        }
-        else 
-        {
-            ringPulseID = Ring_Pulse::RegisteredPatternID();
-        }
-
-        StaticJsonDocument<200> doc;
-        doc["beginIdx"] = beginLedIdx;
-        doc["endIdx"] = endLedIdx;
-
-        LED_Utils::configurePattern(ringPulseID, doc);
+        ringPulseID = Ring_Pulse::RegisteredPatternID();
     }
 
     ~Repeat_Message_State()
@@ -63,6 +45,8 @@ public:
         Serial.println("Enter Repeat Message State");
         #endif
         Window_State::enterState(transferData);
+        
+        ringPulseID = Ring_Pulse::RegisteredPatternID();
         
         if (transferData.serializedData != nullptr)
         {
@@ -142,10 +126,19 @@ public:
             if (message->GetInstanceMessageType() == MessagePing::MessageType())
             {
                 MessagePing *ping = (MessagePing *)message;
-                ping->lat = NavigationUtils::GetLocation().lat();
-                ping->lng = NavigationUtils::GetLocation().lng();
-                ping->time = NavigationUtils::GetTime().value();
-                ping->date = NavigationUtils::GetDate().value();
+
+                if (ping->IsLive) 
+                {
+                    #if DEBUG == 1
+                    Serial.println("Repeat_Message_State::displayState: Updating GPS");
+                    #endif
+                    NavigationUtils::UpdateGPS();
+
+                    ping->lat = NavigationUtils::GetLocation().lat();
+                    ping->lng = NavigationUtils::GetLocation().lng();
+                    ping->time = NavigationUtils::GetTime().value();
+                    ping->date = NavigationUtils::GetDate().value();
+                }
             }
 
             LoraUtils::SendMessage(message, 1);

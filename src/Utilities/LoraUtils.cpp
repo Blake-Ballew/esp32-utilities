@@ -62,6 +62,11 @@ bool LoraUtils::SendMessage(MessageBase *msg, uint8_t numSendAttempts) {
 
     auto msgToSend = msg->clone();
 
+    if (msgToSend->sender == _UserID)
+    {
+        SetMyLastBroadcast(msgToSend);
+    }
+
     OutboundMessageQueueItem item = {msgToSend, numSendAttempts};
 
     #if DEBUG == 1
@@ -87,18 +92,21 @@ void LoraUtils::MarkMessageOpened(uint64_t userID) {
     }
 }
 
-// TODO: Return a copy of the message instead of the original pointer
 MessageBase *LoraUtils::MyLastBroacast() {
     if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE) {
-        MessageBase *msg = _MyLastBroadcast->clone();
+        MessageBase *msg = nullptr;
+
+        if (_MyLastBroadcast != nullptr) {
+            msg = _MyLastBroadcast->clone();
+        }
         xSemaphoreGive(_MessageAccessMutex);
+
         return msg;
     }
 
     return nullptr;
 }
 
-// TODO: Return a copy of the message instead of the original pointer
 MessageBase *LoraUtils::ReceivedMessage(uint64_t userID) {
     if (xSemaphoreTake(_MessageAccessMutex, portMAX_DELAY) == pdTRUE) {
         MessageBase *msg = _ReceivedMessages[userID]->clone();

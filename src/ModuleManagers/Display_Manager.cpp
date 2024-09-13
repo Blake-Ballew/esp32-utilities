@@ -515,7 +515,7 @@ void Display_Manager::openSOS()
 
     Text_Display_Content *txtContent2 = new Text_Display_Content(textData);
 
-    Repeat_Message_State *repeat = new Repeat_Message_State(txtContent2, 0, 15, true);
+    Repeat_Message_State *repeat = new Repeat_Message_State(txtContent2, true);
     SOS_Window *sosWindow = new SOS_Window(currentWindow, repeat, lock);
 
     Display_Manager::attachNewWindow(sosWindow);

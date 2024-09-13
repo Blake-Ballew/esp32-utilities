@@ -10,6 +10,8 @@ public:
         this->textData = txtData;
     }
 
+    Text_Display_Content() {}
+
     void printContent()
     {
         #if DEBUG == 1
@@ -26,6 +28,9 @@ public:
         
         display->display();
     }
+
+    void SetTextData(std::vector<TextDrawData> txtData) { this->textData = txtData; }
+    
 protected:
 
     std::vector<TextDrawData> textData;

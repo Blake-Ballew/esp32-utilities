@@ -72,6 +72,16 @@ void Home_Content::printContent()
         display->print("Msgs");
     }
 
+    if (LoraUtils::MyLastBroacastExists())
+    {
+        TextFormat format;
+        format.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+        format.verticalAlignment = TEXT_LINE;
+        format.line = 1;
+
+        Display_Utils::printFormattedText("^", format);
+    }
+
     display->display();
 }
 
