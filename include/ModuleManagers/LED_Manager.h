@@ -10,7 +10,7 @@
 #include <vector>
 
 #define NUM_COMPASS_LEDS 16
-#define LED_MS_PER_FRAME 15
+#define LED_MS_PER_FRAME 50
 
 /*
 LED Mappings:

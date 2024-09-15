@@ -15,8 +15,12 @@ namespace
     const uint8_t DEFAULT_NODE_ID = 1;
     const char *USER_LIST_FILENAME PROGMEM = "/SavedUsers.msgpk";
     const char *MESSAGE_LIST_FILENAME PROGMEM = "/SavedMessages.msgpk";
-    const size_t MESSAGE_RECEIVE_TIMEOUT_MS = 10;
-    const size_t RECEIVE_THREAD_SLEEP_MS = 1;
+
+    const size_t MESSAGE_RECEIVE_TIMEOUT_MS = 100;
+    const size_t RECEIVE_THREAD_SLEEP_MS = 5;
+
+    const size_t AFTER_SEND_BLOCK_TIME_MS = 500;
+
     const size_t NUM_REBROADCAST_ATTEMPTS = 1;
 }
 
@@ -76,26 +80,19 @@ public:
     {
         while (true) 
         {
-            if (_manager->available())
-            {
-                uint8_t buffer[MAX_MESSAGE_SIZE];
-                memset(buffer, 0, sizeof(buffer));
+            uint8_t buffer[MAX_MESSAGE_SIZE];
+            memset(buffer, 0, sizeof(buffer));
 
-                uint8_t from;
-                uint8_t to;
-                uint8_t id;
-                uint8_t flags;
-                uint8_t len = sizeof(buffer);
+            uint8_t from;
+            uint8_t to;
+            uint8_t id;
+            uint8_t flags;
+            uint8_t len = sizeof(buffer);
 
-                _manager->recvfromAckTimeout(buffer, &len, MESSAGE_RECEIVE_TIMEOUT_MS, &from, &to, &id, &flags);
+            auto result = _manager->recvfromAckTimeout(buffer, &len, MESSAGE_RECEIVE_TIMEOUT_MS, &from, &to, &id, &flags);
+
+            if (result) {
                 #if DEBUG == 1
-                // Serial.println("Raw bytes:");
-                // for (size_t i = 0; i < len; i++)
-                // {
-                //     Serial.print(buffer[i], HEX);
-                //     Serial.print(" ");
-                // }
-                // Serial.println();
                 {
                     StaticJsonDocument<MSG_BASE_SIZE> testDoc;
                     deserializeMsgPack(testDoc, (const char *)buffer, len);
@@ -191,7 +188,7 @@ public:
             vTaskDelete(NULL);
         }
 
-        const size_t SEND_THREAD_TICK_MS = 500;
+        const size_t SEND_THREAD_TICK_MS = 250;
         const size_t MAX_SEND_DELAY_TICKS = 15;
 
         // Map of messages to ticks until send
@@ -260,6 +257,10 @@ public:
                         #endif
 
                         _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
+
+                        // Block core while message transmits
+                        // In the future, maybe disable the other thread instead
+                        delay(AFTER_SEND_BLOCK_TIME_MS);
 
                         #if DEBUG == 1
                         // Serial.printf("Message sent of size: %u\n", len);
