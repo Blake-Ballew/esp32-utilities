@@ -17,10 +17,26 @@ public:
 
     void InitializeUtils(CompassInterface *compass, Stream &gpsInputStream)
     {
+        #if DEBUG == 1
+        Serial.println("NavigationManager::InitializeUtils");
+        #endif
         NavigationUtils::Init(compass, gpsInputStream);
 
         NavigationUtils::SavedLocationsUpdated() += SaveLocationsToFlash;
         this->LoadLocationsFromFlash();
+
+        StaticJsonDocument<128> calibrationData;
+        auto returncode = FilesystemUtils::ReadFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
+        if (returncode == FilesystemReturnCode::FILESYSTEM_OK)
+        {
+            NavigationUtils::SetCalibrationData(calibrationData);
+
+            #if DEBUG == 1
+            Serial.println("Calibration data loaded from flash.");
+            serializeJson(calibrationData, Serial);
+            Serial.println();
+            #endif
+        }
     }
 
     void InitializeUtils(CompassInterface *compass)

@@ -11,6 +11,9 @@ public:
 
     void Init()
     {
+        #if DEBUG == 1
+        Serial.println("FilesystemManager::Init");
+        #endif
         FilesystemUtils::Init();
     }
 };

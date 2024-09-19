@@ -5,6 +5,11 @@
 #include "TinyGPS++.h"
 #include <string>
 
+namespace
+{
+    const char *COMPASS_CALIBRATION_FILENAME PROGMEM = "/CompassCalibration.msgpk";
+}
+
 struct SavedLocation
 {
     std::string Name;
@@ -35,6 +40,14 @@ public:
     static int GetX();
     static int GetY();
     static int GetZ();
+    static void PrintRawValues() { _Compass->PrintRawValues(); }
+
+    static void BeginCalibration() { if (_Compass) _Compass->BeginCalibration(); }
+    static void IterateCalibration() { if (_Compass) _Compass->IterateCalibration(); }
+    static void EndCalibration() { if (_Compass) _Compass->EndCalibration(); }
+    static void GetCalibrationData(JsonDocument &doc) { if (_Compass) _Compass->GetCalibrationData(doc); }
+    static void SetCalibrationData(JsonDocument &doc) { if (_Compass) _Compass->SetCalibrationData(doc); }
+    static const char *GetCalibrationFilename() { return COMPASS_CALIBRATION_FILENAME; }
 
     // Saved Locations
     static EventHandler &SavedLocationsUpdated() { return _SavedLocationsUpdated; }

@@ -28,8 +28,10 @@ EventHandler System_Utils::systemShutdown;
 void System_Utils::init()
 {
     Serial.println("Initializing System Utils");
+#if HARDWARE_VERSION == 1
     healthTimerID = registerTimer("System Health Monitor", 60000, monitorSystemHealth, healthTimerBuffer);
     startTimer(healthTimerID);
+#endif
     monitorSystemHealth(nullptr);
 }
 

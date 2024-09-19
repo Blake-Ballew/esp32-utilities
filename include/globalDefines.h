@@ -61,7 +61,12 @@
 
 #define KEEP_ALIVE_PIN 5
 
+#if HARDWARE_VERSION == 1
 #define OLED_HEIGHT 32
+#else
+#define OLED_HEIGHT 64
+#endif
+
 #define OLED_WIDTH 128
 
 #define OLED_RESET -1

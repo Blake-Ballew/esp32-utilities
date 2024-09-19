@@ -125,49 +125,14 @@ void OLED_Window::drawWindow()
     }
 #endif
 
-    /*
-    if (btn1Text[0] != '\0')
-        display->print(btn1Text);
-    if (btn2Text[0] != '\0')
-    {
-        display->setCursor(OLED_WIDTH - (strlen(btn2Text) * 6), 0);
-        display->print(btn2Text);
-    }
-    if (btn3Text[0] != '\0')
-    {
-        display->setCursor(0, OLED_HEIGHT - 8);
-        display->print(btn3Text);
-    }
-    if (btn4Text[0] != '\0')
-    {
-        display->setCursor(OLED_WIDTH - (strlen(btn4Text) * 6), OLED_HEIGHT - 8);
-        display->print(btn4Text);
-    }
-    if (content != NULL)
-        content->printContent();
-    else
-        display->display();
-    */
-    #if DEBUG == 1
-    // Serial.println("OLED_Window::drawWindow() before displayState()");
-    #endif
     if (currentState != nullptr)
     {
-        #if DEBUG == 1
-        // Serial.println("OLED_Window::drawWindow() currentState is not null");
-        #endif
         currentState->displayState();
     }
     else
     {
-        #if DEBUG == 1
-        // Serial.println("OLED_Window::drawWindow() currentState is null");
-        #endif
         display->display();
     }
-#if DEBUG == 1
-    // Serial.println("OLED_Window::drawWindow() finished");
-#endif
 
     display->display();
 }

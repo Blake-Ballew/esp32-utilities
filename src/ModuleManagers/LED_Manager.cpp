@@ -13,6 +13,9 @@ int LED_Manager::patternTaskID = -1;
 
 void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
 {
+    #if DEBUG == 1
+    Serial.println("LED_Manager::init");
+    #endif
     leds = new CRGB[numLeds];
     LED_Utils::setLeds(leds, numLeds);
 
