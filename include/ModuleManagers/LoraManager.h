@@ -17,11 +17,13 @@ namespace
     const char *MESSAGE_LIST_FILENAME PROGMEM = "/SavedMessages.msgpk";
 
     const size_t MESSAGE_RECEIVE_TIMEOUT_MS = 100;
-    const size_t RECEIVE_THREAD_SLEEP_MS = 5;
+    const size_t RECEIVE_THREAD_SLEEP_MS = 1;
 
     const size_t AFTER_SEND_BLOCK_TIME_MS = 500;
 
     const size_t NUM_REBROADCAST_ATTEMPTS = 1;
+
+    const size_t SEND_THREAD_MUTEX_ADDITIONAL_TIME_MS = 200;
 }
 
 // Struct to manage message pointers waiting to send
@@ -32,12 +34,12 @@ struct QueuedMessageInfo
     size_t ticksLeft;
 };
 
-template <typename RadioType>
+// template <typename RadioType>
 class LoraManager
 {
 public:
     // Constructor for manager with radios accepting a frequency and power level
-    LoraManager(RadioType *driver, uint8_t cs, uint8_t intPin, uint8_t txPower)
+    LoraManager(RHGenericDriver *driver, uint8_t cs, uint8_t intPin, uint8_t txPower)
     {
         _driver = driver;
         _cs = cs;
@@ -57,6 +59,9 @@ public:
             return false;
         }
 
+        // Initialize mutex
+        _RadioMutex = xSemaphoreCreateMutex();
+
         LoraUtils::Init();
 
         LoraUtils::UserInfoListUpdated() += SaveUserInfoList;
@@ -64,6 +69,13 @@ public:
 
         LoraUtils::SavedMessageListUpdated() += SaveMessageList;
         this->LoadMessageList();
+
+        if (LoraUtils::GetSavedMessageListSize() == 0)
+        {
+            LoraUtils::AddSavedMessage("Meet here");
+            LoraUtils::AddSavedMessage("Point of interest");
+            LoraUtils::AddSavedMessage("I have a quest");
+        }
 
         _sendQueue = System_Utils::getQueue(LoraUtils::MessageSendQueueID());
 
@@ -80,6 +92,13 @@ public:
     {
         while (true) 
         {
+            #if DEBUG == 1
+            // Serial.print("Radio state: ");
+            // Serial.println(_driver->mode());
+            // vTaskDelay(pdMS_TO_TICKS(50));
+            // continue;
+            #endif
+
             uint8_t buffer[MAX_MESSAGE_SIZE];
             memset(buffer, 0, sizeof(buffer));
 
@@ -89,7 +108,29 @@ public:
             uint8_t flags;
             uint8_t len = sizeof(buffer);
 
+            bool halted = false;
+            TickType_t xLastWakeTime = xTaskGetTickCount();
+
+            auto mutexResult = xSemaphoreTake(_RadioMutex, 0);
+
+            if (mutexResult == pdFALSE)
+            {
+                halted = true;
+            }
+
+            if (halted)
+            {
+                // Serial.println("RECEIVE TASK IS HALTED");
+                xSemaphoreTake(_RadioMutex, portMAX_DELAY);
+                // Serial.print("RECEIVE TASK WAS HALTED FOR MS: ");
+                Serial.println(xTaskGetTickCount() - xLastWakeTime);
+            }
+
+            _driver->setMode(RHGenericDriver::RHMode::RHModeRx);
             auto result = _manager->recvfromAckTimeout(buffer, &len, MESSAGE_RECEIVE_TIMEOUT_MS, &from, &to, &id, &flags);
+            _driver->setMode(RHGenericDriver::RHMode::RHModeIdle);
+
+            xSemaphoreGive(_RadioMutex);
 
             if (result) {
                 #if DEBUG == 1
@@ -247,6 +288,8 @@ public:
                         Serial.println("Sending message:");
                         serializeJson(doc, Serial);
                         Serial.println();
+                        // Serial.print("Radio state before send: ");
+                        // Serial.println(_driver->mode());
                         // Serial.println("Sending raw bytes:");
                         // for (size_t i = 0; i < len; i++)
                         // {
@@ -256,11 +299,29 @@ public:
                         // Serial.println();
                         #endif
 
-                        _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
+                        TickType_t ReceiveBlockTimer;
 
-                        // Block core while message transmits
-                        // In the future, maybe disable the other thread instead
-                        delay(AFTER_SEND_BLOCK_TIME_MS);
+                        #if DEBUG == 1
+                        Serial.println("HALTING RECEIVE THREAD");
+                        #endif
+                        ReceiveBlockTimer = xTaskGetTickCount();
+                        xSemaphoreTake(_RadioMutex, portMAX_DELAY);
+
+                        _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
+                        
+                        while (_driver->mode() == RHGenericDriver::RHMode::RHModeTx)
+                        {
+                            vTaskDelay(pdMS_TO_TICKS(10));
+                        }
+
+                        // Additional time
+                        vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_MUTEX_ADDITIONAL_TIME_MS));
+
+                        #if DEBUG == 1
+                        Serial.print("RESUMING RECEIVE THREAD AFTER MS: ");
+                        Serial.println(xTaskGetTickCount() - ReceiveBlockTimer);
+                        #endif
+                        xSemaphoreGive(_RadioMutex);
 
                         #if DEBUG == 1
                         // Serial.printf("Message sent of size: %u\n", len);
@@ -386,6 +447,12 @@ public:
         }
     }
 
+    void SetTaskHandles(TaskHandle_t sendHandle, TaskHandle_t receiveHandle)
+    {
+        _SendTaskHandle = sendHandle;
+        _ReceiveTaskHandle = receiveHandle;
+    }
+
 protected:
 
     bool ShouldMessageBeForwarded(MessageBase *msg) 
@@ -446,7 +513,7 @@ protected:
     }
 
     RHReliableDatagram *_manager;
-    RadioType *_driver;
+    RHGenericDriver *_driver;
     uint8_t _cs;
     uint8_t _intPin;
     float _freq;
@@ -460,4 +527,10 @@ protected:
     // The node will route messages not intended for it
     std::unordered_map<uint64_t, uint32_t> _lastReceivedMessages;
 
+    // Task handles
+    TaskHandle_t _SendTaskHandle = nullptr;
+    TaskHandle_t _ReceiveTaskHandle = nullptr;
+
+    // Mutex for use of the LoRa Radio
+    SemaphoreHandle_t _RadioMutex = nullptr;
 };

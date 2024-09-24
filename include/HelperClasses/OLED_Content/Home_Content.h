@@ -25,13 +25,8 @@ public:
     void stop();
     void start();
 
-    static void timerCallback(TimerHandle_t xTimer);
-
     MessageBase *getCurrentMessage();
 
 private:
-    static Home_Content *thisInstance;
-    TimerHandle_t timer;
-
     std::map<uint64_t, MessageBase *>::iterator msgIterator;
 };

@@ -1,14 +1,11 @@
 #include "Home_Content.h"
 
-Home_Content *Home_Content::thisInstance = nullptr;
-
 Home_Content::Home_Content(Adafruit_SSD1306 *display)
 {
     this->type = ContentType::HOME;
     this->display = display;
     this->contentMode = 1;
-    System_Utils::changeTimerPeriod(refreshTimerID, HOME_CONTENT_TIMER_PERIOD);
-    System_Utils::startTimer(refreshTimerID);
+    Display_Utils::enableRefreshTimer(HOME_CONTENT_TIMER_PERIOD);
 }
 
 Home_Content::~Home_Content()
@@ -90,7 +87,7 @@ void Home_Content::stop()
 #if DEBUG == 1
     Serial.println("Stopping Home Content");
 #endif
-    System_Utils::stopTimer(refreshTimerID);
+    Display_Utils::disableRefreshTimer();
 }
 
 void Home_Content::start()
@@ -98,13 +95,7 @@ void Home_Content::start()
 #if DEBUG == 1
     Serial.println("Starting Home Content");
 #endif
-    System_Utils::changeTimerPeriod(OLED_Content::refreshTimerID, HOME_CONTENT_TIMER_PERIOD);
-    System_Utils::startTimer(OLED_Content::refreshTimerID);
-}
-
-void Home_Content::timerCallback(TimerHandle_t xTimer)
-{
-    thisInstance->printContent();
+    Display_Utils::enableRefreshTimer(HOME_CONTENT_TIMER_PERIOD);
 }
 
 MessageBase *Home_Content::getCurrentMessage()

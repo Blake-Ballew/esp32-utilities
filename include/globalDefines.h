@@ -51,7 +51,7 @@
 #define MESSAGE_RECEIVED 7
 #define BUTTON_SOS 8
 
-#define BUTTON_1_PIN 36
+#define BUTTON_1_PIN 5
 #define BUTTON_2_PIN 26
 #define BUTTON_3_PIN 19
 #define BUTTON_4_PIN 34

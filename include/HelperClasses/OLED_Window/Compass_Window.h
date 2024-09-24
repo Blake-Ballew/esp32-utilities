@@ -55,7 +55,7 @@ public:
 
     ~Compass_Window()
     {
-
+        Display_Utils::disableRefreshTimer();
     }
 
     void Pause()

@@ -9,7 +9,7 @@
 
 namespace
 {
-    const size_t COMPASS_WINDOW_REFRESH_RATE_MS = 30;
+    const size_t COMPASS_WINDOW_REFRESH_RATE_MS = 50;
 }
 
 class CompassDebugState : public Window_State

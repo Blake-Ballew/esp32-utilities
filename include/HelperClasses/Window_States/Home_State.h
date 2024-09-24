@@ -8,7 +8,6 @@ class Home_State : public Window_State
 public:
     Home_State(Home_Content *home) : homeContent(home)
     {
-        //typeID = __COUNTER__;
         renderContent = home;
 
         assignInput(ENC_DOWN, ACTION_SWITCH_WINDOW_STATE);
