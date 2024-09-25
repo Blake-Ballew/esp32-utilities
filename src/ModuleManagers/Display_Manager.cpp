@@ -200,7 +200,6 @@ void Display_Manager::initializeCallbacks()
     // registerCallback(ACTION_FLASH_DEFAULT_SETTINGS, flashDefaultSettings);
     registerCallback(ACTION_REBOOT_DEVICE, rebootDevice);
     registerCallback(ACTION_TOGGLE_FLASHLIGHT, toggleFlashlight);
-    registerCallback(ACTION_SHUTDOWN_DEVICE, shutdownDevice);
     registerCallback(ACTION_TOGGLE_SILENT_MODE, toggleSilentMode);
     registerCallback(ACTION_GENERATE_QUICK_ACTION_MENU, quickActionMenu);
     registerCallback(ACTION_OPEN_SAVED_MESSAGES_WINDOW, openSavedMsg);
@@ -209,6 +208,10 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_SWITCH_WINDOW_STATE, switchWindowState);
     registerCallback(ACTION_OPEN_OTA_WINDOW, openOTAWindow);
     registerCallback(ACTION_OPEN_SAVED_LOCATIONS_WINDOW, openSavedLocationsWindow);
+
+    #if HARDWARE_VERSION == 1
+    registerCallback(ACTION_SHUTDOWN_DEVICE, shutdownDevice);
+    #endif
 
     #ifdef USE_BLE
     registerCallback(ACTION_INIT_BLE, initializeBle);

@@ -35,6 +35,9 @@ public:
     // Settings file getter
     static JsonDocument &SettingsFile() { return _SettingsFile; }
 
+    // print settings file to Serial
+    static void PrintSettingsFile() { serializeJson(_SettingsFile, Serial); }
+
     // Settings file setter
     static FilesystemReturnCode WriteSettingsFile(std::string filename, JsonDocument &doc) 
     {
