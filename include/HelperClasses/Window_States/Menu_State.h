@@ -161,9 +161,9 @@ public:
 
         if (menuItems.size() > 1) 
         {
-            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(1));
+            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::SelectTopTextLine());
             display->print("^");
-            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(4));
+            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::SelectBottomTextLine());
             display->print("v");
         }
     }

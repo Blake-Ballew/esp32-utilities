@@ -53,6 +53,15 @@ public:
         {
             _SelectedLocationIt = NavigationUtils::GetSavedLocationsBegin();
         }
+
+        if (NavigationUtils::GetSavedLocationsSize() == 0)
+        {
+            buttonCallbacks.erase(BUTTON_2);
+        }
+        else
+        {
+            assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+        }
     }
 
     void exitState(State_Transfer_Data &transferData)

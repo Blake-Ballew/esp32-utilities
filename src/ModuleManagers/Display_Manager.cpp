@@ -375,7 +375,10 @@ void Display_Manager::generateMenuWindow(uint8_t inputID)
     // menuWindow->addMenuItem("LoRa Test", ACTION_GENERATE_LORA_TEST_WINDOW);
     menuWindow->addMenuItem("Flash Default Settings", ACTION_FLASH_DEFAULT_SETTINGS);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
+
+    #if HARDWARE_VERSION == 1
     menuWindow->addMenuItem("Shutdown Device", ACTION_SHUTDOWN_DEVICE);
+    #endif
 
     #ifdef USE_BLE
     menuWindow->addMenuItem("Init Bluetooth", ACTION_INIT_BLE);

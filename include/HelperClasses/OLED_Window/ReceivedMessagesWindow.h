@@ -41,9 +41,13 @@ public:
 
         receivedMessagesState->assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
         receivedMessagesState->assignInput(ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
-        receivedMessagesState->assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Save");
-        receivedMessagesState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
-        receivedMessagesState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+
+        if (LoraUtils::GetNumMessages() > 0) 
+        {
+            receivedMessagesState->assignInput(BUTTON_1, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Save");
+            receivedMessagesState->assignInput(BUTTON_2, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Reply");
+            receivedMessagesState->assignInput(BUTTON_4, ACTION_CALL_FUNCTIONAL_WINDOW_STATE, "Track");
+        }
 
         receivedMessagesState->setAdjacentState(BUTTON_1, selectionState);
         receivedMessagesState->setAdjacentState(BUTTON_2, selectLocationState);
@@ -66,6 +70,10 @@ public:
 
         if (oldState == receivedMessagesState && newState == selectLocationState)
         {
+            if (transferData.serializedData == nullptr) 
+            {
+                return;
+            }
             auto *doc = transferData.serializedData;
             recipientID = (*doc)["recipientID"].as<uint32_t>();
         }
@@ -167,6 +175,11 @@ public:
         }
         else if (oldState == receivedMessagesState && newState == selectionState)
         {
+            if (LoraUtils::GetNumMessages() == 0)
+            {
+                return;
+            }
+
             transferData.serializedData = new DynamicJsonDocument(256);
 
             JsonArray msgArray = (*transferData.serializedData).createNestedArray("items");
@@ -254,6 +267,11 @@ public:
             {
                 delete transferData.serializedData;
                 transferData.serializedData = nullptr;
+            }
+
+            if (LoraUtils::GetNumMessages() == 0)
+            {
+                return;
             }
             
             NavigationUtils::UpdateGPS();

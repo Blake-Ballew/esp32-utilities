@@ -149,6 +149,10 @@ public:
     // Returns the Y cursor position for selecting a text line
     static uint16_t selectTextLine(uint8_t line);
 
+    static uint16_t SelectTopTextLine() { return selectTextLine(1); }
+
+    static uint16_t SelectBottomTextLine() { return selectTextLine(displayHeight / 8); }
+
     // Prints a formatted string to the display
     static void printFormattedText(const char *text, TextFormat &format);
 
