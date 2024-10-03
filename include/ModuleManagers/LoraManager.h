@@ -121,6 +121,13 @@ public:
                         }
                         else
                         {
+                            // Fill in time received if not set
+                            if (msg->time == 0 && msg->date == 0 && NavigationUtils::IsGPSConnected())
+                            {
+                                msg->time = NavigationUtils::GetTime().value();
+                                msg->date = NavigationUtils::GetDate().value();
+                            }
+
                             auto fwd = ShouldMessageBeForwarded(msg);
 
                             // Dump message if it was sent from this node and came back

@@ -30,7 +30,7 @@ public:
     {
         Window_State::enterState(transferData);
 
-        Display_Utils::enableRefreshTimer(50);
+        Display_Utils::enableRefreshTimer(100);
 
         _RingPointID = RingPoint::RegisteredPatternID();
         LED_Utils::enablePattern(_RingPointID);
@@ -46,7 +46,7 @@ public:
             b = (*doc)["color_B"];
 
             lat = (*doc)["lat"];
-            lng = (*doc)["lng"];
+            lng = (*doc)["lon"];
 
             for (auto it : (*doc)["displayTxt"].as<JsonArray>())
             {
@@ -66,6 +66,7 @@ public:
         Window_State::exitState(transferData);
 
         Display_Utils::disableRefreshTimer();
+        vTaskDelay(pdMS_TO_TICKS(100));
         LED_Utils::disablePattern(_RingPointID);
 
         displayText.clear();

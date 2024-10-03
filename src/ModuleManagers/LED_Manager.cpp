@@ -122,9 +122,20 @@ void LED_Manager::clearRing()
 
 void LED_Manager::toggleFlashlight()
 {
+
+    #if HARDWARE_VERSION == 1
+    size_t beginFlashlightIdx = 23;
+    size_t endFlashlightIdx = 30;
+    #endif
+
+    #if HARDWARE_VERSION == 2
+    size_t beginFlashlightIdx = 23;
+    size_t endFlashlightIdx = 31;
+    #endif
+
     if (flashlightOn)
     {
-        for (uint8_t i = 23; i < 30; i++)
+        for (uint8_t i = beginFlashlightIdx; i < endFlashlightIdx; i++)
         {
             leds[i] = CRGB::Black;
         }
@@ -133,7 +144,7 @@ void LED_Manager::toggleFlashlight()
     }
     else
     {
-        for (uint8_t i = 23; i < 30; i++)
+        for (uint8_t i = beginFlashlightIdx; i < endFlashlightIdx; i++)
         {
             leds[i] = CRGB::White;
         }

@@ -96,6 +96,12 @@ public:
 #if DEBUG == 1
         Serial.println("UnreadMessageState::enterState()");
 #endif
+
+        Window_State::enterState(transferData);
+        Display_Utils::disableRefreshTimer();
+
+        _SolidRingPatternID = SolidRing::RegisteredPatternID();
+
         if (renderContent != nullptr)
         {
             renderContent->start();
@@ -195,7 +201,7 @@ public:
             LED_Utils::configurePattern(_SolidRingPatternID, doc);
 
             #if DEBUG == 1
-            // Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
+            Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
             #endif
             LED_Utils::iteratePattern(_SolidRingPatternID);
         }

@@ -182,7 +182,7 @@ void System_Utils::startTimer(int timerID)
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
-        xTimerStart(systemTimers[timerID], 0);
+        xTimerStart(systemTimers[timerID], 1000);
     }
 }
 
@@ -195,7 +195,18 @@ void System_Utils::stopTimer(int timerID)
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
-        xTimerStop(systemTimers[timerID], 0);
+        if (xTimerStop(systemTimers[timerID], 1000) == pdFAIL)
+        {
+            #if DEBUG == 1
+            Serial.println("Error stopping timer");
+            #endif
+        }
+    }
+    else
+    {
+        #if DEBUG == 1
+        Serial.println("unable to find timer");
+        #endif
     }
 }
 

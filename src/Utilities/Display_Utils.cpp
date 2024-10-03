@@ -26,6 +26,7 @@ void Display_Utils::setDisplay(Adafruit_GFX *display)
     Display_Utils::display = display; 
 }
 
+
 void Display_Utils::setDisplayDimensions(size_t width, size_t height)
 {
     displayWidth = width;
@@ -229,7 +230,12 @@ void Display_Utils::disableRefreshTimer()
         Serial.printf("Display_Utils::disableRefreshTimer(): stopping timerID: %d\n", refreshTimerID);
     #endif
     if (refreshTimerID == -1)
+    {
+        #if DEBUG == 1
+            Serial.println("Display_Utils::disableRefreshTimer(): timer not enabled");
+        #endif
         return;
+    }
 
     System_Utils::stopTimer(refreshTimerID);
 }

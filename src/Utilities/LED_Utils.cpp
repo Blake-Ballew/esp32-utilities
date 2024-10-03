@@ -80,7 +80,9 @@ void LED_Utils::loopPattern(int patternID, int numLoops)
     }
 
     registeredPatterns[patternID].loopsRemaining = numLoops;
-    vTaskResume(_IteratePatternsTaskHandle);
+
+    if (numLoops != 0)
+        vTaskResume(_IteratePatternsTaskHandle);
 }
 
 void LED_Utils::enablePattern(int patternID)

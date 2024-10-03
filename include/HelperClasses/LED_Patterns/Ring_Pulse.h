@@ -85,7 +85,7 @@ public:
         }
 
         // Set the color for the entire ring
-        for (uint32_t i = beginIdx; i < endIdx; i++)
+        for (uint32_t i = beginIdx; i <= endIdx; i++)
         {
             leds[i] = color;
         }
@@ -108,7 +108,7 @@ public:
             return;
         }
 
-        for (uint32_t i = beginIdx; i < endIdx; i++)
+        for (uint32_t i = beginIdx; i <= endIdx; i++)
         {
             leds[i] = CRGB(0, 0, 0);
         }

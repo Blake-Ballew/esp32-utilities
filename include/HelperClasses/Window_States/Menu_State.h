@@ -163,7 +163,7 @@ public:
         {
             display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::SelectTopTextLine());
             display->print("^");
-            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::SelectBottomTextLine());
+            display->setCursor(Display_Utils::centerTextHorizontal(1), Display_Utils::selectTextLine(Display_Utils::SelectBottomTextLine()));
             display->print("v");
         }
     }

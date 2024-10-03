@@ -240,10 +240,22 @@ double NavigationUtils::GetDistanceTo(double lat, double lon)
 {
     UpdateGPS();
 
-    if (!_LastCoordinate.isValid())
-    {
-        return -1;
-    }
+    // if (!_LastCoordinate.isValid())
+    // {
+    //     return -1;
+    // }
+
+    #if DEBUG == 1
+    Serial.println("GetDistanceTo()");
+    Serial.print("My Lat: ");
+    Serial.println(_LastCoordinate.lat());
+    Serial.print("My Lon: ");
+    Serial.println(_LastCoordinate.lng());
+    Serial.print("Target Lat: ");
+    Serial.println(lat);
+    Serial.print("Target Lon: ");
+    Serial.println(lon);
+    #endif
 
     return _GPS.distanceBetween(_LastCoordinate.lat(), _LastCoordinate.lng(), lat, lon);
 }

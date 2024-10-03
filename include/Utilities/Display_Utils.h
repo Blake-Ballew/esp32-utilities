@@ -34,7 +34,7 @@ struct TextFormat
 
     TextAlignmentHorizontal horizontalAlignment;
     TextAlignmentVertical verticalAlignment;
-    uint8_t line;
+    uint16_t line;
     int distanceFrom;
 };
 
@@ -151,7 +151,7 @@ public:
 
     static uint16_t SelectTopTextLine() { return selectTextLine(1); }
 
-    static uint16_t SelectBottomTextLine() { return selectTextLine(displayHeight / 8); }
+    static uint16_t SelectBottomTextLine() { return displayHeight >> 3; }
 
     // Prints a formatted string to the display
     static void printFormattedText(const char *text, TextFormat &format);

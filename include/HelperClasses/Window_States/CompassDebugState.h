@@ -9,7 +9,7 @@
 
 namespace
 {
-    const size_t COMPASS_WINDOW_REFRESH_RATE_MS = 50;
+    const size_t COMPASS_WINDOW_REFRESH_RATE_MS = 100;
 }
 
 class CompassDebugState : public Window_State
@@ -42,6 +42,7 @@ public:
         Window_State::exitState(transferData);
         LED_Utils::disablePattern(_RingPointID);
         Display_Utils::disableRefreshTimer();
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 
     void displayState()

@@ -29,7 +29,7 @@ void Display_Manager::init()
     Window_State::display = &display;
     OLED_Content::display = &display;
     Display_Utils::setDisplay(&display);
-    Display_Utils::setDisplayDimensions(display.width(), display.height());
+    Display_Utils::setDisplayDimensions(OLED_WIDTH, OLED_HEIGHT);
 
     auto displayCmdQueueID = System_Utils::registerQueue(
         DISPLAY_COMMAND_QUEUE_LENGTH, 

@@ -51,7 +51,14 @@
 #define MESSAGE_RECEIVED 7
 #define BUTTON_SOS 8
 
+#if HARDWARE_VERSION == 1
+#define BUTTON_1_PIN 36
+#endif
+
+#if HARDWARE_VERSION == 2
 #define BUTTON_1_PIN 5
+#endif
+
 #define BUTTON_2_PIN 26
 #define BUTTON_3_PIN 19
 #define BUTTON_4_PIN 34
@@ -63,7 +70,9 @@
 
 #if HARDWARE_VERSION == 1
 #define OLED_HEIGHT 32
-#else
+#endif
+
+#if HARDWARE_VERSION == 2
 #define OLED_HEIGHT 64
 #endif
 
@@ -91,7 +100,14 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #define USERID_SIZE_BYTES 8
 
+#if HARDWARE_VERSION == 1
 #define NUM_LEDS 30
+#endif
+
+#if HARDWARE_VERSION == 2
+#define NUM_LEDS 31
+#endif
+
 #define LED_PIN 27
 #define LED_TYPE WS2812B
 #define LED_ORDER GRB

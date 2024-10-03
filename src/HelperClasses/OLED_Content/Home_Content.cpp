@@ -63,10 +63,16 @@ void Home_Content::printContent()
 
     if (unreadMsgs > 0)
     {
-        display->drawLine(OLED_WIDTH / 2, OLED_HEIGHT - 1, (OLED_WIDTH / 2) - 3, OLED_HEIGHT - 3, WHITE);
-        display->drawLine((OLED_WIDTH / 2) + 1, OLED_HEIGHT - 1, (OLED_WIDTH / 2) + 4, OLED_HEIGHT - 3, WHITE);
-        display->setCursor(Display_Utils::alignTextLeft(6), Display_Utils::selectTextLine(4));
-        display->print("Msgs");
+        TextFormat format;
+        format.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+        format.verticalAlignment = TEXT_LINE;
+        auto textLine = Display_Utils::SelectBottomTextLine();
+        format.line = textLine;
+
+        Display_Utils::printFormattedText("v", format);
+        format.line--;
+
+        Display_Utils::printFormattedText("Msgs", format);
     }
 
     if (LoraUtils::MyLastBroacastExists())
