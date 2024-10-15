@@ -561,6 +561,25 @@ void Display_Manager::processMessageReceived()
     {
         LED_Manager::buzzerNotification();
     }
+
+    // MessageBase *msg = LoraUtils::GetCurrentUnreadMessage();
+    // if (msg != nullptr)
+    // {
+    //     System_Utils::sendWifiMessage();
+    // }
+
+
+    // MessageBase *msg = LoraUtils::GetCurrentUnreadMessage();
+    // if (msg != nullptr)
+    // {
+    //     // DynamicJsonDocument *doc = new DynamicJsonDocument(512);
+    //     // msg->serialize(*doc);
+    //     // String payload;
+    //     // serializeJson(*doc, payload);
+
+    //     // System_Utils::sendWifiMessage(payload.c_str());
+        
+    // }
 }
 
 void Display_Manager::enableLockScreen(size_t timeoutMS)

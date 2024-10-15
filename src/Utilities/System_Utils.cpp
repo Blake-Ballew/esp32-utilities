@@ -309,6 +309,34 @@ bool System_Utils::sendToQueue(int queueID, void *item, size_t timeoutMS)
     }
 }
 
+void System_Utils::sendWifiMessage()
+{
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
+  HTTPClient http;
+  String serverPath = "http://192.168.137.1:9000";
+  // Your Domain name with URL path or IP address with path
+  http.begin(serverPath.c_str());
+
+//   int httpResponseCode = http.POST(payload);
+    int httpResponseCode = http.GET();
+
+  if (httpResponseCode > 0) {
+    // Serial.print("HTTP Response code: ");
+    // Serial.println(httpResponseCode);
+    String resPayload = http.getString();
+    // Serial.println(payload);
+  } else {
+    // Serial.print("Error code: ");
+    // Serial.println(httpResponseCode);
+  }
+
+  // Free resources
+  http.end();
+}
+
 // Task functionality
 
 int System_Utils::registerTask(

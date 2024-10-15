@@ -10,6 +10,7 @@
 #include "ArduinoOTA.h"
 #include "driver/adc.h"
 #include "EventHandler.h"
+#include "HTTPClient.h"
 
 #ifdef USE_BLE
 #include "esp_bt.h"
@@ -74,6 +75,8 @@ public:
     static void deleteQueue(int queueID);
     static void resetQueue(int queueID);
     static bool sendToQueue(int queueID, void *item, size_t timeoutMS); 
+
+    static void sendWifiMessage();
 
     // Task functionality
     // Dynamic memory allocation, no pinned core

@@ -16,7 +16,13 @@ public:
         stateList.push_back(currentState);
         Display_Utils::printCenteredText("Connecting to WiFi...");
         display->display();
-        System_Utils::enableWiFi();
+        // System_Utils::enableWiFi();
+        try {
+        //   System_Utils::sendWifiMessage();
+            System_Utils::enableWiFi();
+        } catch (const std::exception& e) {
+            // do something
+        }
         System_Utils::startOTA();
     }
 
