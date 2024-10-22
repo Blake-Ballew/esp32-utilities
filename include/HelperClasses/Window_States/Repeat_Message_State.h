@@ -86,8 +86,7 @@ public:
                 LED_Utils::configurePattern(ringPulseID, cfg);
 
                 LED_Utils::enablePattern(ringPulseID);
-                LED_Utils::loopPattern(ringPulseID, -1);
-                
+                LED_Utils::loopPattern(ringPulseID, -1);                
             }
 
             if (message != nullptr)

@@ -26,6 +26,7 @@
 #include "NavigationUtils.h"
 #include "SaveStatusMessageState.h"
 #include "SaveLocationState.h"
+#include "DiagnosticsWindow.h"
 
 #include "Lock_State.h"
 
@@ -99,6 +100,7 @@ public:
     static void lockDevice(uint8_t inputID);
     static void openOTAWindow(uint8_t inputID);
     static void openSavedLocationsWindow(uint8_t inputID);
+    static void openDiagnosticsWindow(uint8_t inputID);
 
     #ifdef USE_BLE
     static void initializeBle(uint8_t inputID);

@@ -123,7 +123,7 @@ protected:
             // Serial.print(targetAngle);
         #endif
 
-        float fadeDegrees = (360.0 / (float)numItems) / 2.0;
+        float fadeDegrees = max((360.0f / (float)numItems) / 2.0f, (360.0f / (endIdx - beginIdx)));
 
         // Calculate the angle of the LED from the beginning index
         float angle = (float)(ledIdx - beginIdx) * 360.0 / (float)(endIdx - beginIdx);

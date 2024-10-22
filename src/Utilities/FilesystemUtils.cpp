@@ -10,6 +10,7 @@ void FilesystemUtils::Init()
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
     {
         Serial.println("SPIFFS Mount Failed. Rebooting...");
+        vTaskDelay(pdMS_TO_TICKS(1000));
         ESP.restart();
     }
 }

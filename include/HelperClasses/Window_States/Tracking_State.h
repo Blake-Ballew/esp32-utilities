@@ -74,16 +74,16 @@ public:
 
     void displayState()
     {
-        #if DEBUG != 1
-        if (!Navigation_Manager::IsGPSConnected())
-        {
-            Display_Utils::printCenteredText("No GPS Signal");
-            display->display();
-            Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            return;
-        }
-        #endif
+        // #if DEBUG != 1
+        // if (!NavigationUtils::IsGPSConnected())
+        // {
+        //     Display_Utils::printCenteredText("No GPS Signal");
+        //     display->display();
+        //     Display_Utils::sendCallbackCommand(ACTION_RETURN_FROM_FUNCTIONAL_WINDOW_STATE);
+        //     vTaskDelay(pdMS_TO_TICKS(1000));
+        //     return;
+        // }
+        // #endif
 
         Window_State::displayState();
 

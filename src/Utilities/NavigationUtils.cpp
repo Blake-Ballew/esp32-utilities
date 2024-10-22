@@ -287,17 +287,24 @@ int NavigationUtils::GetZ()
     return 0;
 }
 
-void NavigationUtils::AddSavedLocation(SavedLocation location)
+void NavigationUtils::AddSavedLocation(SavedLocation location, bool updateSavedLocations)
 {
     _SavedLocations.push_back(location);
 
-    _SavedLocationsUpdated.Invoke();
+    if (updateSavedLocations)
+        _SavedLocationsUpdated.Invoke();
 }
 
 void NavigationUtils::RemoveSavedLocation(std::vector<SavedLocation>::iterator &locationIt)
 {
     locationIt = _SavedLocations.erase(locationIt);
 
+    _SavedLocationsUpdated.Invoke();
+}
+
+void NavigationUtils::ClearSavedLocations()
+{
+    _SavedLocations.clear();
     _SavedLocationsUpdated.Invoke();
 }
 
@@ -330,9 +337,9 @@ void NavigationUtils::SerializeSavedLocations(JsonDocument &doc)
     }
 
     #if DEBUG == 1
-    Serial.println("Saving location list: ");
-    serializeJson(doc, Serial);
-    Serial.println();
+    // Serial.println("Saving location list: ");
+    // serializeJson(doc, Serial);
+    // Serial.println();
     #endif
 }
 

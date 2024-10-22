@@ -52,8 +52,9 @@ public:
     // Saved Locations
     static EventHandler &SavedLocationsUpdated() { return _SavedLocationsUpdated; }
 
-    static void AddSavedLocation(SavedLocation location);
+    static void AddSavedLocation(SavedLocation location, bool updateSavedLocations = true);
     static void RemoveSavedLocation(std::vector<SavedLocation>::iterator &locationIt);
+    static void ClearSavedLocations();
     static void UpdateSavedLocation(std::vector<SavedLocation>::iterator &locationIt, SavedLocation location);
     static std::vector<SavedLocation>::iterator GetSavedLocationsBegin() { return _SavedLocations.begin(); }
     static std::vector<SavedLocation>::iterator GetSavedLocationsEnd() { return _SavedLocations.end(); }

@@ -55,7 +55,7 @@ public:
 
     static void SaveLocationsToFlash()
     {
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(16000);
 
         NavigationUtils::SerializeSavedLocations(doc);
         auto returncode = FilesystemUtils::WriteFile(LOCATION_FILE, doc);
@@ -67,11 +67,17 @@ public:
             Serial.println((int)returncode);
             #endif
         }
+        else
+        {
+            #if DEBUG == 1
+            Serial.println("Saved locations to flash.");
+            #endif
+        }
     }
 
     void LoadLocationsFromFlash()
     {
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(16000);
         auto returncode = FilesystemUtils::ReadFile(LOCATION_FILE, doc);
 
         if (returncode != FilesystemReturnCode::FILESYSTEM_OK)

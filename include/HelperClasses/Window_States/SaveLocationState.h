@@ -54,7 +54,7 @@ public:
             auto locationStr = (*transferData.serializedData)["return"].as<std::string>();
             SavedLocation location = { locationStr, lat, lon };
 
-            NavigationUtils::AddSavedLocation(location);
+            NavigationUtils::AddSavedLocation({ locationStr, lat, lon });
 
             delete transferData.serializedData;
             transferData.serializedData = nullptr;

@@ -268,16 +268,27 @@ bool LoraUtils::MessagePackSanityCheck(JsonDocument &doc)
     return result;
 }
 
-void LoraUtils::AddSavedMessage(std::string msg)
+void LoraUtils::AddSavedMessage(std::string msg, bool flash)
 {
     _SavedMessageList.push_back(msg);
 
-    _SavedMessageListUpdated.Invoke();
+    if (flash)
+        _SavedMessageListUpdated.Invoke();
 }
 
 void LoraUtils::DeleteSavedMessage(std::vector<std::string>::iterator &it)
 {
     it = _SavedMessageList.erase(it);
+
+    _SavedMessageListUpdated.Invoke();
+}
+
+void LoraUtils::ClearSavedMessages()
+{
+    _SavedMessageList.clear();
+
+    _SavedMessageList.push_back("Meet here");
+    _SavedMessageList.push_back("Point of interest");
 
     _SavedMessageListUpdated.Invoke();
 }

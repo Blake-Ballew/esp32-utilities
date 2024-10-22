@@ -231,8 +231,9 @@ public:
 
     static std::vector<std::string>::iterator SavedMessageListBegin() { return _SavedMessageList.begin(); }
     static std::vector<std::string>::iterator SavedMessageListEnd() { return _SavedMessageList.end(); }
-    static void AddSavedMessage(std::string message);
+    static void AddSavedMessage(std::string message, bool flash = true);
     static void DeleteSavedMessage(std::vector<std::string>::iterator &it);
+    static void ClearSavedMessages();
     static void UpdateSavedMessage(std::vector<std::string>::iterator &it, std::string message);
     static size_t GetSavedMessageListSize() { return _SavedMessageList.size(); }
 

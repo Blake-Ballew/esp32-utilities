@@ -314,7 +314,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         
         NavigationUtils::UpdateGPS();
 
-        transferData.serializedData = new DynamicJsonDocument(1024);
+        transferData.serializedData = new DynamicJsonDocument(16000);
         (*transferData.serializedData).createNestedArray("locations");
         auto currLocObj = (*transferData.serializedData)["locations"].createNestedObject();
         currLocObj["name"] = CURR_LOC;
