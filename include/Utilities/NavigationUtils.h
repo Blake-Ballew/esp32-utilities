@@ -63,6 +63,15 @@ public:
     static void SerializeSavedLocations(JsonDocument &doc);
     static void DeserializeSavedLocations(JsonDocument &doc);
 
+    // RPC
+    static void RpcAddSavedLocation(JsonDocument &doc);
+    static void RpcAddSavedLocations(JsonDocument &doc);
+    static void RpcRemoveSavedLocation(JsonDocument &doc);
+    static void RpcClearSavedLocations(JsonDocument &doc);
+    static void RpcUpdateSavedLocation(JsonDocument &doc);
+    static void RpcGetSavedLocation(JsonDocument &doc);
+    static void RpcGetSavedLocations(JsonDocument &doc);
+
     static void FlashSampleLocations();
 
 protected:

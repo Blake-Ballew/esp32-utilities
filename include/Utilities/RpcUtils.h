@@ -5,14 +5,16 @@
 #include <ArduinoJson.h>
 #include "System_Utils.h"
 
-namespace
-{
-    std::map<std::string, RpcFunction> _rpcMap;
-};
+
 
 namespace RpcModule::Utilities
 {
     using RpcFunction = void (*)(JsonDocument &doc);
+
+    namespace
+    {
+        std::map<std::string, RpcFunction> _rpcMap;
+    };
 
     void RegisterRpc(std::string name, RpcFunction function)
     {

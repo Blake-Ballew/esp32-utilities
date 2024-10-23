@@ -358,6 +358,93 @@ void NavigationUtils::DeserializeSavedLocations(JsonDocument &doc)
     }
 }
 
+void NavigationUtils::RpcAddSavedLocation(JsonDocument &doc)
+{
+    if (doc.containsKey("name") && doc.containsKey("lat") && doc.containsKey("lng"))
+    {
+        SavedLocation location;
+        location.Name = doc["name"].as<std::string>();
+        location.Latitude = doc["lat"].as<double>();
+        location.Longitude = doc["lng"].as<double>();
+        AddSavedLocation(location, true);
+    }
+}
+
+void NavigationUtils::RpcAddSavedLocations(JsonDocument &doc)
+{
+    if (doc.containsKey("locations"))
+    {
+        auto locations = doc["locations"].as<JsonArray>();
+        for (auto location : locations)
+        {
+            SavedLocation savedLocation;
+            savedLocation.Name = location["name"].as<std::string>();
+            savedLocation.Latitude = location["lat"].as<double>();
+            savedLocation.Longitude = location["lng"].as<double>();
+            AddSavedLocation(savedLocation, false);
+        }
+    }
+}
+
+void NavigationUtils::RpcRemoveSavedLocation(JsonDocument &doc)
+{
+    if (doc.containsKey("idx"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedLocations.size())
+        {
+            RemoveSavedLocation(_SavedLocations.begin() + idx);
+        }
+    }
+}
+
+void NavigationUtils::RpcClearSavedLocations(JsonDocument &doc)
+{
+    ClearSavedLocations();
+}
+
+void NavigationUtils::RpcUpdateSavedLocation(JsonDocument &doc)
+{
+    if (doc.containsKey("idx") && doc.containsKey("name") && doc.containsKey("lat") && doc.containsKey("lng"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedLocations.size())
+        {
+            auto locationIt = _SavedLocations.begin() + idx;
+            UpdateSavedLocation(locationIt, {doc["name"].as<std::string>(), doc["lat"].as<double>(), doc["lng"].as<double>()});
+        }
+    }
+}
+
+void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
+{
+    if (doc.containsKey("idx"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedLocations.size())
+        {
+            auto locationIt = _SavedLocations.begin() + idx;
+            doc["name"] = locationIt->Name;
+            doc["lat"] = locationIt->Latitude;
+            doc["lng"] = locationIt->Longitude;
+        }
+    }
+}
+
+void NavigationUtils::RpcGetSavedLocations(JsonDocument &doc)
+{
+    JsonArray locationArray = doc.createNestedArray("locations");
+    size_t idx = 0;
+    for (auto location : _SavedLocations)
+    {
+        JsonObject locationObject = locationArray.createNestedObject();
+        locationObject["idx"] = idx++;
+        locationObject["name"] = location.Name;
+        locationObject["lat"] = location.Latitude;
+        locationObject["lng"] = location.Longitude;
+    }
+}
+
 void NavigationUtils::FlashSampleLocations()
 {
     _SavedLocations.clear();
