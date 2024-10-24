@@ -237,6 +237,15 @@ public:
     static void UpdateSavedMessage(std::vector<std::string>::iterator &it, std::string message);
     static size_t GetSavedMessageListSize() { return _SavedMessageList.size(); }
 
+    // RPC
+    static void RpcGetSavedMessage(JsonDocument &doc);
+    static void RpcGetSavedMessages(JsonDocument &doc);
+    static void RpcAddSavedMessage(JsonDocument &doc);
+    static void RpcAddSavedMessages(JsonDocument &doc);
+    static void RpcDeleteSavedMessage(JsonDocument &doc);
+    static void RpcDeleteSavedMessages(JsonDocument &doc);
+    static void RpcUpdateSavedMessage(JsonDocument &doc);
+
     static void SerializeSavedMessageList(JsonDocument &doc);
     static void DeserializeSavedMessageList(JsonDocument &doc);
 

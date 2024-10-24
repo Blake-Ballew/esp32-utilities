@@ -393,7 +393,8 @@ void NavigationUtils::RpcRemoveSavedLocation(JsonDocument &doc)
         auto idx = doc["idx"].as<int>();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
-            RemoveSavedLocation(_SavedLocations.begin() + idx);
+            auto locationIt = _SavedLocations.begin() + idx;
+            RemoveSavedLocation(locationIt);
         }
     }
 }

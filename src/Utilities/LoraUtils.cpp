@@ -298,6 +298,89 @@ void LoraUtils::UpdateSavedMessage(std::vector<std::string>::iterator &it, std::
     *it = msg;
 }
 
+// RPC
+void LoraUtils::RpcGetSavedMessage(JsonDocument &doc)
+{
+    if (doc.containsKey("idx"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedMessageList.size())
+        {
+            doc["message"] = _SavedMessageList[idx];
+        }
+        else
+        {
+            doc["message"] = "";
+        }
+    }
+}
+
+void LoraUtils::RpcGetSavedMessages(JsonDocument &doc)
+{
+    auto msgArray = doc.createNestedArray("messages");
+    size_t idx = 0;
+    for (auto msg : _SavedMessageList)
+    {
+        JsonObject msgObj = msgArray.createNestedObject();
+        msgObj["idx"] = idx++;
+        msgObj["message"] = msg;
+    }
+}
+
+void LoraUtils::RpcAddSavedMessage(JsonDocument &doc)
+{
+    if (doc.containsKey("message"))
+    {
+        AddSavedMessage(doc["message"].as<std::string>());
+    }
+}
+
+void LoraUtils::RpcAddSavedMessages(JsonDocument &doc)
+{
+    if (doc.containsKey("messages"))
+    {
+        auto msgArray = doc["messages"].as<JsonArray>();
+        for (auto msg : msgArray)
+        {
+            AddSavedMessage(msg.as<std::string>(), false);
+        }
+
+        _SavedMessageListUpdated.Invoke();
+    }
+}
+
+void LoraUtils::RpcDeleteSavedMessage(JsonDocument &doc)
+{
+    if (doc.containsKey("idx"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedMessageList.size())
+        {
+            auto it = _SavedMessageList.begin() + idx;
+            DeleteSavedMessage(it);
+        }
+    }
+}
+
+void LoraUtils::RpcDeleteSavedMessages(JsonDocument &doc)
+{
+    _SavedMessageList.clear();
+    _SavedMessageListUpdated.Invoke();
+}
+
+void LoraUtils::RpcUpdateSavedMessage(JsonDocument &doc)
+{
+    if (doc.containsKey("idx") && doc.containsKey("message"))
+    {
+        auto idx = doc["idx"].as<int>();
+        if (idx >= 0 && idx < _SavedMessageList.size())
+        {
+            auto it = _SavedMessageList.begin() + idx;
+            UpdateSavedMessage(it, doc["message"].as<std::string>());
+        }
+    }
+}
+
 void LoraUtils::SerializeSavedMessageList(JsonDocument &doc)
 {
     JsonArray msgArray;
