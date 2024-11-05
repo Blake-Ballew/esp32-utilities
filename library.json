@@ -18,8 +18,7 @@
     "adafruit/Adafruit BusIO": "^1.14.1",
     "adafruit/Adafruit Unified Sensor": "^1.1.9",
     "adafruit/Adafruit GFX Library": "^1.11.5",
-    "adafruit/Adafruit SSD1306": "^2.5.7",
-    "RadioHead:": "https://github.com/blakeb130/RadioHead.git"
+    "adafruit/Adafruit SSD1306": "^2.5.7"
   },
   "frameworks": "*",
   "platforms": "*",
@@ -33,6 +32,7 @@
       "-Iinclude/HelperClasses/OLED_Window",
       "-Iinclude/HelperClasses/Window_States",
       "-Iinclude/HelperClasses/Message_Types",
+      "-Iinclude/HelperClasses/NetworkStream",
       "-Iinclude/ModuleManagers",
       "-Iinclude/Utilities",
       "-Isrc/",

@@ -5,9 +5,7 @@
 #include <ArduinoJson.h>
 #include "System_Utils.h"
 
-
-
-namespace RpcModule::Utilities
+namespace RpcModule
 {
     using RpcFunction = void (*)(JsonDocument &doc);
 
@@ -16,23 +14,27 @@ namespace RpcModule::Utilities
         std::map<std::string, RpcFunction> _rpcMap;
     };
 
-    void RegisterRpc(std::string name, RpcFunction function)
+    class Utilities
     {
-        _rpcMap[name] = function;
-    }
-
-    void UnregisterRpc(std::string name)
-    {
-        _rpcMap.erase(name);
-    }
-
-    void CallRpc(std::string name, JsonDocument &doc)
-    {
-        if (_rpcMap.find(name) != _rpcMap.end())
+    public:
+        static void RegisterRpc(std::string name, RpcFunction function)
         {
-            _rpcMap[name](doc);
+            _rpcMap[name] = function;
         }
-    }
+
+        static void UnregisterRpc(std::string name)
+        {
+            _rpcMap.erase(name);
+        }
+
+        static void CallRpc(std::string name, JsonDocument &doc)
+        {
+            if (_rpcMap.find(name) != _rpcMap.end())
+            {
+                _rpcMap[name](doc);
+            }
+        }
+    };
 };
 
 
