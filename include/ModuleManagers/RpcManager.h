@@ -49,11 +49,20 @@ namespace RpcModule
                         auto channelID = channel.second.ChannelID;
                         channel.second.PollFunctionPointer(channelID, rpcPayload);
 
-                        if (rpcPayload.containsKey((Utilities::RPC_FUNCTION_NAME_FIELD())) &&
-                            Utilities::CallRpc(rpcPayload[Utilities::RPC_FUNCTION_NAME_FIELD()].as<std::string>(), rpcPayload) &&
-                            channel.second.ReturnSupported)
+                        if (rpcPayload.containsKey(Utilities::RPC_FUNCTION_NAME_FIELD())) 
                         {
-                            channel.second.ReplyFunctionPointer(channelID, rpcPayload);
+                            auto result = Utilities::CallRpc(rpcPayload[Utilities::RPC_FUNCTION_NAME_FIELD()].as<std::string>(), rpcPayload);
+
+                            if (result != RpcReturnCode::RPC_SUCCESS)
+                            {
+                                rpcPayload.clear();
+                                rpcPayload[Utilities::RPC_RETURN_CODE_FIELD()] = (int)result;
+                            }
+
+                            if (channel.second.ReturnSupported)
+                            {
+                                channel.second.ReplyFunctionPointer(channelID, rpcPayload);
+                            }
                         }
                     }
                 }

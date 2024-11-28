@@ -19,6 +19,7 @@ namespace RpcModule
         int _CurrentChannelID = 0;
 
         const char *_RPC_FUNCTION_NAME_FIELD PROGMEM = "F";
+        const char *_RPC_RETURN_CODE_FIELD PROGMEM = "R";
     };
 
     enum RpcReturnCode
@@ -88,6 +89,7 @@ namespace RpcModule
         static const std::unordered_map<int, RpcChannel> &RpcChannels() { return _RpcChannels; }
 
         static const char *RPC_FUNCTION_NAME_FIELD() { return _RPC_FUNCTION_NAME_FIELD; }
+        static const char *RPC_RETURN_CODE_FIELD() { return _RPC_RETURN_CODE_FIELD; }
     };
 };
 
