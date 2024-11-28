@@ -15,8 +15,8 @@ namespace NetworkModule
     {
         const char *NETWORK_CONFIG_FILENAME PROGMEM = "/NetworkConfig.msgpk";
 
-        const char* WIFI_SSID_DEFAULT PROGMEM = "ESP32-OTA";
-        const char* WIFI_PASSWORD_DEFAULT PROGMEM = "e65v41ev";
+        const char* WIFI_SSID_DEFAULT PROGMEM = "Rum Ham";
+        const char* WIFI_PASSWORD_DEFAULT PROGMEM = "Wildcard!";
 
         std::string _WifiSSID = WIFI_SSID_DEFAULT;
         std::string _WifiPassword = WIFI_PASSWORD_DEFAULT;
@@ -25,13 +25,23 @@ namespace NetworkModule
 
         std::unordered_map<int, NetworkStreamInterface *> _NetworkStreams;
         int _NextNetworkStreamID = 0;
+
+        // Map RPC channel IDs to NetworkStream IDs
+        std::unordered_map<int, int> _RpcStreams;
     }
 
     class Utilities
     {
     public:
+
+        const static int RPC_PORT = 14589;
+
         static bool EnableWiFi()
         {
+            #if DEBUG == 1
+            Serial.println("Enabling WiFi");
+            #endif
+            
             System_Utils::enableRadio();
             WiFi.disconnect(false);  // Reconnect the network
             WiFi.mode(WIFI_STA);    // Switch WiFi on
@@ -46,13 +56,26 @@ namespace NetworkModule
                     return false;
                 }
             }
+
+            #if DEBUG == 1
+            Serial.println("WiFi connected");
+            Serial.println("IP address: ");
+            Serial.println(WiFi.localIP());
+            #endif
+            return true;
         }
 
+        // TODO: How to handle active streams?
         static void DisableWiFi()
         {
-            System_Utils::enableRadio();
+            System_Utils::disableRadio();
             WiFi.disconnect(true);  // Disconnect from the network
             WiFi.mode(WIFI_OFF);    // Switch WiFi off
+        }
+
+        static IPAddress GetBroadcastIP()
+        {
+            return WiFi.broadcastIP();
         }
 
         static IPAddress GetLocalIP()
@@ -74,7 +97,6 @@ namespace NetworkModule
 
         static void UnregisterNetworkStream(int id)
         {
-            delete _NetworkStreams[id];
             _NetworkStreams.erase(id);
         }
 
@@ -92,31 +114,52 @@ namespace NetworkModule
             }
         }
 
-        static void StartRpcTask()
+        static bool RpcRequestHandler(int channelID, JsonDocument &payload)
         {
-            if (_RdpTaskID == -1)
+
+            if (_RpcStreams.find(channelID) != _RpcStreams.end() &&
+                _NetworkStreams.find(_RpcStreams[channelID]) != _NetworkStreams.end())
             {
-                _RdpTaskID = System_Utils::registerTask(RpcTask, "Rpc Task", 4096, NULL, 1, 1);
+                auto networkStreamID = _RpcStreams[channelID];
+                auto result = deserializeMsgPack(payload, _NetworkStreams[networkStreamID]->GetStream());
+
+                if (result == DeserializationError::Ok)
+                {
+                    return true;
+                }
             }
 
-            vTaskResume(System_Utils::getTask(_RdpTaskID));
+            return false;
         }
 
-        static void StopRpcTask()
+        static void RpcResponseHandler(int channelID, JsonDocument &payload)
         {
-            if (_RdpTaskID != -1)
+            if (_RpcStreams.find(channelID) != _RpcStreams.end() &&
+                _NetworkStreams.find(_RpcStreams[channelID]) != _NetworkStreams.end())
             {
-                vTaskSuspend(System_Utils::getTask(_RdpTaskID));
+                auto networkStreamID = _RpcStreams[channelID];
+                auto stream = _NetworkStreams[networkStreamID];
+
+                stream->BeginPacket();
+                serializeMsgPack(payload, stream->GetStream());
+                stream->EndPacket();
             }
         }
 
-        static void RpcTask(void *pvParameters)
+        static void AttachRpcStream(int rpcChannelID, int networkStreamID)
         {
-            while (true)
+            if (_RpcStreams.find(rpcChannelID) == _RpcStreams.end() &&
+                _NetworkStreams.find(networkStreamID) != _NetworkStreams.end())
             {
-                vTaskDelay(pdMS_TO_TICKS(500));
+                _RpcStreams[rpcChannelID] = networkStreamID;
+            }
+        }
 
-                
+        static void DetachRpcStream(int rpcChannelID)
+        {
+            if (_RpcStreams.find(rpcChannelID) != _RpcStreams.end())
+            {
+                _RpcStreams.erase(rpcChannelID);
             }
         }
     };

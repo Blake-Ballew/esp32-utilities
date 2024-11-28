@@ -368,6 +368,8 @@ void NavigationUtils::RpcAddSavedLocation(JsonDocument &doc)
         location.Longitude = doc["lng"].as<double>();
         AddSavedLocation(location, true);
     }
+
+    doc.clear();
 }
 
 void NavigationUtils::RpcAddSavedLocations(JsonDocument &doc)
@@ -384,37 +386,53 @@ void NavigationUtils::RpcAddSavedLocations(JsonDocument &doc)
             AddSavedLocation(savedLocation, false);
         }
     }
+
+    doc.clear();
 }
 
 void NavigationUtils::RpcRemoveSavedLocation(JsonDocument &doc)
 {
+    bool success = false;
+
     if (doc.containsKey("idx"))
     {
         auto idx = doc["idx"].as<int>();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
+            success = true;
             auto locationIt = _SavedLocations.begin() + idx;
             RemoveSavedLocation(locationIt);
         }
     }
+
+    doc.clear();
+
+    doc["success"] = success;
 }
 
 void NavigationUtils::RpcClearSavedLocations(JsonDocument &doc)
 {
     ClearSavedLocations();
+    doc.clear();
 }
 
 void NavigationUtils::RpcUpdateSavedLocation(JsonDocument &doc)
 {
+    bool success = false;
     if (doc.containsKey("idx") && doc.containsKey("name") && doc.containsKey("lat") && doc.containsKey("lng"))
     {
         auto idx = doc["idx"].as<int>();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
+            success = true;
             auto locationIt = _SavedLocations.begin() + idx;
             UpdateSavedLocation(locationIt, {doc["name"].as<std::string>(), doc["lat"].as<double>(), doc["lng"].as<double>()});
         }
     }
+
+    doc.clear();
+
+    doc["success"] = success;
 }
 
 void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
@@ -422,6 +440,7 @@ void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
     if (doc.containsKey("idx"))
     {
         auto idx = doc["idx"].as<int>();
+        doc.clear();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
             auto locationIt = _SavedLocations.begin() + idx;
@@ -434,6 +453,7 @@ void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
 
 void NavigationUtils::RpcGetSavedLocations(JsonDocument &doc)
 {
+    doc.clear();
     JsonArray locationArray = doc.createNestedArray("locations");
     size_t idx = 0;
     for (auto location : _SavedLocations)

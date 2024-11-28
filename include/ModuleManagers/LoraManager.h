@@ -14,7 +14,7 @@ namespace
     const char *MESSAGE_LIST_FILENAME PROGMEM = "/SavedMessages.msgpk";
 
     const size_t MESSAGE_RECEIVE_TIMEOUT_MS = 100;
-    const size_t RECEIVE_THREAD_SLEEP_MS = 1;
+    const size_t RECEIVE_THREAD_SLEEP_MS = 100;
 
     const size_t AFTER_SEND_BLOCK_TIME_MS = 500;
 
@@ -29,6 +29,12 @@ struct QueuedMessageInfo
     MessageBase *msg;
     uint8_t numSendAttempts;
     size_t ticksLeft;
+};
+
+enum RpcChannelState
+{
+    RECEIVING = 0,
+    SENDING = 1
 };
 
 // template <typename RadioType>
@@ -290,292 +296,26 @@ public:
         }
     }
 
-    // RTOS task to handle receiving messages
-    // void ReceiveTask(void *pvParameters)
+    // Read RPC requests over LoRa
+    // bool ReadRpcRequests(uint32_t channelID, JsonDocument &payload)
     // {
-    //     while (true) 
+    //     // Skip reading for messages if we're still sending a reply
+    //     if (xTaskGetTickCount() < _NextReceiveTime)
     //     {
-    //         #if DEBUG == 1
-    //         // Serial.print("Radio state: ");
-    //         // Serial.println(_driver->mode());
-    //         // vTaskDelay(pdMS_TO_TICKS(50));
-    //         // continue;
-    //         #endif
-
-    //         uint8_t buffer[MAX_MESSAGE_SIZE];
-    //         memset(buffer, 0, sizeof(buffer));
-
-    //         uint8_t from;
-    //         uint8_t to;
-    //         uint8_t id;
-    //         uint8_t flags;
-    //         uint8_t len = sizeof(buffer);
-
-    //         bool halted = false;
-    //         TickType_t xLastWakeTime = xTaskGetTickCount();
-
-    //         auto mutexResult = xSemaphoreTake(_RadioMutex, 0);
-
-    //         if (mutexResult == pdFALSE)
-    //         {
-    //             halted = true;
-    //         }
-
-    //         if (halted)
-    //         {
-    //             // Serial.println("RECEIVE TASK IS HALTED");
-    //             xSemaphoreTake(_RadioMutex, portMAX_DELAY);
-    //             // Serial.print("RECEIVE TASK WAS HALTED FOR MS: ");
-    //             Serial.println(xTaskGetTickCount() - xLastWakeTime);
-    //         }
-
-    //         _driver->setMode(RHGenericDriver::RHMode::RHModeRx);
-    //         auto result = _manager->recvfromAckTimeout(buffer, &len, MESSAGE_RECEIVE_TIMEOUT_MS, &from, &to, &id, &flags);
-    //         _driver->setMode(RHGenericDriver::RHMode::RHModeIdle);
-
-    //         xSemaphoreGive(_RadioMutex);
-
-    //         if (result) {
-    //             #if DEBUG == 1
-    //             {
-    //                 // StaticJsonDocument<MSG_BASE_SIZE> testDoc;
-    //                 // deserializeMsgPack(testDoc, (const char *)buffer, len);
-    //                 // Serial.println("Received message:");
-    //                 // serializeJson(testDoc, Serial);
-    //                 // Serial.println();
-    //             }
-    //             #endif
-    //             auto msg = LoraUtils::DeserializeMessage(buffer, len);
-
-    //             if (msg != nullptr)
-    //             {   
-    //                 #if DEBUG == 1
-    //                 // Serial.print("Received message from 0x");
-    //                 // Serial.print(msg->sender, HEX);
-    //                 // Serial.println();
-    //                 // Serial.printf("Length: %u\n", len);
-    //                 // // auto jsondoc = msg->serializeJSON();
-    //                 // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
-    //                 // msg->serialize(jsondoc);
-    //                 // serializeJson(jsondoc, Serial);
-    //                 // Serial.println();
-    //                 // Serial.println("End of message");
-    //                 // Serial.println("Raw bytes:");
-    //                 // for (size_t i = 0; i < len; i++)
-    //                 // {
-    //                 //     Serial.printf("%02X", buffer[i]);
-    //                 //     Serial.print(" ");
-    //                 // }
-    //                 // Serial.println();
-    //                 #endif
-
-    //                 if (!msg->IsValid())
-    //                 {
-    //                     #if DEBUG == 1
-    //                     // Serial.println("Invalid message");
-    //                     #endif
-    //                     delete msg;
-    //                     continue;
-    //                 }
-
-    //                 // Check if the message should be forwarded
-    //                 auto fwd = ShouldMessageBeForwarded(msg);
-
-    //                 // Dump message if it was sent from this node and came back
-    //                 if (msg->sender == LoraUtils::UserID())
-    //                 {
-    //                     #if DEBUG == 1
-    //                     // Serial.println("Message was sent from this node and came back");
-    //                     #endif
-    //                     delete msg;
-    //                     continue;
-    //                 }
-
-    //                 if (fwd)
-    //                 {
-    //                     msg->bouncesLeft--;
-    //                     LoraUtils::SendMessage(msg, NUM_REBROADCAST_ATTEMPTS); 
-
-    //                     _lastReceivedMessages[msg->sender] = msg->msgID;
-    //                 }
-                    
-    //                 // Check if the message is a broadcast or intended for this node
-    //                 if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
-    //                 {
-    //                     #if DEBUG == 1
-    //                     // Serial.println("Message directed to this node or broadcast");
-    //                     #endif
-    //                     // Handle the message
-    //                     auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
-    //                     LoraUtils::SetReceivedMessage(msg->sender, msg);
-
-    //                     LoraUtils::MessageReceived().Invoke(msg->sender, !msgExists);
-    //                 }
-
-    //                 delete msg;
-    //             }
-    //         }
-
-    //         vTaskDelay(pdMS_TO_TICKS(RECEIVE_THREAD_SLEEP_MS));
+    //         return false;
     //     }
+
+    //     if (_Driver->ReceiveMessage(payload, MESSAGE_RECEIVE_TIMEOUT_MS))
+    //     {
+    //         return true;
+    //     }
+
+    //     return false;
     // }
 
-    // RTOS task for sending messages
-    // This task will assign a randomized delay
-    // to each message to prevent collisions
-    // void SendTask(void *pvParameters)
+    // void QueueRpcResponse(uint32_t channelID, JsonDocument &payload)
     // {
-    //     auto sendQueue = System_Utils::getQueue(LoraUtils::MessageSendQueueID());
 
-    //     if (sendQueue == nullptr)
-    //     {
-    //         vTaskDelete(NULL);
-    //     }
-
-    //     const size_t SEND_THREAD_TICK_MS = 250;
-    //     const size_t MAX_SEND_DELAY_TICKS = 15;
-
-    //     // Map of messages to ticks until send
-    //     std::vector<QueuedMessageInfo> ticksUntilSend;
-
-    //     while (true)
-    //     {
-    //         OutboundMessageQueueItem item;
-
-    //         if (xQueueReceive(sendQueue, &item, 0) == pdTRUE)
-    //         {
-    //             QueuedMessageInfo info = {item.msg, item.numSendAttempts, 0};
-
-    //             #if DEBUG == 1
-    //             // Serial.print("Message queued to send: ");
-    //             // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
-    //             // item.msg->serialize(jsondoc);
-    //             // serializeJson(jsondoc, Serial);
-    //             // Serial.println();
-    //             // Serial.println("Sanity checking message:");
-    //             // LoraUtils::MessagePackSanityCheck(jsondoc);
-    //             // Serial.print("Message length: ");
-    //             // Serial.println(measureMsgPack(jsondoc));
-    //             #endif
-
-    //             // Assign a random delay to the message
-    //             info.ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
-
-    //             ticksUntilSend.push_back(info);
-    //         }
-
-    //         for (auto msgTimer = ticksUntilSend.begin(); msgTimer != ticksUntilSend.end(); msgTimer++)
-    //         {
-    //             msgTimer->ticksLeft--;
-
-    //             if (msgTimer->ticksLeft == 0)
-    //             {
-    //                 size_t len = 0;
-
-    //                 // Send the message
-    //                 StaticJsonDocument<MSG_BASE_SIZE> doc;
-    //                 auto success = msgTimer->msg->serialize(doc);                  
-
-    //                 if (success)
-    //                 {
-    //                     #if DEBUG == 1
-    //                     // Serial.println("Message serialized successfully. Message: ");
-    //                     // serializeJson(doc, Serial);
-    //                     // Serial.println();
-    //                     #endif
-    //                     len = measureMsgPack(doc) + 4;
-    //                     uint8_t buffer[len];
-    //                     len = serializeMsgPack(doc, buffer, len);
-
-    //                     #if DEBUG == 1
-    //                     // Serial.println("Sending message:");
-    //                     // serializeJson(doc, Serial);
-    //                     // Serial.println();
-    //                     // Serial.print("Radio state before send: ");
-    //                     // Serial.println(_driver->mode());
-    //                     // Serial.println("Sending raw bytes:");
-    //                     // for (size_t i = 0; i < len; i++)
-    //                     // {
-    //                     //     Serial.printf("%02X", buffer[i]);
-    //                     //     Serial.print(" ");
-    //                     // }
-    //                     // Serial.println();
-    //                     #endif
-
-    //                     TickType_t ReceiveBlockTimer;
-
-    //                     #if DEBUG == 1
-    //                     // Serial.println("HALTING RECEIVE THREAD");
-    //                     #endif
-    //                     ReceiveBlockTimer = xTaskGetTickCount();
-    //                     xSemaphoreTake(_RadioMutex, portMAX_DELAY);
-
-    //                     _manager->sendtoWait(buffer, len, RH_BROADCAST_ADDRESS);
-                        
-    //                     while (_driver->mode() == RHGenericDriver::RHMode::RHModeTx)
-    //                     {
-    //                         vTaskDelay(pdMS_TO_TICKS(10));
-    //                     }
-
-    //                     // Additional time
-    //                     vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_MUTEX_ADDITIONAL_TIME_MS));
-
-    //                     #if DEBUG == 1
-    //                     // Serial.print("RESUMING RECEIVE THREAD AFTER MS: ");
-    //                     // Serial.println(xTaskGetTickCount() - ReceiveBlockTimer);
-    //                     #endif
-    //                     xSemaphoreGive(_RadioMutex);
-
-    //                     #if DEBUG == 1
-    //                     // Serial.printf("Message sent of size: %u\n", len);
-    //                     // Serial.println("Raw bytes:");
-    //                     // for (size_t i = 0; i < len; i++)
-    //                     // {
-    //                     //     Serial.print(buffer[i], HEX);
-    //                     //     Serial.print(" ");
-    //                     // }
-    //                     // Serial.println();
-    //                     #endif
-    //                 }
-    //                 #if DEBUG == 1
-    //                 else
-    //                 {
-    //                     Serial.println("Message failed to serialize");
-    //                 }
-    //                 #endif
-
-    //                 msgTimer->numSendAttempts--;
-
-    //                 // if (msgTimer->msg->sender == LoraUtils::UserID())
-    //                 // {
-    //                 //     // Update the last broadcast message.
-    //                 //     LoraUtils::SetMyLastBroadcast(msgTimer->msg);
-    //                 // }
-
-    //                 if (msgTimer->numSendAttempts > 0)
-    //                 {
-    //                     // Requeue the message
-    //                     msgTimer->ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
-    //                 }
-    //                 else
-    //                 {
-    //                     // Delete the message
-    //                     #if DEBUG == 1
-    //                     // Serial.printf("Deleting message of ID: %u\n", msgTimer->msg->msgID);
-    //                     #endif
-    //                     delete msgTimer->msg;
-
-    //                     // Remove from the vector
-    //                     msgTimer = ticksUntilSend.erase(msgTimer);
-    //                 }
-
-    //                 // Only send one message per tick
-    //                 break;
-    //             }
-    //         }
-
-    //         vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_TICK_MS));      
-    //     }
     // }
 
     // Event code to save user list to flash
@@ -741,6 +481,8 @@ protected:
     SemaphoreHandle_t _RadioMutex = nullptr;
 
     // Send buffer
+    TickType_t _NextReceiveTime = 0;
     bool _SendBufferIdle = true;
     DynamicJsonDocument _SendBuffer = DynamicJsonDocument(MAX_MESSAGE_SIZE);
+    
 };

@@ -209,6 +209,7 @@ void Display_Manager::initializeCallbacks()
     registerCallback(ACTION_OPEN_OTA_WINDOW, openOTAWindow);
     registerCallback(ACTION_OPEN_SAVED_LOCATIONS_WINDOW, openSavedLocationsWindow);
     registerCallback(ACTION_OPEN_DIAGNOSTICS_WINDOW, openDiagnosticsWindow);
+    registerCallback(ACTION_OPEN_WIFI_RPC_WINDOW, openWiFiRpcWindow);
 
     #if HARDWARE_VERSION == 1
     registerCallback(ACTION_SHUTDOWN_DEVICE, shutdownDevice);
@@ -370,16 +371,16 @@ void Display_Manager::generateMenuWindow(uint8_t inputID)
     menuWindow->addMenuItem("Edit Saved Locations", ACTION_OPEN_SAVED_LOCATIONS_WINDOW);
     menuWindow->addMenuItem("Received Messages", ACTION_GENERATE_STATUSES_WINDOW);
     menuWindow->addMenuItem("Settings", ACTION_GENERATE_SETTINGS_WINDOW);
+    menuWindow->addMenuItem("Configure via WiFi", ACTION_OPEN_WIFI_RPC_WINDOW);
     menuWindow->addMenuItem("Flashlight", ACTION_TOGGLE_FLASHLIGHT);
     menuWindow->addMenuItem("Debug Compass", ACTION_GENERATE_COMPASS_WINDOW);
     menuWindow->addMenuItem("Debug GPS", ACTION_GENERATE_GPS_WINDOW);
-    // menuWindow->addMenuItem("LoRa Test", ACTION_GENERATE_LORA_TEST_WINDOW);
     menuWindow->addMenuItem("Flash Settings", ACTION_FLASH_DEFAULT_SETTINGS);
     menuWindow->addMenuItem("Flash Locations", ACTION_FLASH_LOCATIONS);
     menuWindow->addMenuItem("Flash Messages", ACTION_FLASH_MESSAGES);
     menuWindow->addMenuItem("Wipe Saved Locations", ACTION_CLEAR_LOCATIONS);
     menuWindow->addMenuItem("Wipe Saved Messages", ACTION_CLEAR_MESSAGES);
-    menuWindow->addMenuItem("Diagnoistics", ACTION_OPEN_DIAGNOSTICS_WINDOW);
+    menuWindow->addMenuItem("Diagnostics", ACTION_OPEN_DIAGNOSTICS_WINDOW);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
 
     #if HARDWARE_VERSION == 1
@@ -609,6 +610,13 @@ void Display_Manager::openSavedLocationsWindow(uint8_t inputID)
 void Display_Manager::openDiagnosticsWindow(uint8_t inputID)
 {
     DiagnosticsWindow *window = new DiagnosticsWindow(currentWindow);
+    Display_Manager::attachNewWindow(window);
+    window->drawWindow();
+}
+
+void Display_Manager::openWiFiRpcWindow(uint8_t inputID)
+{
+    WiFiRpcWindow *window = new WiFiRpcWindow(currentWindow);
     Display_Manager::attachNewWindow(window);
     window->drawWindow();
 }

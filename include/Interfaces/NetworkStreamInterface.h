@@ -9,6 +9,7 @@ namespace NetworkModule
     class NetworkStreamInterface
     {
     public:
+        NetworkStreamInterface() {}
         NetworkStreamInterface(uint16_t port) : _port(port) {}
         virtual ~NetworkStreamInterface() {}
 
@@ -17,8 +18,8 @@ namespace NetworkModule
 
         void SetPort(uint16_t port) { _port = port; }
 
-        virtual void BeginPacket() = 0;
-        virtual void EndPacket() = 0;
+        virtual bool BeginPacket() = 0;
+        virtual bool EndPacket() = 0;
         virtual void Flush() = 0;
 
     protected:
