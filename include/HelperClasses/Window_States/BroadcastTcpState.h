@@ -52,7 +52,7 @@ public:
         
         _broadcast.SetPortToBroadcast(NetworkModule::Utilities::RPC_PORT);
         Window_State::enterState(transferData);
-        Display_Utils::enableRefreshTimer(10000);
+        Display_Utils::enableRefreshTimer(3000);
         _broadcast.SendBroadcast();
     }
 

@@ -43,6 +43,11 @@ public:
             NetworkModule::Utilities::RpcRequestHandler,
            NetworkModule::Utilities::RpcResponseHandler);
             NetworkModule::Utilities::AttachRpcStream(_rpcChannelID, _rpcStreamID);
+
+            #if DEBUG == 1
+            Serial.print("RPC Channel ID: "); Serial.println(_rpcChannelID);
+            Serial.print("RPC Stream ID: "); Serial.println(_rpcStreamID);
+            #endif
         }
         else
         {
@@ -96,6 +101,7 @@ public:
             {
                 _rpcConnectionState = RPC_CONNECTION_ESTABLISHED;
                 currentState = &_otherState;
+                RpcModule::Utilities::EnableRpcChannel(_rpcChannelID);
             }
         }
 

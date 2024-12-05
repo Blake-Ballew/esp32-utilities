@@ -116,6 +116,10 @@ namespace NetworkModule
 
         static bool RpcRequestHandler(int channelID, JsonDocument &payload)
         {
+            #if DEBUG == 1
+            Serial.print("NetworkUtils::RpcRequestHandler. channelID: "); 
+            Serial.println(channelID);
+            #endif
 
             if (_RpcStreams.find(channelID) != _RpcStreams.end() &&
                 _NetworkStreams.find(_RpcStreams[channelID]) != _NetworkStreams.end())
@@ -125,6 +129,9 @@ namespace NetworkModule
 
                 if (result == DeserializationError::Ok)
                 {
+                    #if DEBUG == 1
+                    Serial.println("NetworkUtils::RpcRequestHandler. result: Ok");
+                    #endif
                     return true;
                 }
             }

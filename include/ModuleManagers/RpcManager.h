@@ -21,20 +21,14 @@ namespace RpcModule
 
         ~Manager() {}
 
-        void Init(int taskPriority)
+        void Init(int taskPriority, size_t taskCore = 0)
         {
-            System_Utils::registerTask([] (void *pvParameters) 
-            {
-                Manager *manager = (Manager *)pvParameters;
-                manager->RegisterSerialRpc();
-                manager->ProcessRpcChannels();
-
-                vTaskDelete(NULL);
-            },
+            System_Utils::registerTask(BoundRpcTask,
             "RpcLoop",
-            4096,
+            8192,
             this,
-            taskPriority);
+            taskPriority, 
+            taskCore);
         }
 
         void ProcessRpcChannels()
@@ -45,9 +39,25 @@ namespace RpcModule
                 {
                     if (channel.second.IsActive)
                     {
+                        #if DEBUG == 1
+                        Serial.print("Polling channel ");
+                        Serial.println(channel.second.ChannelID);
+                        #endif
+
                         DynamicJsonDocument rpcPayload(channel.second.BufferMaxSize);
                         auto channelID = channel.second.ChannelID;
-                        channel.second.PollFunctionPointer(channelID, rpcPayload);
+                        if (!channel.second.PollFunctionPointer(channelID, rpcPayload))
+                        {
+                            continue;
+                        }
+
+                        #if DEBUG == 1
+                        Serial.print("MsgPack found on channel ");
+                        Serial.print(channelID);
+                        Serial.println(": ");
+                        serializeJson(rpcPayload, Serial);
+                        Serial.println();
+                        #endif
 
                         if (rpcPayload.containsKey(Utilities::RPC_FUNCTION_NAME_FIELD())) 
                         {
@@ -98,10 +108,29 @@ namespace RpcModule
                 }
             };
 
-            Utilities::AddRpcChannel(512, pollFunctionPointer, replyFunctionPointer);
+            _serialRpcChannelID = Utilities::AddRpcChannel(512, pollFunctionPointer, replyFunctionPointer);
+            // Utilities::EnableRpcChannel(_serialRpcChannelID);
         }
 
     protected:
 
+        int _serialRpcChannelID = -1;
+
+        static void BoundRpcTask(void *pvParameters) 
+        {
+            #if DEBUG == 1
+            Serial.println("Rpc loop started");
+            #endif
+
+            Manager *manager = (Manager *)pvParameters;
+            manager->RegisterSerialRpc();
+            manager->ProcessRpcChannels();
+
+            #if DEBUG == 1
+            Serial.println("Rpc loop exited");
+            #endif
+
+            vTaskDelete(NULL);
+        }
     };
 }

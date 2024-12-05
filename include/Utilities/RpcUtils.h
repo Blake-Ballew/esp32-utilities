@@ -15,7 +15,6 @@ namespace RpcModule
     {
         std::unordered_map<std::string, RpcFunction> _rpcMap;
 
-        std::unordered_map<int, RpcChannel> _RpcChannels;
         int _CurrentChannelID = 0;
 
         const char *_RPC_FUNCTION_NAME_FIELD PROGMEM = "F";
@@ -58,35 +57,74 @@ namespace RpcModule
         {
             int channelID = _CurrentChannelID;
             _CurrentChannelID++;
-            _RpcChannels[channelID] = RpcChannel(channelID, bufferMaxSize, pollFunctionPointer, replyFunctionPointer);
-            return channelID;
+
+            auto result = RpcChannels().emplace(channelID, RpcChannel(channelID, bufferMaxSize, pollFunctionPointer, replyFunctionPointer));
+
+            if (result.second)
+            {
+                #if DEBUG == 1
+                Serial.print("Added channel ");
+                Serial.println(channelID);
+                #endif
+
+                return channelID;
+            }
+            else
+            {
+                #if DEBUG == 1
+                Serial.print("Failed to add channel ");
+                Serial.println(channelID);
+                #endif
+                return -1;
+            }
         }
 
         static void RemoveRpcChannel(int channelID)
         {
-            if (_RpcChannels.find(channelID) != _RpcChannels.end())
+            if (RpcChannels().find(channelID) != RpcChannels().end())
             {
-                _RpcChannels.erase(channelID);
+                RpcChannels().erase(channelID);
             }
         }
 
         static void EnableRpcChannel(int channelID)
         {
-            if (_RpcChannels.find(channelID) != _RpcChannels.end())
+            if (RpcChannels().find(channelID) != RpcChannels().end())
             {
-                _RpcChannels[channelID].IsActive = true;
+                #if DEBUG == 1
+                Serial.print("Enabling channel "); 
+                Serial.println(channelID);
+                #endif
+                RpcChannels()[channelID].IsActive = true;
             }
+            #if DEBUG == 1
+            else
+            {
+                Serial.print("Failed to enable channel "); 
+                Serial.println(channelID);
+            }
+            #endif
         }
 
         static void DisableRpcChannel(int channelID)
         {
-            if (_RpcChannels.find(channelID) != _RpcChannels.end())
+            if (RpcChannels().find(channelID) != RpcChannels().end())
             {
-                _RpcChannels[channelID].IsActive = false;
+                RpcChannels()[channelID].IsActive = false;
             }
         }
 
-        static const std::unordered_map<int, RpcChannel> &RpcChannels() { return _RpcChannels; }
+        static std::unordered_map<int, RpcChannel> &RpcChannels() 
+        { 
+            static std::unordered_map<int, RpcChannel> _RpcChannels;
+            return _RpcChannels;
+        }
+
+        static std::unordered_map<std::string, RpcFunction> &RpcMap() 
+        {
+            static std::unordered_map<std::string, RpcFunction> _rpcMap;
+            return _rpcMap;
+        }
 
         static const char *RPC_FUNCTION_NAME_FIELD() { return _RPC_FUNCTION_NAME_FIELD; }
         static const char *RPC_RETURN_CODE_FIELD() { return _RPC_RETURN_CODE_FIELD; }

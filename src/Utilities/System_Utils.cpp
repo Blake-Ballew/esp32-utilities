@@ -352,6 +352,10 @@ int System_Utils::registerTask(
     }
     else
     {
+        #if DEBUG == 1
+        Serial.print("Unable to create task: ");
+        Serial.println(taskName);
+        #endif
         return -1;
     }
     

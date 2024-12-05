@@ -36,33 +36,33 @@ namespace NetworkModule
             else
             {
                 #if DEBUG == 1
-                Serial.println("Broadcast packet started");
+                // Serial.println("Broadcast packet started");
                 #endif
             }
 
             if (serializeMsgPack(doc, GetStream()) == 0)
             {
                 #if DEBUG == 1
-                Serial.println("Failed to serialize broadcast packet");
+                // Serial.println("Failed to serialize broadcast packet");
                 #endif
             }
             else
             {
                 #if DEBUG == 1
-                Serial.println("Broadcast packet serialized");
+                // Serial.println("Broadcast packet serialized");
                 #endif
             }
 
             if (!EndPacket())
             {
                 #if DEBUG == 1
-                Serial.println("Failed to end broadcast packet");
+                // Serial.println("Failed to end broadcast packet");
                 #endif
             }
             else
             {
                 #if DEBUG == 1
-                Serial.println("Broadcast packet ended");
+                // Serial.println("Broadcast packet ended");
                 #endif
             }
 
