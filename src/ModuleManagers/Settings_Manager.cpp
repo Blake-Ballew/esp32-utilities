@@ -222,16 +222,16 @@ JsonArray::iterator Settings_Manager::getMsgIteratorEnd()
 
 void Settings_Manager::WriteMessagesToJSON(ArduinoJson::JsonDocument &doc)
 {
-    // Create nested array "messages" if it does not exist
-    if (!doc.containsKey("messages"))
+    // Create nested array "Messages" if it does not exist
+    if (!doc.containsKey("Messages"))
     {
-        doc.createNestedArray("messages");
+        doc.createNestedArray("Messages");
     }
 
     // iterate through saved messages and add them to the JSON document
     for (auto msg : savedMessages["Messages"].as<JsonArray>())
     {
-        doc["messages"].add(msg.as<std::string>());
+        doc["Messages"].add(msg.as<std::string>());
     }
 }
 

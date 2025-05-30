@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NetworkUtils.h"
+#include "IpUtils.h"
 #include "TcpConnectionBroadcast.h"
 #include "Window_State.h"
 
@@ -29,7 +29,7 @@ public:
 
         prompt.line = 3;
         message = "Port: ";
-        message += std::to_string(NetworkModule::Utilities::RPC_PORT);
+        message += std::to_string(ConnectivityModule::IpUtils::RPC_PORT);
         Display_Utils::printFormattedText(message.c_str(), prompt);
 
         Display_Utils::UpdateDisplay().Invoke();
@@ -37,7 +37,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData) 
     {
-        if (!_broadcast.EstablishConnection(NetworkModule::Utilities::GetBroadcastIP(), _broadcast.PortToBroadcast()))
+        if (!_broadcast.EstablishConnection(ConnectivityModule::IpUtils::GetWiFiBroadcastIP(), _broadcast.PortToBroadcast()))
         {
             #if DEBUG == 1
             Serial.println("Failed to establish broadcast connection");
@@ -50,9 +50,9 @@ public:
             #endif
         }
         
-        _broadcast.SetPortToBroadcast(NetworkModule::Utilities::RPC_PORT);
+        _broadcast.SetPortToBroadcast(ConnectivityModule::IpUtils::RPC_PORT);
         Window_State::enterState(transferData);
-        Display_Utils::enableRefreshTimer(3000);
+        Display_Utils::enableRefreshTimer(500);
         _broadcast.SendBroadcast();
     }
 
@@ -62,5 +62,5 @@ public:
     }
 
 protected:
-    NetworkModule::TcpConnectionBroadcast _broadcast;
+    ConnectivityModule::TcpConnectionBroadcast _broadcast;
 };

@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-namespace NetworkModule
+namespace ConnectivityModule
 {
     class WiFiUdpStream : public NetworkStreamInterface
     {

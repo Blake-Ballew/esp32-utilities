@@ -3,7 +3,7 @@
 #include "NetworkStreamInterface.h"
 #include <WiFi.h>
 
-namespace NetworkModule
+namespace ConnectivityModule
 {
     class WiFiTcpStream : public NetworkStreamInterface
     {

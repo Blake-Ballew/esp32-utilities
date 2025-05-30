@@ -6,6 +6,7 @@ size_t Display_Utils::displayWidth = 0;
 size_t Display_Utils::displayHeight = 0;
 
 int Display_Utils::refreshTimerID = -1;
+uint32_t Display_Utils::refreshTimerInterval = 0;
 
 QueueHandle_t Display_Utils::displayCommandQueue = nullptr;
 
@@ -212,32 +213,12 @@ size_t Display_Utils::getUintLength(uint64_t num)
 
 void Display_Utils::enableRefreshTimer(size_t timerPeriodMS)
 {
-    #if DEBUG == 1
-        Serial.printf("Display_Utils::enableRefreshTimer(): starting timerID: %d\n", refreshTimerID);
-    #endif
-    if (refreshTimerID == -1)
-        return;
-
-    if (timerPeriodMS > 0)
-        System_Utils::changeTimerPeriod(refreshTimerID, timerPeriodMS);
-
-    System_Utils::startTimer(refreshTimerID);
+   refreshTimerInterval = timerPeriodMS;
 }
 
 void Display_Utils::disableRefreshTimer()
 {
-    #if DEBUG == 1
-        Serial.printf("Display_Utils::disableRefreshTimer(): stopping timerID: %d\n", refreshTimerID);
-    #endif
-    if (refreshTimerID == -1)
-    {
-        #if DEBUG == 1
-            Serial.println("Display_Utils::disableRefreshTimer(): timer not enabled");
-        #endif
-        return;
-    }
-
-    System_Utils::stopTimer(refreshTimerID);
+    refreshTimerInterval = 0;
 }
 
 

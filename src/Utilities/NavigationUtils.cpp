@@ -319,21 +319,21 @@ void NavigationUtils::SerializeSavedLocations(JsonDocument &doc)
 {
     JsonArray locationArray;
 
-    if (doc.containsKey("locations"))
+    if (doc.containsKey("Locations"))
     {
-        locationArray = doc["locations"].as<JsonArray>();
+        locationArray = doc["Locations"].as<JsonArray>();
     }
     else
     {
-        locationArray = doc.createNestedArray("locations");
+        locationArray = doc.createNestedArray("Locations");
     }
 
     for (auto location : _SavedLocations)
     {
         JsonObject locationObject = locationArray.createNestedObject();
-        locationObject["name"] = location.Name;
-        locationObject["lat"] = location.Latitude;
-        locationObject["lng"] = location.Longitude;
+        locationObject["Name"] = location.Name;
+        locationObject["Lat"] = location.Latitude;
+        locationObject["Lng"] = location.Longitude;
     }
 
     #if DEBUG == 1
@@ -345,27 +345,27 @@ void NavigationUtils::SerializeSavedLocations(JsonDocument &doc)
 
 void NavigationUtils::DeserializeSavedLocations(JsonDocument &doc)
 {
-    auto locationArray = doc["locations"].as<JsonArray>();
+    auto locationArray = doc["Locations"].as<JsonArray>();
     _SavedLocations.clear();
 
     for (auto location : locationArray)
     {
         SavedLocation savedLocation;
-        savedLocation.Name = location["name"].as<std::string>();
-        savedLocation.Latitude = location["lat"].as<double>();
-        savedLocation.Longitude = location["lng"].as<double>();
+        savedLocation.Name = location["Name"].as<std::string>();
+        savedLocation.Latitude = location["Lat"].as<double>();
+        savedLocation.Longitude = location["Lng"].as<double>();
         _SavedLocations.push_back(savedLocation);
     }
 }
 
 void NavigationUtils::RpcAddSavedLocation(JsonDocument &doc)
 {
-    if (doc.containsKey("name") && doc.containsKey("lat") && doc.containsKey("lng"))
+    if (doc.containsKey("Name") && doc.containsKey("Lat") && doc.containsKey("Lng"))
     {
         SavedLocation location;
-        location.Name = doc["name"].as<std::string>();
-        location.Latitude = doc["lat"].as<double>();
-        location.Longitude = doc["lng"].as<double>();
+        location.Name = doc["Name"].as<std::string>();
+        location.Latitude = doc["Lat"].as<double>();
+        location.Longitude = doc["Lng"].as<double>();
         AddSavedLocation(location, true);
     }
 
@@ -374,17 +374,19 @@ void NavigationUtils::RpcAddSavedLocation(JsonDocument &doc)
 
 void NavigationUtils::RpcAddSavedLocations(JsonDocument &doc)
 {
-    if (doc.containsKey("locations"))
+    if (doc.containsKey("Locations"))
     {
-        auto locations = doc["locations"].as<JsonArray>();
+        auto locations = doc["Locations"].as<JsonArray>();
         for (auto location : locations)
         {
             SavedLocation savedLocation;
-            savedLocation.Name = location["name"].as<std::string>();
-            savedLocation.Latitude = location["lat"].as<double>();
-            savedLocation.Longitude = location["lng"].as<double>();
+            savedLocation.Name = location["Name"].as<std::string>();
+            savedLocation.Latitude = location["Lat"].as<double>();
+            savedLocation.Longitude = location["Lng"].as<double>();
             AddSavedLocation(savedLocation, false);
         }
+
+        SavedLocationsUpdated().Invoke();
     }
 
     doc.clear();
@@ -394,9 +396,9 @@ void NavigationUtils::RpcRemoveSavedLocation(JsonDocument &doc)
 {
     bool success = false;
 
-    if (doc.containsKey("idx"))
+    if (doc.containsKey("Idx"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
             success = true;
@@ -407,7 +409,7 @@ void NavigationUtils::RpcRemoveSavedLocation(JsonDocument &doc)
 
     doc.clear();
 
-    doc["success"] = success;
+    doc["Success"] = success;
 }
 
 void NavigationUtils::RpcClearSavedLocations(JsonDocument &doc)
@@ -419,34 +421,34 @@ void NavigationUtils::RpcClearSavedLocations(JsonDocument &doc)
 void NavigationUtils::RpcUpdateSavedLocation(JsonDocument &doc)
 {
     bool success = false;
-    if (doc.containsKey("idx") && doc.containsKey("name") && doc.containsKey("lat") && doc.containsKey("lng"))
+    if (doc.containsKey("Idx") && doc.containsKey("Name") && doc.containsKey("Lat") && doc.containsKey("Lng"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
             success = true;
             auto locationIt = _SavedLocations.begin() + idx;
-            UpdateSavedLocation(locationIt, {doc["name"].as<std::string>(), doc["lat"].as<double>(), doc["lng"].as<double>()});
+            UpdateSavedLocation(locationIt, {doc["Name"].as<std::string>(), doc["Lat"].as<double>(), doc["Lng"].as<double>()});
         }
     }
 
     doc.clear();
 
-    doc["success"] = success;
+    doc["Success"] = success;
 }
 
 void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
 {
-    if (doc.containsKey("idx"))
+    if (doc.containsKey("Idx"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         doc.clear();
         if (idx >= 0 && idx < _SavedLocations.size())
         {
             auto locationIt = _SavedLocations.begin() + idx;
-            doc["name"] = locationIt->Name;
-            doc["lat"] = locationIt->Latitude;
-            doc["lng"] = locationIt->Longitude;
+            doc["Name"] = locationIt->Name;
+            doc["Lat"] = locationIt->Latitude;
+            doc["Lng"] = locationIt->Longitude;
         }
     }
 }
@@ -454,16 +456,19 @@ void NavigationUtils::RpcGetSavedLocation(JsonDocument &doc)
 void NavigationUtils::RpcGetSavedLocations(JsonDocument &doc)
 {
     doc.clear();
-    JsonArray locationArray = doc.createNestedArray("locations");
-    size_t idx = 0;
+    JsonArray locationArray = doc.createNestedArray("Locations");
     for (auto location : _SavedLocations)
     {
         JsonObject locationObject = locationArray.createNestedObject();
-        locationObject["idx"] = idx++;
-        locationObject["name"] = location.Name;
-        locationObject["lat"] = location.Latitude;
-        locationObject["lng"] = location.Longitude;
+        locationObject["Name"] = location.Name;
+        locationObject["Lat"] = location.Latitude;
+        locationObject["Lng"] = location.Longitude;
     }
+
+    #if DEBUG == 1
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
+    #endif
 }
 
 void NavigationUtils::FlashSampleLocations()

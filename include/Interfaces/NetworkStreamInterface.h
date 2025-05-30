@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-namespace NetworkModule
+namespace ConnectivityModule
 {
     // Reponsible for UDP and TCP connection over WiFi or Ethernet
     // Connection is automatically closed when the object is destroyed

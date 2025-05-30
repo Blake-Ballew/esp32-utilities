@@ -178,6 +178,7 @@ public:
     // Disables the refresh timer
     static void disableRefreshTimer();
 
+    static uint32_t RefreshTimerInterval() { return refreshTimerInterval; }
 
     // Command Queue Functions
 
@@ -202,6 +203,7 @@ protected:
     static uint8_t _EncDownInputID;
 
     static int refreshTimerID;
+    static uint32_t refreshTimerInterval;
 
     static QueueHandle_t displayCommandQueue;
 

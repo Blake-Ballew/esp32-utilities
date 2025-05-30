@@ -18,7 +18,8 @@
     "adafruit/Adafruit BusIO": "^1.14.1",
     "adafruit/Adafruit Unified Sensor": "^1.1.9",
     "adafruit/Adafruit GFX Library": "^1.11.5",
-    "adafruit/Adafruit SSD1306": "^2.5.7"
+    "adafruit/Adafruit SSD1306": "^2.5.7",
+    "mathieucarbou/ESPAsyncWebServer": "^3.6.0"
   },
   "frameworks": "*",
   "platforms": "*",
@@ -27,6 +28,7 @@
       "-Iinclude/",
       "-Iinclude/Interfaces",
       "-Iinclude/HelperClasses",
+      "-Iinclude/HelperClasses/DrawCommands",
       "-Iinclude/HelperClasses/LED_Patterns",
       "-Iinclude/HelperClasses/Rpc",
       "-Iinclude/HelperClasses/OLED_Content",

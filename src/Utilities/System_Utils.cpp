@@ -1,4 +1,6 @@
 #include "System_Utils.h"
+std::string System_Utils::DeviceName = "ESP32";
+size_t System_Utils::DeviceID = 0;
 
 bool System_Utils::silentMode = true;
 bool System_Utils::time24Hour = false;
@@ -446,6 +448,7 @@ TaskHandle_t System_Utils::getTask(int taskID)
     }
 }
 
+// TODO: kill this
 bool System_Utils::enableWiFi()
 {
     enableRadio();
@@ -658,4 +661,17 @@ void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
     Serial.printf("Row size: %d\n", displayBuffer[0].size());
 
     ArduinoJson::serializeJson(doc, Serial);
+}
+
+void System_Utils::UpdateSettings(JsonDocument &settings)
+{
+    if (settings.containsKey("DeviceName"))
+    {
+        DeviceName = settings["DeviceName"].as<std::string>();
+    }
+
+    if (settings.containsKey("DeviceID"))
+    {
+        DeviceID = settings["DeviceID"].as<size_t>();
+    }
 }

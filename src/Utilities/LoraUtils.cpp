@@ -301,17 +301,17 @@ void LoraUtils::UpdateSavedMessage(std::vector<std::string>::iterator &it, std::
 // RPC
 void LoraUtils::RpcGetSavedMessage(JsonDocument &doc)
 {
-    if (doc.containsKey("idx"))
+    if (doc.containsKey("Idx"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         doc.clear();
         if (idx >= 0 && idx < _SavedMessageList.size())
         {
-            doc["message"] = _SavedMessageList[idx];
+            doc["Message"] = _SavedMessageList[idx];
         }
         else
         {
-            doc["message"] = "";
+            doc["Message"] = "";
         }
     }
 }
@@ -319,31 +319,31 @@ void LoraUtils::RpcGetSavedMessage(JsonDocument &doc)
 void LoraUtils::RpcGetSavedMessages(JsonDocument &doc)
 {
     doc.clear();
-    auto msgArray = doc.createNestedArray("messages");
+    auto msgArray = doc.createNestedArray("Messages");
     size_t idx = 0;
     for (auto msg : _SavedMessageList)
     {
-        JsonObject msgObj = msgArray.createNestedObject();
-        msgObj["idx"] = idx++;
-        msgObj["message"] = msg;
+        msgArray.add(msg);
     }
 }
 
 void LoraUtils::RpcAddSavedMessage(JsonDocument &doc)
 {
-    if (doc.containsKey("message"))
+    if (doc.containsKey("Message"))
     {
-        AddSavedMessage(doc["message"].as<std::string>());
+        AddSavedMessage(doc["Message"].as<std::string>(), true);
     }
 
     doc.clear();
+
+    doc["Success"] = true;
 }
 
 void LoraUtils::RpcAddSavedMessages(JsonDocument &doc)
 {
-    if (doc.containsKey("messages"))
+    if (doc.containsKey("Messages"))
     {
-        auto msgArray = doc["messages"].as<JsonArray>();
+        auto msgArray = doc["Messages"].as<JsonArray>();
         for (auto msg : msgArray)
         {
             AddSavedMessage(msg.as<std::string>(), false);
@@ -358,9 +358,9 @@ void LoraUtils::RpcAddSavedMessages(JsonDocument &doc)
 void LoraUtils::RpcDeleteSavedMessage(JsonDocument &doc)
 {
     bool success = false;
-    if (doc.containsKey("idx"))
+    if (doc.containsKey("Idx"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         
         if (idx >= 0 && idx < _SavedMessageList.size())
         {
@@ -372,7 +372,7 @@ void LoraUtils::RpcDeleteSavedMessage(JsonDocument &doc)
 
     doc.clear();
 
-    doc["success"] = success;
+    doc["Success"] = success;
 }
 
 void LoraUtils::RpcDeleteSavedMessages(JsonDocument &doc)
@@ -385,33 +385,33 @@ void LoraUtils::RpcDeleteSavedMessages(JsonDocument &doc)
 void LoraUtils::RpcUpdateSavedMessage(JsonDocument &doc)
 {
     bool success = false;
-    if (doc.containsKey("idx") && doc.containsKey("message"))
+    if (doc.containsKey("Idx") && doc.containsKey("Message"))
     {
-        auto idx = doc["idx"].as<int>();
+        auto idx = doc["Idx"].as<int>();
         if (idx >= 0 && idx < _SavedMessageList.size())
         {
             success = true;
             auto it = _SavedMessageList.begin() + idx;
-            UpdateSavedMessage(it, doc["message"].as<std::string>());
+            UpdateSavedMessage(it, doc["Message"].as<std::string>());
         }
     }
 
     doc.clear();
 
-    doc["success"] = success;
+    doc["Success"] = success;
 }
 
 void LoraUtils::SerializeSavedMessageList(JsonDocument &doc)
 {
     JsonArray msgArray;
 
-    if (doc.containsKey("messages"))
+    if (doc.containsKey("Messages"))
     {
-        msgArray = doc["messages"].as<JsonArray>();
+        msgArray = doc["Messages"].as<JsonArray>();
     }
     else
     {
-        msgArray = doc.createNestedArray("messages");
+        msgArray = doc.createNestedArray("Messages");
     }
 
     for (auto msg : _SavedMessageList)
@@ -422,7 +422,7 @@ void LoraUtils::SerializeSavedMessageList(JsonDocument &doc)
 
 void LoraUtils::DeserializeSavedMessageList(JsonDocument &doc)
 {
-    auto msgArray = doc["messages"].as<JsonArray>();
+    auto msgArray = doc["Messages"].as<JsonArray>();
     _SavedMessageList.clear();
 
     for (auto msg : msgArray)

@@ -26,8 +26,8 @@ public:
         this->LoadLocationsFromFlash();
 
         StaticJsonDocument<128> calibrationData;
-        auto returncode = FilesystemUtils::ReadFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
-        if (returncode == FilesystemReturnCode::FILESYSTEM_OK)
+        auto returncode = FilesystemModule::Utilities::ReadFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
+        if (returncode == FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             NavigationUtils::SetCalibrationData(calibrationData);
 
@@ -58,9 +58,9 @@ public:
         DynamicJsonDocument doc(16000);
 
         NavigationUtils::SerializeSavedLocations(doc);
-        auto returncode = FilesystemUtils::WriteFile(LOCATION_FILE, doc);
+        auto returncode = FilesystemModule::Utilities::WriteFile(LOCATION_FILE, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to save locations to flash. Error code: ");
@@ -78,9 +78,9 @@ public:
     void LoadLocationsFromFlash()
     {
         DynamicJsonDocument doc(16000);
-        auto returncode = FilesystemUtils::ReadFile(LOCATION_FILE, doc);
+        auto returncode = FilesystemModule::Utilities::ReadFile(LOCATION_FILE, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to load locations from flash. Error code: ");

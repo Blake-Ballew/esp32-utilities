@@ -11,7 +11,7 @@ class Settings_State : public Window_State
 public:
     Settings_State()
     {
-        settingsContent = new Settings_Content(FilesystemUtils::SettingsFile());
+        settingsContent = new Settings_Content(FilesystemModule::Utilities::SettingsFile());
         renderContent = settingsContent;
 
         strcpy(upOneLevel.displayText, "<-");
@@ -107,7 +107,7 @@ public:
                 // save settings if any have changed
                 if (settingsSaved)
                 {
-                    FilesystemUtils::WriteSettingsFileToFlash();
+                    FilesystemModule::Utilities::WriteSettingsFileToFlash();
                     settingsSaved = false;
                 }
 

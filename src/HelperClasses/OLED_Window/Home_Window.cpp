@@ -144,7 +144,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         delete transferData.serializedData;
         transferData.serializedData = new DynamicJsonDocument(1024);
 
-        JsonArray msgArray = (*transferData.serializedData).createNestedArray("messages");
+        JsonArray msgArray = (*transferData.serializedData).createNestedArray("Messages");
 
         if (!useCurrLocation)
         {
@@ -315,11 +315,11 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         NavigationUtils::UpdateGPS();
 
         transferData.serializedData = new DynamicJsonDocument(16000);
-        (*transferData.serializedData).createNestedArray("locations");
-        auto currLocObj = (*transferData.serializedData)["locations"].createNestedObject();
-        currLocObj["name"] = CURR_LOC;
-        currLocObj["lat"] = NavigationUtils::GetLocation().lat();
-        currLocObj["lng"] = NavigationUtils::GetLocation().lng();
+        (*transferData.serializedData).createNestedArray("Locations");
+        auto currLocObj = (*transferData.serializedData)["Locations"].createNestedObject();
+        currLocObj["Name"] = CURR_LOC;
+        currLocObj["Lat"] = NavigationUtils::GetLocation().lat();
+        currLocObj["Lng"] = NavigationUtils::GetLocation().lng();
         
         NavigationUtils::SerializeSavedLocations(*transferData.serializedData);
         

@@ -46,10 +46,20 @@ namespace RpcModule
         {
             if (_rpcMap.find(name) != _rpcMap.end())
             {
+                #if DEBUG == 1
+                Serial.print("Calling function ");
+                Serial.println(name.c_str());
+                #endif
+
                 _rpcMap[name](doc);
                 return RpcReturnCode::RPC_SUCCESS;
             }
 
+            #if DEBUG == 1
+            Serial.print("Function ");
+            Serial.print(name.c_str());
+            Serial.println(" not registered");
+            #endif
             return RpcReturnCode::RPC_FUNCTION_NOT_REGISTERED;
         }
 

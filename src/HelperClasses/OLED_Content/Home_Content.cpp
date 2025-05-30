@@ -5,6 +5,8 @@ Home_Content::Home_Content(Adafruit_SSD1306 *display)
     this->type = ContentType::HOME;
     this->display = display;
     this->contentMode = 1;
+    _wifiIcon.x = 2 + Display_Utils::alignTextLeft(5);
+    _wifiIcon.y = Display_Utils::selectTextLine(2);
     Display_Utils::enableRefreshTimer(HOME_CONTENT_TIMER_PERIOD);
 }
 
@@ -31,7 +33,7 @@ void Home_Content::printContent()
             hour -= 4;
         }
 
-        if (FilesystemUtils::SettingsFile()["24H Time"].as<bool>())
+        if (FilesystemModule::Utilities::SettingsFile()["24H Time"].as<bool>())
         {
             display->setCursor(Display_Utils::alignTextRight(5), Display_Utils::selectTextLine(2));
             display->printf("%02d:%02d", hour, time.minute());
@@ -57,9 +59,16 @@ void Home_Content::printContent()
 
     OLED_Content::drawBellIcon(Display_Utils::alignTextLeft(3), Display_Utils::selectTextLine(2), System_Utils::silentMode);
 
-    OLED_Content::drawMessageIcon(Display_Utils::alignTextLeft(6), Display_Utils::selectTextLine(2));
-    display->setCursor(Display_Utils::alignTextLeft(8), Display_Utils::selectTextLine(2));
-    display->printf(":%d", unreadMsgs);
+    if (ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_STA ||
+        ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_AP)
+    {
+        _wifiIcon.draw();
+    }
+    else if (ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_ESP_NOW)
+    {
+        // maybe make a different icon later
+        _wifiIcon.draw();
+    }
 
     if (unreadMsgs > 0)
     {
@@ -70,9 +79,10 @@ void Home_Content::printContent()
         format.line = textLine;
 
         Display_Utils::printFormattedText("v", format);
-        format.line--;
 
-        Display_Utils::printFormattedText("Msgs", format);
+        display->setCursor(Display_Utils::centerTextHorizontal(2, 1), Display_Utils::selectTextLine(textLine - 1));
+        display->printf(":%d", unreadMsgs);
+        OLED_Content::drawMessageIcon(Display_Utils::centerTextHorizontal(2, -1), Display_Utils::selectTextLine(textLine - 1));
     }
 
     if (LoraUtils::MyLastBroacastExists())

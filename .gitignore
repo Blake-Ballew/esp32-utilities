@@ -5,3 +5,4 @@
 .vscode/ipch
 ./platformio.ini
 src/main.cpp
+.qodo

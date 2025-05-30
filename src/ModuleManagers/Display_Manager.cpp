@@ -58,19 +58,19 @@ void Display_Manager::init()
     display.display();
 
     // Register refresh timer
-    Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
-    #if DEBUG == 1
-    if (Display_Manager::refreshTimerID == -1)
-    {
-        Serial.println("Display_Manager::init: Failed to register refresh timer");
-    }
-    else
-    {
-        Serial.printf("Display_Manager::init: Registered refresh timer with ID %d\n", Display_Manager::refreshTimerID);
-    }
-    #endif
-    OLED_Content::setTimerID(Display_Manager::refreshTimerID);
-    Display_Utils::setRefreshTimerID(refreshTimerID);
+    // Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
+    // #if DEBUG == 1
+    // if (Display_Manager::refreshTimerID == -1)
+    // {
+    //     Serial.println("Display_Manager::init: Failed to register refresh timer");
+    // }
+    // else
+    // {
+    //     Serial.printf("Display_Manager::init: Registered refresh timer with ID %d\n", Display_Manager::refreshTimerID);
+    // }
+    // #endif
+    // OLED_Content::setTimerID(Display_Manager::refreshTimerID);
+    // Display_Utils::setRefreshTimerID(refreshTimerID);
 
     Display_Manager::initializeCallbacks();
     Display_Manager::generateHomeWindow(0);
@@ -115,7 +115,9 @@ void Display_Manager::processCommandQueue(void *taskParams)
     {
         // xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification, portMAX_DELAY);
         DisplayCommandQueueItem displayCommand;
-        auto queueItemReceived = xQueueReceive(displayCommandQueue, &displayCommand, portMAX_DELAY);
+
+        auto timeToWait = Display_Utils::RefreshTimerInterval() == 0 ? portMAX_DELAY : Display_Utils::RefreshTimerInterval();
+        auto queueItemReceived = xQueueReceive(displayCommandQueue, &displayCommand, timeToWait);
         if (queueItemReceived == pdTRUE)
         {
             switch (displayCommand.commandType)
@@ -178,6 +180,13 @@ void Display_Manager::processCommandQueue(void *taskParams)
             // System_Utils::sendDisplayContents(&display);
             Serial.println();
             
+        }
+        else
+        {
+            if (currentWindow != nullptr)
+            {
+                currentWindow->drawWindow();
+            }
         }
     }
 }
@@ -460,8 +469,8 @@ void Display_Manager::toggleSilentMode(uint8_t inputID)
 {
     System_Utils::silentMode = !System_Utils::silentMode;
 
-    FilesystemUtils::SettingsFile()["Silent Mode"] = System_Utils::silentMode;
-    FilesystemUtils::WriteSettingsFileToFlash();
+    FilesystemModule::Utilities::SettingsFile()["Silent Mode"] = System_Utils::silentMode;
+    FilesystemModule::Utilities::WriteSettingsFileToFlash();
 }
 
 void Display_Manager::quickActionMenu(uint8_t inputID)

@@ -10,6 +10,7 @@
 #include "ArduinoOTA.h"
 #include "driver/adc.h"
 #include "EventHandler.h"
+#include <string>
 
 #ifdef USE_BLE
 #include "esp_bt.h"
@@ -48,6 +49,9 @@ enum DebugCommand
 class System_Utils
 {
 public:
+    static std::string DeviceName;
+    static size_t DeviceID;
+
     static bool silentMode;
     static bool time24Hour;
     // static Adafruit_SSD1306 *OLEDdisplay;
@@ -157,6 +161,8 @@ public:
     static EventHandler &getEnableInterrupts() { return enableInterrupts; }
     static EventHandler &getDisableInterrupts() { return disableInterrupts; }
     static EventHandler &getSystemShutdown() { return systemShutdown; }
+
+    static void UpdateSettings(JsonDocument &settings);
 
 private:
     // Event Handlers

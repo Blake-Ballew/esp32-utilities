@@ -2,18 +2,21 @@
 
 #include "FilesystemUtils.h"
 
-// Manager class for the SPIFFS filesystem
-class FilesystemManager
+namespace FilesystemModule
 {
-public:
-    FilesystemManager() {}
-    ~FilesystemManager() {}
-
-    void Init()
+// Manager class for the SPIFFS filesystem
+    class Manager
     {
-        #if DEBUG == 1
-        Serial.println("FilesystemManager::Init");
-        #endif
-        FilesystemUtils::Init();
-    }
-};
+    public:
+        Manager() {}
+        ~Manager() {}
+
+        void InitializeFilesystem()
+        {
+            #if DEBUG == 1
+            Serial.println("FilesystemManager::Init");
+            #endif
+            Utilities::Init();
+        }
+    };
+}

@@ -9,7 +9,7 @@ namespace
     const int BROADCAST_PORT = 54789;
 }
 
-namespace NetworkModule
+namespace ConnectivityModule
 {
     // Broadcasts the IP address and port of a listening TCP server
     class TcpConnectionBroadcast : public WiFiUdpStream

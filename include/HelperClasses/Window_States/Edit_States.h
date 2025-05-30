@@ -448,6 +448,8 @@ public:
             }
         }
 
+        Display_Utils::enableRefreshTimer(500);
+
         displayState();
     }
 
@@ -462,6 +464,8 @@ public:
 
             transferData.serializedData = doc;
         }
+
+        Display_Utils::disableRefreshTimer();
 
         editStringContent->clearString();
     }

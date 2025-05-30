@@ -1,9 +1,9 @@
 #pragma once
 
 #include "OLED_Window.h"
-#include "BroadcastTcpState.h"
-#include "WiFiTcpStream.h"
-#include "NetworkUtils.h"
+#include "AwaitWifiState.h"
+#include "IpUtils.h"
+#include "RadioUtils.h"
 #include "RpcUtils.h"
 
 namespace
@@ -19,61 +19,19 @@ class WiFiRpcWindow : public OLED_Window
 public:
     WiFiRpcWindow(OLED_Window *parent) : OLED_Window(parent) 
     {
-        _rpcStream = nullptr;
-        _broadcast.assignInput(BUTTON_3, ACTION_BACK, "Back");
+        _wifiConnectState.assignInput(BUTTON_3, ACTION_BACK, "Back");
         _otherState.assignInput(BUTTON_3, ACTION_BACK, "Back");
 
-        auto result = NetworkModule::Utilities::EnableWiFi();
-        // Create TCP Stream
 
-        if (result)
-        {
-            #if DEBUG == 1
-            Serial.println("Connected to WiFi!");
-            #endif
-
-            _rpcStream = new NetworkModule::WiFiTcpStream(NetworkModule::Utilities::RPC_PORT);
-
-            setInitialState(&_broadcast);
-            _rpcStream->SetPort(NetworkModule::Utilities::RPC_PORT);
-            _rpcStream->StartServer();
-
-            _rpcStreamID = NetworkModule::Utilities::RegisterNetworkStream(_rpcStream);
-            _rpcChannelID = RpcModule::Utilities::AddRpcChannel(1024, 
-            NetworkModule::Utilities::RpcRequestHandler,
-           NetworkModule::Utilities::RpcResponseHandler);
-            NetworkModule::Utilities::AttachRpcStream(_rpcChannelID, _rpcStreamID);
-
-            #if DEBUG == 1
-            Serial.print("RPC Channel ID: "); Serial.println(_rpcChannelID);
-            Serial.print("RPC Stream ID: "); Serial.println(_rpcStreamID);
-            #endif
-        }
-        else
-        {
-            setInitialState(&_otherState);
-            _rpcConnectionState = RPC_WIFI_FAILED;
-        }
+        setInitialState(&_wifiConnectState);
+        Display_Utils::enableRefreshTimer(500);
     }
 
     ~WiFiRpcWindow() 
     {
-        if (_rpcStream != nullptr)
+        if (ConnectivityModule::RadioUtils::IsRadioActive())
         {
-            delete _rpcStream;
-            _rpcStream = nullptr;
-        }
-
-        NetworkModule::Utilities::DisableWiFi();
-        if (_rpcStreamID != -1)
-        {
-            NetworkModule::Utilities::UnregisterNetworkStream(_rpcStreamID);
-        }
-
-        if (_rpcChannelID != -1)
-        {
-            RpcModule::Utilities::RemoveRpcChannel(_rpcChannelID);
-            NetworkModule::Utilities::DetachRpcStream(_rpcChannelID);
+            ConnectivityModule::RadioUtils::DisableRadio();
         }
     }
 
@@ -81,44 +39,43 @@ public:
     {
         OLED_Window::drawWindow();
 
-        if (_rpcConnectionState == RPC_WIFI_FAILED)
+        if (currentState == &_wifiConnectState && ConnectivityModule::RadioUtils::IsWiFiActive())
         {
-            TextFormat prompt;
-            prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
-            prompt.verticalAlignment = ALIGN_CENTER_VERTICAL;
-            Display_Utils::printFormattedText("WiFi Error", prompt);
+            State_Transfer_Data td;
+            td.oldState = &_wifiConnectState;
+            td.newState = &_otherState;
+
+            transferState(td);
         }
-        else if (_rpcConnectionState == RPC_CONNECTION_ESTABLISHED)
+        else if (currentState == &_otherState && !ConnectivityModule::RadioUtils::IsWiFiActive())
         {
+            State_Transfer_Data td;
+            td.oldState = &_otherState;
+            td.newState = &_wifiConnectState;
+
+            transferState(td);
+        }
+        else if (currentState == &_otherState)
+        {
+            std::string ip = std::string(WiFi.localIP().toString().c_str());
+            std::string msg = "IP: " + ip;
+
             TextFormat prompt;
             prompt.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
             prompt.verticalAlignment = ALIGN_CENTER_VERTICAL;
-            Display_Utils::printFormattedText("RPC Client Connected", prompt);
-        } 
-        else if (_rpcConnectionState == RPC_AWAITING_CONNECTION)
-        {
-            if (_rpcStream != nullptr && _rpcStream->AcceptClientConnection())
-            {
-                _rpcConnectionState = RPC_CONNECTION_ESTABLISHED;
-                currentState = &_otherState;
-                RpcModule::Utilities::EnableRpcChannel(_rpcChannelID);
-            }
+
+            Display_Utils::printFormattedText(msg.c_str(), prompt);
         }
 
         Display_Utils::UpdateDisplay().Invoke();
     }
 
 protected:
-    // State to broadcast the TCP server
-    BroadcastTcpState _broadcast;
+    // State to connect to an AP via saved credentials or SmartConfig
+    AwaitWifiState _wifiConnectState;
     
-    // Blank state that does nothing. Just to have something to switch to
+    // State that displays IP the user can connect to
     Window_State _otherState;
-
-    NetworkModule::WiFiTcpStream *_rpcStream; 
-    int _rpcStreamID = -1;
-
-    int _rpcChannelID = -1;
 
 private:
     int _rpcConnectionState = RPC_AWAITING_CONNECTION;

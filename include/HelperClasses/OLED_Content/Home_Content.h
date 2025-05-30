@@ -5,6 +5,8 @@
 #include "FilesystemUtils.h"
 #include "LoraUtils.h"
 #include "System_Utils.h"
+#include "RadioUtils.h"
+#include "DrawWifiIcon.h"
 
 class Home_Content : public OLED_Content
 {
@@ -29,4 +31,5 @@ public:
 
 private:
     std::map<uint64_t, MessageBase *>::iterator msgIterator;
+    DrawWifiIcon _wifiIcon;
 };

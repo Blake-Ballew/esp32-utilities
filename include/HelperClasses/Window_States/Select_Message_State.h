@@ -46,9 +46,9 @@ public:
         if (transferData.serializedData != nullptr)
         {
             DynamicJsonDocument *doc = transferData.serializedData;
-            if (doc->containsKey("messages") && (*doc)["messages"].is<JsonArray>())
+            if (doc->containsKey("Messages") && (*doc)["Messages"].is<JsonArray>())
             {
-                for (auto msg : (*doc)["messages"].as<JsonArray>())
+                for (auto msg : (*doc)["Messages"].as<JsonArray>())
                 {
                     _Messages.push_back(msg.as<std::string>());
                 }

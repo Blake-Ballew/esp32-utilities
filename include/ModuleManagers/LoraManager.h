@@ -324,9 +324,9 @@ public:
         DynamicJsonDocument doc(1024);
         LoraUtils::SerializeUserInfoList(doc);
 
-        auto returncode = FilesystemUtils::WriteFile(USER_LIST_FILENAME, doc);
+        auto returncode = FilesystemModule::Utilities::WriteFile(USER_LIST_FILENAME, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to save user list. Error code: ");
@@ -339,9 +339,9 @@ public:
     void LoadUserInfoList()
     {
         DynamicJsonDocument doc(1024);
-        auto returncode = FilesystemUtils::ReadFile(USER_LIST_FILENAME, doc);
+        auto returncode = FilesystemModule::Utilities::ReadFile(USER_LIST_FILENAME, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to load user list. Error code: ");
@@ -360,9 +360,9 @@ public:
         DynamicJsonDocument doc(1024);
         LoraUtils::SerializeSavedMessageList(doc);
 
-        auto returncode = FilesystemUtils::WriteFile(MESSAGE_LIST_FILENAME, doc);
+        auto returncode = FilesystemModule::Utilities::WriteFile(MESSAGE_LIST_FILENAME, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to save message list. Error code: ");
@@ -375,9 +375,9 @@ public:
     void LoadMessageList()
     {
         DynamicJsonDocument doc(1024);
-        auto returncode = FilesystemUtils::ReadFile(MESSAGE_LIST_FILENAME, doc);
+        auto returncode = FilesystemModule::Utilities::ReadFile(MESSAGE_LIST_FILENAME, doc);
 
-        if (returncode != FilesystemReturnCode::FILESYSTEM_OK)
+        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
             #if DEBUG == 1
             Serial.print("Failed to load message list. Error code: ");

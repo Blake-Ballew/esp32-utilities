@@ -73,17 +73,6 @@ public:
         displayCursor = false;
     }
 
-    void start()
-    {
-        System_Utils::changeTimerPeriod(refreshTimerID, timerPeriodMS);
-        System_Utils::startTimer(refreshTimerID);
-    }
-
-    void stop()
-    {
-        System_Utils::stopTimer(refreshTimerID);
-    }
-
     void setString(std::string str, size_t maxLen)
     {
 #if DEBUG == 1
@@ -146,6 +135,5 @@ private:
     std::string currStr;
     size_t currStrLen;
 
-    const size_t timerPeriodMS = 500;
     bool displayCursor = false;
 };
