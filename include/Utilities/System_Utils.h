@@ -12,6 +12,11 @@
 #include "EventHandler.h"
 #include <string>
 
+#include "esp_ota_ops.h"
+#include "mbedtls/base64.h"
+
+#include "esp_rom_crc.h"
+
 #ifdef USE_BLE
 #include "esp_bt.h"
 #include "esp_gap_ble_api.h"
@@ -39,6 +44,14 @@ namespace
     // BLECharacteristic BLE_CHARACTERISTIC_RECEIVE_MSGPACK_UUID("8dd684a5-0090-4c81-9793-ac7f0d0d6e20", BLECharacteristic::PROPERTY_WRITE);
     // BLEDescriptor BLE_DESCRIPTOR_RECEIVE_MSGPACK_UUID(BLEUUID((uint16_t)0x2903));
 }
+
+struct {
+    esp_ota_handle_t handle = 0;
+    const esp_partition_t* partition = nullptr;
+    size_t total_size = 0;
+    size_t bytes_written = 0;
+    bool active = false;
+} ota_state;
 
 enum DebugCommand
 {
@@ -149,6 +162,12 @@ public:
     static void startOTA();
     static void stopOTA();
 
+    // RPC OTA
+    static int DecodeBase64(const char* input, uint8_t* output, size_t output_len);
+    static void StartOtaRpc(JsonDocument &doc);
+    static void UploadOtaChunkRpc(JsonDocument &doc);
+    static void EndOtaRpc(JsonDocument &doc);
+
     // Debug Companion Functionality
     static void sendDisplayContents(Adafruit_SSD1306 *display);
 
@@ -163,6 +182,8 @@ public:
     static EventHandler &getSystemShutdown() { return systemShutdown; }
 
     static void UpdateSettings(JsonDocument &settings);
+
+ 
 
 private:
     // Event Handlers

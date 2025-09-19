@@ -121,13 +121,13 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
 #endif
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
 
-        if (doc->containsKey("name")
-        && doc->containsKey("lat")
-        && doc->containsKey("lng"))
+        if (doc->containsKey("Name")
+        && doc->containsKey("Lat")
+        && doc->containsKey("Lng"))
         {
-            locName = (*doc)["name"].as<std::string>();
-            latitude = (*doc)["lat"].as<double>();
-            longitude = (*doc)["lng"].as<double>();
+            locName = (*doc)["Name"].as<std::string>();
+            latitude = (*doc)["Lat"].as<double>();
+            longitude = (*doc)["Lng"].as<double>();
             
             std::string currLocCompare = std::string(CURR_LOC);
             if (locName == currLocCompare)
@@ -168,9 +168,9 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
         }
 
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
-        if (doc != nullptr && doc->containsKey("message"))
+        if (doc != nullptr && doc->containsKey("Message"))
         {
-            const char *message = (*doc)["message"].as<const char *>();
+            const char *message = (*doc)["Message"].as<const char *>();
             // Send message
 
             MessagePing *newMsg = new MessagePing(

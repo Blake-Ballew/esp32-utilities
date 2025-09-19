@@ -40,14 +40,14 @@ public:
         if (transferData.serializedData != nullptr)
         {
             DynamicJsonDocument *doc = transferData.serializedData;
-            if (doc->containsKey("locations") && (*doc)["locations"].is<JsonArray>())
+            if (doc->containsKey("Locations") && (*doc)["Locations"].is<JsonArray>())
             {
-                for (auto loc : (*doc)["locations"].as<JsonArray>())
+                for (auto loc : (*doc)["Locations"].as<JsonArray>())
                 {
                     SavedLocation location;
-                    location.Name = loc["name"].as<std::string>();
-                    location.Latitude = loc["lat"].as<double>();
-                    location.Longitude = loc["lng"].as<double>();
+                    location.Name = loc["Name"].as<std::string>();
+                    location.Latitude = loc["Lat"].as<double>();
+                    location.Longitude = loc["Lng"].as<double>();
 
                     locations.push_back(location);
                 }
@@ -69,9 +69,9 @@ public:
             doc = new DynamicJsonDocument(128);
             auto location = *locationIt;
 
-            (*doc)["name"] = location.Name;
-            (*doc)["lat"] = location.Latitude;
-            (*doc)["lng"] = location.Longitude;
+            (*doc)["Name"] = location.Name;
+            (*doc)["Lat"] = location.Latitude;
+            (*doc)["Lng"] = location.Longitude;
 
             transferData.serializedData = doc;
         }

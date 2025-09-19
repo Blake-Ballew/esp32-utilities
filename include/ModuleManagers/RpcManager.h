@@ -5,6 +5,7 @@
 #include "RpcUtils.h"
 #include "RpcChannel.h"
 #include "System_Utils.h"
+#include "VersionUtils.h"
 #include "ESPAsyncWebServer.h"
 #include <string>
 
@@ -135,7 +136,7 @@ namespace RpcModule
 
                 if (!doc.as<JsonObject>().containsKey(RpcModule::Utilities::RPC_FUNCTION_NAME_FIELD()))
                 {
-                    request->send(400, "text/plain", "Packet does not contain function name");
+                    request->send(404, "text/plain", "Packet does not contain function name");
                     return;
                 }
 
@@ -203,6 +204,12 @@ namespace RpcModule
                     StaticJsonDocument<256> doc;
                     doc["DeviceName"] = System_Utils::DeviceName;
                     doc["DeviceID"] = System_Utils::DeviceID;
+                    doc["FirmwareVersion"] = FIRMWARE_VERSION_STRING;
+                    #ifdef HARDWARE_VERSION
+                    doc["HardwareVersion"] = HARDWARE_VERSION;
+                    #else
+                    doc["HardwareVersion"] = 0;
+                    #endif
                     std::string jsonReturn;
                     serializeJson(doc, jsonReturn);
                     request->send(200, "json", jsonReturn.c_str());   

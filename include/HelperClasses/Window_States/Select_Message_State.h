@@ -67,7 +67,7 @@ public:
         if (_MessageIt != _Messages.end() && transferData.inputID == BUTTON_4)
         {
             DynamicJsonDocument *doc = new DynamicJsonDocument(200);
-            (*doc)["message"] = *_MessageIt;
+            (*doc)["Message"] = *_MessageIt;
             transferData.serializedData = doc;
         }
     }

@@ -632,6 +632,149 @@ void System_Utils::stopOTA()
     ArduinoOTA.end();
 }
 
+int System_Utils::DecodeBase64(const char* input, uint8_t* output, size_t output_len)
+{
+    size_t out_len = 0;
+    int err = mbedtls_base64_decode(output, output_len, &out_len,
+                                    reinterpret_cast<const unsigned char*>(input),
+                                    strlen(input));
+    return err == 0 ? out_len : -1;
+}
+
+void System_Utils::StartOtaRpc(JsonDocument &doc)
+{
+    size_t size = doc["size"] | 0;
+    doc.clear();
+
+    if (size == 0) {
+        doc["error"] = "Missing or invalid 'size'";
+        return;
+    }
+
+    ota_state.partition = esp_ota_get_next_update_partition(nullptr);
+    if (!ota_state.partition) {
+        doc["error"] = "No update partition available";
+        return;
+    }
+
+    esp_err_t err = esp_ota_begin(ota_state.partition, size, &ota_state.handle);
+    if (err != ESP_OK) {
+        doc["error"] = "esp_ota_begin failed";
+        doc["code"] = err;
+        return;
+    }
+
+    ota_state.total_size = size;
+    ota_state.bytes_written = 0;
+    ota_state.active = true;
+
+    doc["status"] = "OTA begin successful";
+}
+
+void System_Utils::UploadOtaChunkRpc(JsonDocument &doc)
+{
+    #if DEBUG == 1
+    // Serial.println("UploadOtaChunkRpc packet: ");
+    // serializeJsonPretty(doc, Serial);
+    // Serial.println();
+    #endif
+
+    if (!doc.containsKey("chunk")) {
+        doc.clear();
+        doc["error"] = "Missing or invalid 'chunk'";
+        return;
+    }
+    auto b64 = doc["chunk"].as<std::string>();
+    
+    if (!doc.containsKey("checksum")) {
+        doc.clear();
+        doc["error"] = "Missing or invalid 'checksum'";
+        return;
+    }
+    auto checksum = doc["checksum"].as<uint32_t>();
+    
+
+    if (!ota_state.active) {
+        doc.clear();
+        doc["error"] = "OTA inactive";
+        return;
+    }
+
+    size_t b64Len = strlen(b64.c_str());
+    size_t binLen = (b64Len * 3) / 4;
+    std::unique_ptr<uint8_t[]> buffer(new uint8_t[binLen]);
+
+    int actualLen = DecodeBase64(b64.c_str(), buffer.get(), binLen);
+    if (actualLen <= 0) {
+        doc.clear();
+        doc["error"] = "Base64 decode failed";
+        return;
+    }
+
+    doc.clear();
+
+    uint32_t calculatedChecksum = 0;
+    for (size_t i = 0; i < actualLen; i++) {
+        calculatedChecksum += buffer[i];
+    }
+
+    if (calculatedChecksum != checksum) {
+        doc["error"] = "CRC mismatch";
+        #if DEBUG == 1
+        Serial.printf("expected checksum: %08X\n", checksum);
+        Serial.printf("calculated checksum: %08X\n", calculatedChecksum);
+        #endif
+        return;
+    }
+
+    esp_err_t err = esp_ota_write(ota_state.handle, buffer.get(), actualLen);
+    if (err != ESP_OK) {
+        esp_ota_abort(ota_state.handle);
+        ota_state.active = false;
+        doc["error"] = "esp_ota_write failed";
+        doc["code"] = err;
+        return;
+    }
+
+    ota_state.bytes_written += actualLen;
+    doc["written"] = actualLen;
+    doc["total_written"] = ota_state.bytes_written;
+    doc["remaining"] = ota_state.total_size - ota_state.bytes_written;
+}
+
+void System_Utils::EndOtaRpc(JsonDocument &doc)
+{
+    doc.clear();
+
+    if (!ota_state.active) {
+        doc["error"] = "OTA not active";
+        return;
+    }
+
+    if (ota_state.bytes_written < ota_state.total_size) {
+        doc["error"] = "Not enough data written";
+        return;
+    }
+
+    esp_err_t err = esp_ota_end(ota_state.handle);
+    if (err != ESP_OK) {
+        doc["error"] = "esp_ota_end failed";
+        doc["code"] = err;
+        return;
+    }
+
+    err = esp_ota_set_boot_partition(ota_state.partition);
+    if (err != ESP_OK) {
+        doc["error"] = "esp_ota_set_boot_partition failed";
+        doc["code"] = err;
+        return;
+    }
+
+    ota_state.active = false;
+    doc["status"] = "OTA complete";
+}
+
+
 void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
 {
     DynamicJsonDocument doc(10000);
@@ -673,5 +816,10 @@ void System_Utils::UpdateSettings(JsonDocument &settings)
     if (settings.containsKey("DeviceID"))
     {
         DeviceID = settings["DeviceID"].as<size_t>();
+    }
+
+    if (settings.containsKey("Device Name"))
+    {
+        DeviceName = settings["Device Name"]["cfgVal"].as<std::string>();
     }
 }
