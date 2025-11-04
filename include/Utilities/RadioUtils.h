@@ -131,7 +131,20 @@ namespace ConnectivityModule
             EnableRadio();
             WiFi.disconnect();
             WiFi.mode(WIFI_STA);
-            auto reuslt = WiFi.begin("Rum Ham", "Wildcard!") == WL_CONNECTED;
+            auto reuslt = WiFi.begin() == WL_CONNECTED;
+            if (reuslt)
+            {
+                RadioState() = RADIO_STATE_STA;
+            }
+            return reuslt;
+        }
+
+        static bool ConnectToAccessPoint(std::string ssid, std::string password)
+        {
+            EnableRadio();
+            WiFi.disconnect();
+            WiFi.mode(WIFI_STA);
+            auto reuslt = WiFi.begin(ssid.c_str(), password.c_str()) == WL_CONNECTED;
             if (reuslt)
             {
                 RadioState() = RADIO_STATE_STA;

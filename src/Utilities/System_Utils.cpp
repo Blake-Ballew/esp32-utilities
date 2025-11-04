@@ -808,14 +808,9 @@ void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
 
 void System_Utils::UpdateSettings(JsonDocument &settings)
 {
-    if (settings.containsKey("DeviceName"))
+    if (settings.containsKey("UserID"))
     {
-        DeviceName = settings["DeviceName"].as<std::string>();
-    }
-
-    if (settings.containsKey("DeviceID"))
-    {
-        DeviceID = settings["DeviceID"].as<size_t>();
+        DeviceID = 0 | settings["UserID"]["cfgVal"].as<int>();
     }
 
     if (settings.containsKey("Device Name"))

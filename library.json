@@ -19,8 +19,9 @@
     "adafruit/Adafruit Unified Sensor": "^1.1.9",
     "adafruit/Adafruit GFX Library": "^1.11.5",
     "adafruit/Adafruit SSD1306": "^2.5.7",
-    "mathieucarbou/ESPAsyncWebServer": "^3.6.0"
-  },
+    "mathieucarbou/ESPAsyncWebServer": "^3.6.0",
+    "tzapu/WiFiManager": "^2.0.17",
+    "WiFiManager": "https://github.com/rmsz005/AlooWifiManager.git"  },
   "frameworks": "*",
   "platforms": "*",
   "build": {
@@ -46,7 +47,8 @@
       "-Isrc/HelperClasses/Window_States",
       "-Isrc/HelperClasses/Message_Types",
       "-Isrc/ModuleManagers",
-      "-Isrc/Utilities"
+      "-Isrc/Utilities",
+      "-Ilib/"
     ]
   }
 }

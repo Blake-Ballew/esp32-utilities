@@ -385,6 +385,7 @@ void Display_Manager::generateMenuWindow(uint8_t inputID)
     menuWindow->addMenuItem("Debug Compass", ACTION_GENERATE_COMPASS_WINDOW);
     menuWindow->addMenuItem("Debug GPS", ACTION_GENERATE_GPS_WINDOW);
     menuWindow->addMenuItem("Diagnostics", ACTION_OPEN_DIAGNOSTICS_WINDOW);
+    // menuWindow->addMenuItem("OTA Update", ACTION_OPEN_OTA_WINDOW);
     menuWindow->addMenuItem("Reboot Device", ACTION_REBOOT_DEVICE);
 
     #if HARDWARE_VERSION == 1

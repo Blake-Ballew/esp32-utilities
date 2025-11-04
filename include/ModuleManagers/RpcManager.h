@@ -34,6 +34,16 @@ namespace RpcModule
             taskCore);
         }
 
+        int RegisterRpcChannel(RpcRequestSource pollFunctionPointer, RpcReplyDestination replyFunctionPointer, size_t bufferMaxSize = 512)
+        {
+            if (pollFunctionPointer == nullptr)
+            {
+                return -1;
+            }
+
+            return Utilities::AddRpcChannel(bufferMaxSize, pollFunctionPointer, replyFunctionPointer);
+        }
+
         void ProcessRpcChannels()
         {
             while (true)

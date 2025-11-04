@@ -42,6 +42,12 @@ namespace RpcModule
             _rpcMap.erase(name);
         }
 
+        static bool RpcResponseNullDestination(int channelID, JsonDocument &payload)
+    {
+        // Do nothing
+        return true;
+    }
+
         static RpcReturnCode CallRpc(std::string name, JsonDocument &doc)
         {
             if (_rpcMap.find(name) != _rpcMap.end())
@@ -93,6 +99,10 @@ namespace RpcModule
         {
             if (RpcChannels().find(channelID) != RpcChannels().end())
             {
+                #if DEBUG == 1
+                Serial.print("Removing channel ");
+                Serial.println(channelID);
+                #endif
                 RpcChannels().erase(channelID);
             }
         }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "System_Utils.h"
 #include "NetworkStreamInterface.h"
 #include <WiFi.h>

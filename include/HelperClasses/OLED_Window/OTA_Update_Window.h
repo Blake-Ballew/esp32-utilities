@@ -10,6 +10,8 @@ class OTA_Update_Window : public OLED_Window
 public:
     OTA_Update_Window(OLED_Window *parent) : OLED_Window(parent)
     {
+        _wifiConnectState.assignInput(BUTTON_3, ACTION_BACK, "Back");
+        _otherState.assignInput(BUTTON_3, ACTION_BACK, "Back");
         setInitialState(&_wifiConnectState);
         System_Utils::startOTA();
     }

@@ -2,6 +2,7 @@
 
 #include "Window_State.h"
 #include "RadioUtils.h"
+#include "ConnectivityUtils.h"
 
 class AwaitWifiState : public Window_State
 {
@@ -18,10 +19,12 @@ public:
         displayState();
 
         // Temporary
-        ConnectivityModule::RadioUtils::ConnectToAccessPoint();
-        awaitingSmartConnect = false;
-        skipTimeout = false;
-        return;
+        if (ConnectivityModule::RadioUtils::ConnectToAccessPoint())
+        {
+            awaitingSmartConnect = false;
+            skipTimeout = false;
+            return;
+        }
 
         bool credentialSaved = !(WiFi.SSID() == "");
         skipTimeout = true;
@@ -45,15 +48,19 @@ public:
         
         if (skipTimeout)
         {
-            ConnectivityModule::RadioUtils::InitializeSmartConfig();
+            // ConnectivityModule::RadioUtils::InitializeSmartConfig();
+            // ConnectivityModule::Utilities::InitializeEspNow().Invoke(ConnectivityModule::Utilities::DataReceivedRpc, nullptr);
+            ConnectivityModule::Utilities::InitializeWiFiProvisioning();
+            awaitingSmartConnect = true;
         }
     }
 
     void exitState(State_Transfer_Data &transferData)
     {
-        if (!WiFi.smartConfigDone())
+        if (!ConnectivityModule::RadioUtils::RadioState() != ConnectivityModule::RADIO_STATE_STA)
         {
-            WiFi.stopSmartConfig();
+            ConnectivityModule::Utilities::DeinitializeWiFiProvisioning();
+            // WiFi.stopSmartConfig();
         }
     }
 
@@ -61,7 +68,7 @@ public:
     {
         if (!awaitingSmartConnect && (skipTimeout || xTaskGetTickCount() > _WiFiConnectBegin + _WiFiTimeOut))
         {
-            ConnectivityModule::RadioUtils::InitializeSmartConfig();
+            ConnectivityModule::Utilities::InitializeWiFiProvisioning();
             awaitingSmartConnect = true;
         }
 
@@ -72,14 +79,36 @@ public:
         }
         else
         {
-            TextFormat tf;
-            tf.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
-            tf.verticalAlignment = TEXT_LINE;
-            tf.line = 2;
-            Display_Utils::printFormattedText("No WiFi Found", tf);
+            auto provisioningMode = ConnectivityModule::Utilities::ProvisioningMode();
 
-            tf.line = 3;
-            Display_Utils::printFormattedText("Awaiting SmartConfig", tf);
+            if (provisioningMode == ConnectivityModule::WIFI_PROV_MODE_ESP_NOW)
+            {
+                TextFormat tf;
+                tf.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+                tf.verticalAlignment = TEXT_LINE;
+                tf.line = 2;
+                Display_Utils::printFormattedText("No WiFi Found", tf);
+
+                tf.line = 3;
+                Display_Utils::printFormattedText("Awaiting SmartConfig", tf);
+            }
+            else if (provisioningMode == ConnectivityModule::WIFI_PROV_MODE_TEMP_AP)
+            {
+                TextFormat tf;
+                tf.horizontalAlignment = ALIGN_CENTER_HORIZONTAL;
+                tf.verticalAlignment = TEXT_LINE;
+                tf.line = 1;
+                Display_Utils::printFormattedText("Configure WiFi", tf);
+
+                tf.line++;
+                std::string ssid = "SSID: " + ConnectivityModule::Utilities::WiFiProvisiningApSSID();
+                Display_Utils::printFormattedText(ssid.c_str(), tf);
+
+                tf.line++;
+                std::string password = "Password: " + ConnectivityModule::Utilities::WiFiProvisiningApPassword();
+                Display_Utils::printFormattedText(password.c_str(), tf);
+            }
+            
             Display_Utils::UpdateDisplay().Invoke();
 
             #if DEBUG == 1
