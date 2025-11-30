@@ -469,73 +469,12 @@ bool System_Utils::enableWiFi()
     return true;
 }
 
-#ifdef USE_BLE
-
 void System_Utils::initBluetooth()
 {
-    #if DEBUG == 1
-    Serial.println("Initializing Bluetooth");
-    #endif
-    esp_err_t ret;
-
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    ret = esp_bt_controller_init(&bt_cfg);
-
-
-    ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    ret = esp_bluedroid_init();
-    ret = esp_bluedroid_enable();
-
-
-    #if DEBUG == 1
-    Serial.println("Registering event handlers");
-    #endif
-
-    ret = esp_ble_gatts_register_callback(gattsEventHandler);
-    ret = esp_ble_gap_register_callback(gapEventHandler);
-
-    
-
-    #if DEBUG == 1
-    Serial.println("Bluetooth initialized");
-    #endif
+    // Can't have both wifi and bluetooth enabled at the same time on the ESP32
+    disableWiFi();
+    Bluetooth_Utils::initBluetooth();
 }
-
-void System_Utils::gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
-{
-    #if DEBUG == 1
-    Serial.print("GAP Event: ");
-    Serial.println(event);
-    #endif
-}
-
-void System_Utils::gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
-{
-    #if DEBUG == 1
-    Serial.print("GATTS Event: ");
-    Serial.println(event);
-    #endif
-}
-
-#endif
-
-// void System_Utils::enableBluetooth()
-// {
-//     enableRadio(ADC_BT);
-//     esp_bt_controller_enable(ESP_BT_MODE_BTDM);
-// }
-
-// void System_Utils::disableBluetooth()
-// {
-//     disableRadio(ADC_BT);
-//     esp_bt_controller_disable();
-// }
-
-// void System_Utils::addCharacteristic(BLECharacteristic &characteristic)
-// {
-//     pService->addCharacteristic(&characteristic);
-//     bleCharacteristics.push_back(&characteristic);
-// }
 
 void System_Utils::disableWiFi()
 {
@@ -774,6 +713,17 @@ void System_Utils::EndOtaRpc(JsonDocument &doc)
     doc["status"] = "OTA complete";
 }
 
+void System_Utils::GetSystemInfoRpc(JsonDocument &doc)
+{
+    doc["DeviceName"] = System_Utils::DeviceName;
+    doc["DeviceID"] = System_Utils::DeviceID;
+    doc["FirmwareVersion"] = FIRMWARE_VERSION_STRING;
+    #ifdef HARDWARE_VERSION
+    doc["HardwareVersion"] = HARDWARE_VERSION;
+    #else
+    doc["HardwareVersion"] = 0;
+    #endif
+}
 
 void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
 {
