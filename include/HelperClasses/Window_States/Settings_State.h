@@ -67,9 +67,7 @@ public:
 
     void exitState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Settings_State::exitState");
-#endif
+        ESP_LOGD(TAG, "Settings_State::exitState");
         if (settingsContent != nullptr)
         {
             settingsContent->stop();
@@ -146,14 +144,9 @@ public:
 
     DynamicJsonDocument *initializeEdit(bool &success, JsonVariantType &selectedType)
     {
-#if DEBUG == 1
-        Serial.println("Settings_State::initializeEdit");
-#endif
+        ESP_LOGD(TAG, "Settings_State::initializeEdit");
         selectedType = settingsContent->getSelectionVariantType();
-        #if DEBUG == 1
-        Serial.print("Settings_State::initializeEdit: selectedType: ");
-        Serial.println(selectedType);
-#endif
+        ESP_LOGD(TAG, "Settings_State::initializeEdit: selectedType: %d", selectedType);
 
         if (selectedType == JSON_VARIANT_CONFIGURABLE_STRING ||
             selectedType == JSON_VARIANT_CONFIGURABLE_ENUM ||
@@ -163,13 +156,12 @@ public:
         {
             settingsContent->pushVariant();
             auto returnData = settingsContent->getEditStateInput();
-#if DEBUG == 1
             if (returnData != nullptr)
             {
-                Serial.println("Settings_State::initializeEdit: returnData");
-                ArduinoJson::serializeJsonPretty(*returnData, Serial);
+                std::string buf;
+                ArduinoJson::serializeJsonPretty(*returnData, buf);
+                ESP_LOGD(TAG, "Settings_State::initializeEdit: returnData: %s", buf.c_str());
             }
-#endif
             if (returnData != nullptr)
             {
                 success = true;

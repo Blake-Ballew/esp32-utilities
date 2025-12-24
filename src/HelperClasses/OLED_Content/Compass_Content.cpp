@@ -13,36 +13,24 @@ Compass_Content::Compass_Content(Adafruit_SSD1306 *disp)
 
 Compass_Content::~Compass_Content()
 {
-#if DEBUG == 1
-    Serial.println("Compass_Content destructor");
-#endif
+    ESP_LOGV(TAG, "Compass_Content destructor");
     if (xTimerIsTimerActive(updateTimer) == pdTRUE)
     {
-#if DEBUG == 1
-        Serial.println("Compass_Content destructor: Timer is active");
-#endif
+        ESP_LOGV(TAG, "Compass_Content destructor: Timer is active");
         if (xTimerStop(updateTimer, 0) == pdFALSE)
         {
-#if DEBUG == 1
-            Serial.println("Compass_Content destructor: Could not stop timer");
-#endif
+            ESP_LOGV(TAG, "Compass_Content destructor: Could not stop timer");
         }
         else
         {
-#if DEBUG == 1
-            Serial.println("Compass_Content destructor: Timer stopped");
-#endif
+            ESP_LOGV(TAG, "Compass_Content destructor: Timer stopped");
         }
     }
     /*         if (xTimerDelete(updateTimer, 500) == pdFALSE)
             {
-    #if DEBUG == 1
-                Serial.println("Compass_Content destructor: Could not delete timer");
-    #endif
+                ESP_LOGV(TAG, "Compass_Content destructor: Could not delete timer");
             } */
-#if DEBUG == 1
-    Serial.println("Compass_Content destructor: Timer deleted");
-#endif
+    ESP_LOGV(TAG, "Compass_Content destructor: Timer deleted");
     thisInstance = nullptr;
 }
 

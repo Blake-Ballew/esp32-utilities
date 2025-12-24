@@ -19,9 +19,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-        #if DEBUG == 1
-        Serial.println("SaveLocationState::enterState");
-        #endif
+        ESP_LOGI(TAG, "SaveLocationState::enterState");
 
         if (transferData.serializedData == nullptr)
         {

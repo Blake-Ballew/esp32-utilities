@@ -2,6 +2,7 @@
 
 #include "LED_Pattern_Interface.h"
 
+
 // A pattern used to point a direction with the LED ring.
 // The angle is degrees from the beginning index of the ring is supplied for the direction.
 // The sharpness of the point is controlled by the fadeDegrees parameter.
@@ -66,14 +67,10 @@ public:
 
     bool iterateFrame()
     {
-        #if DEBUG == 1
-            // Serial.println("RingPoint::iterateFrame");
-        #endif
+        ESP_LOGV(TAG, "RingPoint::iterateFrame");
         if (beginIdx == -1 || endIdx == -1)
         {
-            #if DEBUG == 1
-                Serial.println("RingPoint::iterateFrame: Invalid begin or end index");
-            #endif
+            ESP_LOGW(TAG, "RingPoint::iterateFrame: Invalid begin or end index");
             return true;
         }
 

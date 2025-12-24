@@ -56,33 +56,23 @@ void Settings_Window::callFunctionState(uint8_t inputID)
             switch (editType)
             {
             case JSON_VARIANT_CONFIGURABLE_BOOL:
-#if DEBUG == 1
-                Serial.println("Settings_Window::callFunctionState(): editBoolState");
-#endif
+                ESP_LOGV(TAG, "Settings_Window::callFunctionState(): editBoolState");
                 transferData.newState = editBoolState;
                 break;
             case JSON_VARIANT_CONFIGURABLE_INTEGER:
-#if DEBUG == 1
-                Serial.println("Settings_Window::callFunctionState(): editIntState");
-#endif
+                ESP_LOGV(TAG, "Settings_Window::callFunctionState(): editIntState");
                 transferData.newState = editIntState;
                 break;
             case JSON_VARIANT_CONFIGURABLE_STRING:
-#if DEBUG == 1
-                Serial.println("Settings_Window::callFunctionState(): editStringState");
-#endif
+                ESP_LOGV(TAG, "Settings_Window::callFunctionState(): editStringState");
                 transferData.newState = editStringState;
                 break;
             case JSON_VARIANT_CONFIGURABLE_FLOAT:
-#if DEBUG == 1
-                Serial.println("Settings_Window::callFunctionState(): editFloatState");
-#endif
+                ESP_LOGV(TAG, "Settings_Window::callFunctionState(): editFloatState");
                 transferData.newState = editFloatState;
                 break;
             case JSON_VARIANT_CONFIGURABLE_ENUM:
-#if DEBUG == 1
-                Serial.println("Settings_Window::callFunctionState(): editEnumState");
-#endif
+                ESP_LOGV(TAG, "Settings_Window::callFunctionState(): editEnumState");
                 transferData.newState = editEnumState;
                 break;
             default:
@@ -115,9 +105,7 @@ void Settings_Window::returnFromFunctionState(uint8_t inputID)
 
 void Settings_Window::transferState(State_Transfer_Data &transferData)
 {
-#if DEBUG == 1
-    Serial.println("Settings_Window::transferState()");
-#endif
+    ESP_LOGV(TAG, "Settings_Window::transferState()");
 
     transferData.oldState->exitState(transferData);
 

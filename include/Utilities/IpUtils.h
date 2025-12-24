@@ -1,14 +1,13 @@
 #pragma once
 
 #include "System_Utils.h"
+#include "ConnectivityUtils.h"
 #include "NetworkStreamInterface.h"
 #include <WiFi.h>
 #include <unordered_map>
 
 namespace ConnectivityModule
 {
-
-
     class IpUtils
     {
     public:
@@ -52,11 +51,6 @@ namespace ConnectivityModule
 
         static bool RpcRequestHandler(int channelID, JsonDocument &payload)
         {
-            #if DEBUG == 1
-            // Serial.print("NetworkUtils::RpcRequestHandler. channelID: "); 
-            // Serial.println(channelID);
-            #endif
-
             if (_RpcStreams().find(channelID) != _RpcStreams().end() &&
                 _NetworkStreams().find(_RpcStreams()[channelID]) != _NetworkStreams().end())
             {
@@ -65,9 +59,7 @@ namespace ConnectivityModule
 
                 if (result == DeserializationError::Ok)
                 {
-                    #if DEBUG == 1
-                    Serial.println("NetworkUtils::RpcRequestHandler. result: Ok");
-                    #endif
+                    ESP_LOGD(TAG, "RpcRequestHandler result: Ok");
                     return true;
                 }
             }
@@ -83,27 +75,26 @@ namespace ConnectivityModule
                 auto networkStreamID = _RpcStreams()[channelID];
                 auto stream = _NetworkStreams()[networkStreamID];
 
-                #if DEBUG == 1
-                Serial.println("NetworkUtils::RpcResponseHandler. sening payload: ");
-                serializeJson(payload, Serial);
-                Serial.println("");
-                #endif
+                std::string buf;
+                serializeJson(payload, buf);
+                ESP_LOGV(TAG, "RpcResponseHandler sending payload: %s", buf.c_str());
 
                 stream->BeginPacket();
                 auto result = serializeMsgPack(payload, stream->GetStream());
-                #if DEBUG == 1
-                Serial.print("NetworkUtils::RpcResponseHandler. bytes written: ");
-                Serial.println(result);
-                Serial.println("Bytes: ");
+
                 uint8_t buffer[measureMsgPack(payload)];
                 serializeMsgPack(payload, buffer, sizeof(buffer));
+                ESP_LOGV(TAG, "RpcResponseHandler bytes written: %zu", result);
+
+                std::string hexStr;
                 for (int i = 0; i < result; i++)
                 {
-                    Serial.print(buffer[i], HEX);
-                    Serial.print(" ");
+                    char hex[4];
+                    snprintf(hex, sizeof(hex), "%02X ", buffer[i]);
+                    hexStr += hex;
                 }
-                Serial.println("");
-                #endif
+                ESP_LOGV(TAG, "Bytes: %s", hexStr.c_str());
+
                 stream->EndPacket();
             }
         }

@@ -2,6 +2,7 @@
 
 #include "LED_Pattern_Interface.h"
 
+
 // Fades in entire LED ring then fades out
 class Ring_Pulse : public LED_Pattern_Interface
 {
@@ -46,9 +47,7 @@ public:
 
     bool iterateFrame()
     {
-        #if DEBUG == 1
-        // Serial.println("Ring Pulse");
-        #endif
+        ESP_LOGV(TAG, "Ring Pulse");
         if (beginIdx == -1 || endIdx == -1)
         {
             return true;

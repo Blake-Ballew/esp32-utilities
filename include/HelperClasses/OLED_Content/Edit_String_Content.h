@@ -2,6 +2,7 @@
 
 #include "OLED_Content.h"
 
+
 class Edit_String_Content : public OLED_Content
 {
 public:
@@ -12,17 +13,13 @@ public:
 
     ~Edit_String_Content()
     {
-#if DEBUG == 1
-        Serial.println("Edit_String_Content destructor");
-#endif
+        ESP_LOGD(TAG, "Destructor");
         stop();
     }
 
     void printContent()
     {
-#if DEBUG == 1
-        Serial.println("Edit_String_Content::printContent");
-#endif
+        ESP_LOGD(TAG, "printContent");
 
         // Clear content area
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
@@ -75,10 +72,7 @@ public:
 
     void setString(std::string str, size_t maxLen)
     {
-#if DEBUG == 1
-        Serial.print("Editing string: ");
-        Serial.println(str.c_str());
-#endif
+        ESP_LOGD(TAG, "Editing string: %s", str.c_str());
 
         currStr = str;
         currStrLen = maxLen;

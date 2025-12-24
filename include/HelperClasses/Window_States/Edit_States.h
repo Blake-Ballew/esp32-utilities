@@ -7,6 +7,7 @@
 #include "Edit_Int_Content.h"
 #include "Edit_String_Content.h"
 
+
 class Edit_Bool_State : public Window_State
 {
 public:
@@ -211,23 +212,17 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-        #if DEBUG == 1
-        Serial.println("Edit_Float_State::enterState");
-        #endif
+        ESP_LOGD(TAG, "Edit_Float_State::enterState");
         Window_State::enterState(transferData);
 
         if (transferData.serializedData != nullptr)
         {
-            #if DEBUG == 1
-            Serial.println("Edit_Float_State::enterState: serializedData not null");
-            #endif
+            ESP_LOGD(TAG, "Edit_Float_State::enterState: serializedData not null");
             ArduinoJson::DynamicJsonDocument *doc = transferData.serializedData;
             // Extract values if found and call editFloat
             if (doc->containsKey("cfgVal") && doc->containsKey("minVal") && doc->containsKey("maxVal") && doc->containsKey("incVal"))
             {
-                #if DEBUG == 1
-                Serial.printf("Edit_Float_State::enterState: cfgVal: %f, minVal: %f, maxVal: %f, incVal: %f\n", (*doc)["cfgVal"].as<float>(), (*doc)["minVal"].as<float>(), (*doc)["maxVal"].as<float>(), (*doc)["incVal"].as<float>());
-                #endif
+                ESP_LOGD(TAG, "Edit_Float_State::enterState: cfgVal: %f, minVal: %f, maxVal: %f, incVal: %f", (*doc)["cfgVal"].as<float>(), (*doc)["minVal"].as<float>(), (*doc)["maxVal"].as<float>(), (*doc)["incVal"].as<float>());
                 float value = (*doc)["cfgVal"].as<float>();
                 float min = (*doc)["minVal"].as<float>();
                 float max = (*doc)["maxVal"].as<float>();
@@ -301,23 +296,17 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-        #if DEBUG == 1
-        Serial.println("Edit_Int_State::enterState");
-        #endif
+        ESP_LOGD(TAG, "Edit_Int_State::enterState");
         Window_State::enterState(transferData);
 
         if (transferData.serializedData != nullptr)
         {
-            #if DEBUG == 1
-            Serial.println("Edit_Int_State::enterState: serializedData not null");
-            #endif
+            ESP_LOGD(TAG, "Edit_Int_State::enterState: serializedData not null");
             ArduinoJson::DynamicJsonDocument *doc = transferData.serializedData;
             // Extract values if found and call editInt
             if (doc->containsKey("cfgVal") && doc->containsKey("minVal") && doc->containsKey("maxVal") && doc->containsKey("incVal") && doc->containsKey("signed"))
             {
-                #if DEBUG == 1
-                Serial.println("Edit_Int_State::enterState: cfgVal, minVal, maxVal, incVal, signed found");
-                #endif
+                ESP_LOGD(TAG, "Edit_Int_State::enterState: cfgVal, minVal, maxVal, incVal, signed found");
                 isSigned = (*doc)["signed"].as<bool>();
                 int value = (*doc)["cfgVal"].as<int>();
                 int min = (*doc)["minVal"].as<int>();
@@ -326,16 +315,12 @@ public:
 
                 if (isSigned)
                 {
-                    #if DEBUG == 1
-                    Serial.println("Edit_Int_State::enterState: isSigned");
-                    #endif
+                    ESP_LOGD(TAG, "Edit_Int_State::enterState: isSigned");
                     editIntContent->editSignedInt(value, min, max, step);
                 }
                 else
                 {
-                    #if DEBUG == 1
-                    Serial.println("Edit_Int_State::enterState: isUnsigned");
-                    #endif
+                    ESP_LOGD(TAG, "Edit_Int_State::enterState: isUnsigned");
                     editIntContent->editUnsignedInt(value, min, max, step);
                 }
             }
@@ -417,9 +402,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Edit_String_State::enterState");
-#endif
+        ESP_LOGD(TAG, "Edit_String_State::enterState");
         Window_State::enterState(transferData);
 
         editStringContent->clearString();
@@ -430,19 +413,15 @@ public:
             // Extract values if found and call editString
             if (doc->containsKey("maxLen"))
             {
-#if DEBUG == 1
-                // Serial.print("Edit_String_State::enterState: cfgVal -  ");
-                // Serial.println((*doc)["cfgVal"].as<std::string>().c_str());
-                // Serial.print("Edit_String_State::enterState: maxLen -  ");
-                // Serial.println((*doc)["maxLen"].as<size_t>());
-#endif
                 std::string str;
                 if (doc->containsKey("cfgVal"))
                 {
                     str = (*doc)["cfgVal"].as<std::string>();
                 }
-                
+
                 size_t maxLength = (*doc)["maxLen"].as<size_t>();
+
+                ESP_LOGV(TAG, "Edit_String_State::enterState: cfgVal: %s, maxLen: %zu", str.c_str(), maxLength);
 
                 editStringContent->setString(str, maxLength);
             }

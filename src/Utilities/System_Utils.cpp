@@ -1,4 +1,5 @@
 #include "System_Utils.h"
+
 std::string System_Utils::DeviceName = "ESP32";
 size_t System_Utils::DeviceID = 0;
 
@@ -41,10 +42,7 @@ long System_Utils::getBatteryPercentage()
 {
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
 
-#if DEBUG == 1
-    // Serial.print("Battery voltage: ");
-    // Serial.println(voltage);
-#endif
+    ESP_LOGV(TAG, "Battery voltage: %u", voltage);
 
     // Show full battery if BATT_SENSE_PIN is low. Device is plugged in.
 
@@ -87,34 +85,25 @@ void System_Utils::shutdownBatteryWarning()
 
 void System_Utils::enableInterruptsInvoke()
 {
-    #if DEBUG == 1
-    // Serial.println("Enabling interrupts");
-    #endif
+    ESP_LOGV(TAG, "Enabling interrupts");
     enableInterrupts.Invoke();
 }
 
 void System_Utils::disableInterruptsInvoke()
 {
-    #if DEBUG == 1
-    // Serial.println("Disabling interrupts");
-    #endif
+    ESP_LOGV(TAG, "Disabling interrupts");
     disableInterrupts.Invoke();
 }
 
 void System_Utils::systemShutdownInvoke()
 {
-    #if DEBUG == 1
-    // Serial.println("Shutting down system");
-    #endif
+    ESP_LOGV(TAG, "Shutting down system");
     systemShutdown.Invoke();
 }
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)
 {
-#if DEBUG == 1
-    // Serial.print("Registering timer: ");
-    // Serial.println(timerName);
-#endif
+    ESP_LOGV(TAG, "Registering timer: %s", timerName);
 
     TimerHandle_t handle = xTimerCreate(timerName, periodMS, pdTRUE, (void *)0, callback);
 
@@ -131,10 +120,7 @@ int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCal
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback, StaticTimer_t &timerBuffer)
 {
-#if DEBUG == 1
-    // Serial.print("Registering static timer: ");
-    // Serial.println(timerName);
-#endif
+    ESP_LOGV(TAG, "Registering static timer: %s", timerName);
     TimerHandle_t handle = xTimerCreateStatic(timerName, periodMS, pdTRUE, (void *)0, callback, &timerBuffer);
 
     if (handle != nullptr)
@@ -150,10 +136,7 @@ int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCal
 
 void System_Utils::deleteTimer(int timerID)
 {
-#if DEBUG == 1
-    // Serial.print("Deleting timer: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Deleting timer: %d", timerID);
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
@@ -164,10 +147,7 @@ void System_Utils::deleteTimer(int timerID)
 
 bool System_Utils::isTimerActive(int timerID)
 {
-#if DEBUG == 1
-    // Serial.print("Checking if timer is active: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Checking if timer is active: %d", timerID);
     if (systemTimers.find(timerID) != systemTimers.end())
     {
         return xTimerIsTimerActive(systemTimers[timerID]);
@@ -177,10 +157,7 @@ bool System_Utils::isTimerActive(int timerID)
 
 void System_Utils::startTimer(int timerID)
 {
-#if DEBUG == 1
-    // Serial.print("Starting timer: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Starting timer: %d", timerID);
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
@@ -190,34 +167,24 @@ void System_Utils::startTimer(int timerID)
 
 void System_Utils::stopTimer(int timerID)
 {
-#if DEBUG == 1
-    // Serial.print("Stopping timer: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Stopping timer: %d", timerID);
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
         if (xTimerStop(systemTimers[timerID], 1000) == pdFAIL)
         {
-            #if DEBUG == 1
-            Serial.println("Error stopping timer");
-            #endif
+            ESP_LOGE(TAG, "Error stopping timer");
         }
     }
     else
     {
-        #if DEBUG == 1
-        Serial.println("unable to find timer");
-        #endif
+        ESP_LOGE(TAG, "unable to find timer");
     }
 }
 
 void System_Utils::resetTimer(int timerID)
 {
-#if DEBUG == 1
-    // Serial.print("Resetting timer: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Resetting timer: %d", timerID);
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
@@ -227,10 +194,7 @@ void System_Utils::resetTimer(int timerID)
 
 void System_Utils::changeTimerPeriod(int timerID, size_t timerPeriodMS)
 {
-#if DEBUG == 1
-    // Serial.print("Changing timer period: ");
-    // Serial.println(timerID);
-#endif
+    ESP_LOGV(TAG, "Changing timer period: %d", timerID);
 
     if (systemTimers.find(timerID) != systemTimers.end())
     {
@@ -354,10 +318,7 @@ int System_Utils::registerTask(
     }
     else
     {
-        #if DEBUG == 1
-        Serial.print("Unable to create task: ");
-        Serial.println(taskName);
-        #endif
+        ESP_LOGE(TAG, "Unable to create task: %s", taskName);
         return -1;
     }
     
@@ -473,9 +434,7 @@ bool System_Utils::enableWiFi()
 
 void System_Utils::initBluetooth()
 {
-    #if DEBUG == 1
-    Serial.println("Initializing Bluetooth");
-    #endif
+    ESP_LOGI(TAG, "Initializing Bluetooth");
     esp_err_t ret;
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -487,34 +446,24 @@ void System_Utils::initBluetooth()
     ret = esp_bluedroid_enable();
 
 
-    #if DEBUG == 1
-    Serial.println("Registering event handlers");
-    #endif
+    ESP_LOGI(TAG, "Registering event handlers");
 
     ret = esp_ble_gatts_register_callback(gattsEventHandler);
     ret = esp_ble_gap_register_callback(gapEventHandler);
 
-    
 
-    #if DEBUG == 1
-    Serial.println("Bluetooth initialized");
-    #endif
+
+    ESP_LOGI(TAG, "Bluetooth initialized");
 }
 
 void System_Utils::gapEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
-    #if DEBUG == 1
-    Serial.print("GAP Event: ");
-    Serial.println(event);
-    #endif
+    ESP_LOGD(TAG, "GAP Event: %d", event);
 }
 
 void System_Utils::gattsEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
-    #if DEBUG == 1
-    Serial.print("GATTS Event: ");
-    Serial.println(event);
-    #endif
+    ESP_LOGD(TAG, "GATTS Event: %d", event);
 }
 
 #endif
@@ -673,11 +622,9 @@ void System_Utils::StartOtaRpc(JsonDocument &doc)
 
 void System_Utils::UploadOtaChunkRpc(JsonDocument &doc)
 {
-    #if DEBUG == 1
-    // Serial.println("UploadOtaChunkRpc packet: ");
-    // serializeJsonPretty(doc, Serial);
-    // Serial.println();
-    #endif
+    std::string buf;
+    serializeJsonPretty(doc, buf);
+    ESP_LOGV(TAG, "UploadOtaChunkRpc packet: %s", buf.c_str());
 
     if (!doc.containsKey("chunk")) {
         doc.clear();
@@ -720,10 +667,8 @@ void System_Utils::UploadOtaChunkRpc(JsonDocument &doc)
 
     if (calculatedChecksum != checksum) {
         doc["error"] = "CRC mismatch";
-        #if DEBUG == 1
-        Serial.printf("expected checksum: %08X\n", checksum);
-        Serial.printf("calculated checksum: %08X\n", calculatedChecksum);
-        #endif
+        ESP_LOGD(TAG, "expected checksum: %08X", checksum);
+        ESP_LOGD(TAG, "calculated checksum: %08X", calculatedChecksum);
         return;
     }
 

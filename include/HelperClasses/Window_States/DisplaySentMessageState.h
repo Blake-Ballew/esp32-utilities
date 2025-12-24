@@ -3,6 +3,7 @@
 #include "Window_State.h"
 #include "LoraUtils.h"
 
+
 class DisplaySentMessageState : public Window_State
 {
 public:
@@ -55,11 +56,9 @@ public:
 
                 transferData.serializedData = doc;
 
-                #if DEBUG == 1
-                Serial.print("Retransmitting message: ");
-                serializeJson(*transferData.serializedData, Serial);
-                Serial.println();
-                #endif
+                std::string buf;
+                serializeJson(*transferData.serializedData, buf);
+                ESP_LOGI(TAG, "Retransmitting message: %s", buf.c_str());
             }
         }
 

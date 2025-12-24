@@ -4,6 +4,7 @@
 #include "MessagePing.h"
 #include "LED_Utils.h"
 
+
 class LoraMessageDisplay : public OLED_Content
 {
 public:
@@ -43,9 +44,6 @@ public:
 
     void printContent()
     {
-        #if DEBUG == 1
-        // Serial.println("LoraMessageDisplay::printContent()");
-        #endif
         if (_DisplayMessage == nullptr)
         {
             return;
@@ -55,10 +53,6 @@ public:
         _DisplayMessage->GetPrintableInformation(displayInfo);
 
         Display_Utils::clearContentArea();
-
-        #if DEBUG == 1
-        // Serial.printf("LoraMessageDisplay::printContent() displayInfo.size() = %d\n", displayInfo.size());
-        #endif
 
         for (size_t i = 0; i < displayInfo.size(); i++)
         {

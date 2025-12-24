@@ -2,6 +2,7 @@
 
 #include "OLED_Content.h"
 
+
 class Edit_Float_Content : public OLED_Content
 {
 public:
@@ -12,9 +13,7 @@ public:
 
     ~Edit_Float_Content()
     {
-#if DEBUG == 1
-        Serial.println("Edit_Float_Content destructor");
-#endif
+        ESP_LOGD(TAG, "Destructor");
     }
 
     void encDown()
@@ -43,22 +42,14 @@ public:
         display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
         display->setCursor(Display_Utils::centerTextHorizontal(6), Display_Utils::centerTextVertical());
         display->print(this->floatToEdit);
-#if DEBUG == 1
-        Serial.print("Edit_Float_Content::printContent() - ");
-        Serial.println(this->floatToEdit);
-        Serial.print("display x: ");
-        Serial.println(display->getCursorX());
-        Serial.print("display y: ");
-        Serial.println(display->getCursorY());
-#endif
+        ESP_LOGD(TAG, "printContent - value: %f, cursor: (%d, %d)",
+                 this->floatToEdit, display->getCursorX(), display->getCursorY());
         display->display();
     }
 
     void editFloat(double floatToEdit, double min, double max, double incrementAmt = 0.1f)
     {
-        #if DEBUG == 1
-        Serial.println("Edit_Float_Content::editFloat()");
-        #endif 
+        ESP_LOGD(TAG, "editFloat");
         this->floatToEdit = floatToEdit;
         this->incrementAmt = incrementAmt;
         this->min = min;

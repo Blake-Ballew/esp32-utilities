@@ -19,9 +19,7 @@ Settings_Content::~Settings_Content()
 
 void Settings_Content::printContent()
 {
-#if DEBUG == 1
-    Serial.println("Settings_Content::printContent()");
-#endif
+    ESP_LOGV(TAG, "Settings_Content::printContent()");
     auto variantType = Settings_Manager::getVariantType(currentNode.variant);
     this->display->fillRect(6, 8, OLED_WIDTH - 12, OLED_HEIGHT - 16, SSD1306_BLACK);
 
@@ -160,9 +158,7 @@ void Settings_Content::refresh()
 
 size_t Settings_Content::getVariantDepth()
 {
-#if DEBUG == 1
-    Serial.printf("=============Settings_Content::getVariantDepth(): %d=============\n", variantStack.size());
-#endif
+    ESP_LOGV(TAG, "=============Settings_Content::getVariantDepth(): %d=============", variantStack.size());
     return variantStack.size();
 }
 
@@ -305,10 +301,7 @@ JsonVariantType Settings_Content::getVariantType()
 JsonVariantType Settings_Content::getSelectionVariantType()
 {
     auto variantType = currentNode.type;
-    #if DEBUG == 1
-    Serial.print("Current node variant type: ");
-    Serial.println(variantType);
-    #endif
+    ESP_LOGV(TAG, "Current node variant type: %d", variantType);
     switch (variantType)
     {
     case JsonVariantType::JSON_VARIANT_TYPE_OBJECT:
@@ -370,10 +363,7 @@ void Settings_Content::saveReturnValueFromEditState(JsonVariant returnData)
         else
         {
             const char *str = returnData.as<const char *>();
-            #if DEBUG == 1
-            Serial.print("Settings_Content::saveReturnValueFromEditState(): str: ");
-            Serial.println(str);
-            #endif
+            ESP_LOGV(TAG, "Settings_Content::saveReturnValueFromEditState(): str: %s", str);
             char *newStr = new char[strlen(str) + 1];
             strcpy(newStr, str);
             newStr[strlen(str)] = '\0';
@@ -384,10 +374,7 @@ void Settings_Content::saveReturnValueFromEditState(JsonVariant returnData)
 
 DynamicJsonDocument *Settings_Content::getEditStateInput()
 {
-    #if DEBUG == 1
-    Serial.print("Settings_Content::getEditStateInput(): currentNode.type: ");
-    Serial.println(currentNode.type);
-    #endif
+    ESP_LOGV(TAG, "Settings_Content::getEditStateInput(): currentNode.type: %d", currentNode.type);
     switch (currentNode.type)
     {
     case JSON_VARIANT_CONFIGURABLE_BOOL:

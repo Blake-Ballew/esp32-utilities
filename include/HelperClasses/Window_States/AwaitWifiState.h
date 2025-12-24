@@ -111,9 +111,7 @@ public:
             
             Display_Utils::UpdateDisplay().Invoke();
 
-            #if DEBUG == 1
-            WiFi.smartConfigDone() ? Serial.println("SmartConfig Done") : Serial.println("SmartConfig Not Done");
-            #endif
+            ESP_LOGD(TAG, "SmartConfig status: %s", WiFi.smartConfigDone() ? "Done" : "Not Done");
         }
     }
 

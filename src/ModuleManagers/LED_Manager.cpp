@@ -13,9 +13,7 @@ int LED_Manager::patternTaskID = -1;
 
 void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
 {
-    #if DEBUG == 1
-    Serial.println("LED_Manager::init");
-    #endif
+    ESP_LOGI(TAG, "LED_Manager::init");
     leds = new CRGB[numLeds];
     LED_Utils::setLeds(leds, numLeds);
 
@@ -50,10 +48,7 @@ void LED_Manager::initializeButtonFlashAnimation()
 
 void LED_Manager::inputButtonFlash(uint8_t inputID)
 {
-    #if DEBUG == 1
-    Serial.print("Button flash input: ");
-    Serial.println(inputID);
-    #endif
+    ESP_LOGD(TAG, "Button flash input: %d", inputID);
     StaticJsonDocument<64> cfg;
     cfg["inputID"] = inputID;
 
@@ -79,20 +74,15 @@ void LED_Manager::pointNorth(int Azimuth)
 
 void LED_Manager::pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b)
 {
-#if DEBUG == 1
     static uint8_t refreshTicks = 0;
 
     if (!refreshTicks)
     {
-        Serial.print("Azimuth: ");
-        Serial.println(Azimuth);
-        Serial.print("Heading: ");
-        Serial.println(heading);
-        Serial.print("Distance: ");
-        Serial.println(distanceAway);
+        ESP_LOGV(TAG, "Azimuth: %d", Azimuth);
+        ESP_LOGV(TAG, "Heading: %f", heading);
+        ESP_LOGV(TAG, "Distance: %f", distanceAway);
     }
     refreshTicks++;
-#endif
     double deg = heading - Azimuth;
     if (deg < 0)
     {
@@ -245,22 +235,16 @@ void LED_Manager::interpolateLEDsDegrees(double deg, double distanceAway, uint8_
     double ledDirection = (deg / 360.0f) * NUM_COMPASS_LEDS;
     float distanceMultiplier = (7.0f / 2000.0f) * (distanceAway - 20.0f) + (1.0f / 8.0f);
 
-#if DEBUG == 1
     static uint8_t refreshTicks = 0;
 
     refreshTicks += 8;
     if (!refreshTicks)
     {
-        Serial.print("Distance: ");
-        Serial.println(distanceAway);
-        // Serial.print("Degrees: ");
-        // Serial.println(deg);
-        // Serial.print("Distance multiplier: ");
-        // Serial.println(distanceMultiplier);
-        // Serial.println("LED brightness: ");
+        ESP_LOGV(TAG, "Distance: %f", distanceAway);
+        ESP_LOGV(TAG, "Degrees: %f", deg);
+        ESP_LOGV(TAG, "Distance multiplier: %f", distanceMultiplier);
+        ESP_LOGV(TAG, "LED brightness: ");
     }
-
-#endif
 
     for (int i = 0; i < NUM_COMPASS_LEDS; i++)
     {
@@ -270,21 +254,10 @@ void LED_Manager::interpolateLEDsDegrees(double deg, double distanceAway, uint8_
         float brightness2 = -1.0f * distanceMultiplier * (i - (ledDirection - NUM_COMPASS_LEDS)) * (i - (ledDirection - NUM_COMPASS_LEDS)) + 1.0f;
         float brightness3 = -1.0f * distanceMultiplier * (i - (ledDirection + NUM_COMPASS_LEDS)) * (i - (ledDirection + NUM_COMPASS_LEDS)) + 1.0f;
 
-#if DEBUG == 1
         if (!refreshTicks)
         {
-
-            // Serial.print("LED ");
-            // Serial.print(i);
-            // Serial.print(": B1: ");
-            // Serial.print(brightness);
-            // Serial.print(" B2: ");
-            // Serial.print(brightness2);
-            // Serial.print(" B3: ");
-            // Serial.println(brightness3);
+            ESP_LOGV(TAG, "LED %d: B1: %f B2: %f B3: %f", i, brightness, brightness2, brightness3);
         }
-
-#endif
         brightness = max(brightness, brightness2);
         brightness = max(brightness, brightness3);
 

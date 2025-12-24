@@ -144,12 +144,7 @@ public:
         cfg["fadeDegrees"] = fadeDegrees;
         cfg["directionDegrees"] = directionDegrees;
 
-        #if DEBUG == 1
-            // Serial.print("heading: ");
-            // Serial.println(heading);
-            // Serial.print("azimuth: ");
-            // Serial.println(azimuth);
-        #endif
+        ESP_LOGV(TAG, "heading: %f, azimuth: %f", heading, azimuth);
 
         LED_Utils::configurePattern(_RingPointID, cfg);
         LED_Utils::iteratePattern(_RingPointID);

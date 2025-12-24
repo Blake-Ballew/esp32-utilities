@@ -156,9 +156,7 @@ void Display_Utils::printFormattedText(const char *text, TextFormat &format)
         break;
     }
 
-    #if DEBUG == 1
-        // Serial.printf("Display_Utils::printFormattedText(): xPos: %d, yPos: %d\n", xPos, yPos);
-    #endif
+    ESP_LOGV(TAG, "Display_Utils::printFormattedText(): xPos: %d, yPos: %d", xPos, yPos);
 
     display->setCursor(xPos, yPos);
     display->print(text);

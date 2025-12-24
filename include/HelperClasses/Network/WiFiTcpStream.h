@@ -2,9 +2,12 @@
 
 #include "NetworkStreamInterface.h"
 #include <WiFi.h>
+#define LOG_TAG __FILE__
 
 namespace ConnectivityModule
 {
+
+
     class WiFiTcpStream : public NetworkStreamInterface
     {
     public:
@@ -23,10 +26,7 @@ namespace ConnectivityModule
             size_t timeoutMs = 10000,
             uint8_t maxConnections = 1)
         {
-            #if DEBUG == 1
-            Serial.print("Starting server on port ");
-            Serial.println(_port);
-            #endif
+            ESP_LOGI(TAG, "Starting server on port %d", _port);
 
             _server = WiFiServer(_port, maxConnections);
             _server.begin(_port);
@@ -44,12 +44,9 @@ namespace ConnectivityModule
         }
 
         // Starts server in background
-        void StartServer(uint8_t maxConnections = 1) 
+        void StartServer(uint8_t maxConnections = 1)
         {
-            #if DEBUG == 1
-            Serial.print("Starting server on port ");
-            Serial.println(_port);
-            #endif
+            ESP_LOGI(TAG, "Starting server on port %d", _port);
             _server = WiFiServer(_port, maxConnections);
             _server.begin(_port);
         }

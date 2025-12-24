@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System_Utils.h"
+#include "ConnectivityUtils.h"
 #include "WiFi.h"
 #include <esp_now.h>
 #include "esp_smartconfig.h"
@@ -8,6 +9,7 @@
 
 namespace ConnectivityModule
 {
+
     enum WiFiRadioState
     {
         RADIO_STATE_OFF = 0,
@@ -73,9 +75,7 @@ namespace ConnectivityModule
             if (esp_now_init() != ESP_OK)
             {
                 DisableRadio();
-                #if DEBUG == 1
-                Serial.println("esp_now_init failed");
-                #endif
+                ESP_LOGE(TAG, "esp_now_init failed");
                 return;
             }
 
@@ -119,9 +119,6 @@ namespace ConnectivityModule
 
         static bool IsWiFiActive()
         {
-            #if DEBUG == 1
-            // Serial.println(WiFi.status());
-            #endif
             return WiFi.status() == WL_CONNECTED;
         }
 

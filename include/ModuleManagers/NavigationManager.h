@@ -12,14 +12,16 @@ namespace
 // Manager class to iniitialize NavigationUtils
 class NavigationManager
 {
+private:
+    static constexpr const char *TAG = "NavigationManager";
+
+
 public:
     NavigationManager() {}
 
     void InitializeUtils(CompassInterface *compass, Stream &gpsInputStream)
     {
-        #if DEBUG == 1
-        Serial.println("NavigationManager::InitializeUtils");
-        #endif
+        ESP_LOGI(TAG, "NavigationManager::InitializeUtils");
         NavigationUtils::Init(compass, gpsInputStream);
 
         NavigationUtils::SavedLocationsUpdated() += SaveLocationsToFlash;
@@ -31,11 +33,9 @@ public:
         {
             NavigationUtils::SetCalibrationData(calibrationData);
 
-            #if DEBUG == 1
-            Serial.println("Calibration data loaded from flash.");
-            serializeJson(calibrationData, Serial);
-            Serial.println();
-            #endif
+            std::string buf;
+            serializeJson(calibrationData, buf);
+            ESP_LOGI(TAG, "Calibration data loaded from flash: %s", buf.c_str());
         }
     }
 
@@ -62,16 +62,11 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to save locations to flash. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to save locations to flash. Error code: %d", (int)returncode);
         }
         else
         {
-            #if DEBUG == 1
-            Serial.println("Saved locations to flash.");
-            #endif
+            ESP_LOGI(TAG, "Saved locations to flash");
         }
     }
 
@@ -82,10 +77,7 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to load locations from flash. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to load locations from flash. Error code: %d", (int)returncode);
         }
         else
         {

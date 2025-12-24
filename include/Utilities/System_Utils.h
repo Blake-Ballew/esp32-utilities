@@ -16,6 +16,7 @@
 #include "mbedtls/base64.h"
 
 #include "esp_rom_crc.h"
+#include "esp_log.h"
 
 #ifdef USE_BLE
 #include "esp_bt.h"
@@ -25,6 +26,8 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 #endif
+
+static const char *TAG = "System_Utils";
 
 namespace 
 {

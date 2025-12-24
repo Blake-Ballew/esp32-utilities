@@ -7,15 +7,16 @@ namespace FilesystemModule
 // Manager class for the SPIFFS filesystem
     class Manager
     {
+    private:
+        static constexpr const char *TAG = "FilesystemManager";
+
     public:
         Manager() {}
         ~Manager() {}
 
         void InitializeFilesystem()
         {
-            #if DEBUG == 1
-            Serial.println("FilesystemManager::Init");
-            #endif
+            ESP_LOGI(TAG, "FilesystemManager::Init");
             Utilities::Init();
         }
     };

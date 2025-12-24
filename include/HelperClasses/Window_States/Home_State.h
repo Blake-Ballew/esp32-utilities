@@ -3,6 +3,7 @@
 #include "Window_State.h"
 #include "Home_Content.h"
 
+
 class Home_State : public Window_State
 {
 public:
@@ -24,17 +25,13 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Home_State::enterState");
-#endif
+        ESP_LOGD(TAG, "Home_State::enterState");
         Window_State::enterState(transferData);
     }
 
     void exitState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("Home_State::exitState");
-#endif
+        ESP_LOGD(TAG, "Home_State::exitState");
 
         Window_State::exitState(transferData);
 

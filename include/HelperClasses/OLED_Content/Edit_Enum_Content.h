@@ -20,9 +20,7 @@ public:
 
     ~Edit_Enum_Content()
     {
-#if DEBUG == 1
-        Serial.println("Edit_Enum_Content destructor");
-#endif
+        ESP_LOGD(TAG, "Destructor");
     }
 
     void encUp()

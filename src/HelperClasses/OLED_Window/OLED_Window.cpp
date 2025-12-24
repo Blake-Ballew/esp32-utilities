@@ -86,9 +86,7 @@ void OLED_Window::drawWindow()
 
     if (currentState != nullptr)
     {
-#if DEBUG == 1
-        // Serial.println("State is not null");
-#endif
+        ESP_LOGV(TAG, "State is not null");
         if (currentState->buttonCallbacks.find(BUTTON_1) != currentState->buttonCallbacks.end())
         {
             display->setCursor(0, 0);
@@ -114,16 +112,12 @@ void OLED_Window::drawWindow()
             display->print(currentState->buttonCallbacks[BUTTON_4].displayText);
         }
 
-        #if DEBUG == 1
-        // Serial.println("Rendered intputs");
-        #endif
+        ESP_LOGV(TAG, "Rendered intputs");
     }
-#if DEBUG == 1
     else
     {
-        // Serial.println("State is null");
+        ESP_LOGV(TAG, "State is null");
     }
-#endif
 
     if (currentState != nullptr)
     {
@@ -145,9 +139,7 @@ OLED_Window *OLED_Window::getParentWindow()
 
 void OLED_Window::execBtnCallback(uint8_t inputID)
 {
-#if DEBUG == 1
-    // Serial.println("OLED_Window::execBtnCallback()");
-#endif
+    ESP_LOGV(TAG, "OLED_Window::execBtnCallback()");
 
     if (currentState != nullptr)
     {

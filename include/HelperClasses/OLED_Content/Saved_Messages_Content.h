@@ -5,6 +5,7 @@
 #include "LED_Manager.h"
 #include <vector>
 
+
 struct Saved_Message
 {
     int idx;
@@ -56,9 +57,7 @@ public:
     {
         if (Settings_Manager::savedMessages["Messages"].as<JsonArray>().size() == 0)
         {
-#if DEBUG == 1
-            Serial.println("No saved messages");
-#endif
+            ESP_LOGD(TAG, "No saved messages");
             display->display();
             return;
         }
@@ -151,35 +150,25 @@ public:
 
     void loadMessages()
     {
-#if DEBUG == 1
-        Serial.println("Loading messages");
-#endif
+        ESP_LOGD(TAG, "Loading messages");
 
         msgList.clear();
 
-#if DEBUG == 1
-        Serial.println("Copying messages from additional message list");
-#endif
+        ESP_LOGV(TAG, "Copying messages from additional message list");
         if (additionalMsgList.size() > 0)
         {
-#if DEBUG == 1
-            Serial.printf("additionalMsgList has %d elements\n", additionalMsgList.size());
-#endif
+            ESP_LOGV(TAG, "additionalMsgList has %zu elements", additionalMsgList.size());
             for (const Saved_Message &it : additionalMsgList)
             {
                 msgList.push_back(it);
             }
         }
-#if DEBUG == 1
         else
         {
-            Serial.println("No additional messages");
+            ESP_LOGV(TAG, "No additional messages");
         }
-#endif
 
-#if DEBUG == 1
-        Serial.println("Copying messages from EEPROM list");
-#endif
+        ESP_LOGV(TAG, "Copying messages from EEPROM list");
         if (eepromMsgList.size() > 0)
         {
             for (const Saved_Message &it : eepromMsgList)
@@ -188,9 +177,7 @@ public:
             }
         }
 
-#if DEBUG == 1
-        Serial.printf("Loaded %d messages\n", msgList.size());
-#endif
+        ESP_LOGD(TAG, "Loaded %zu messages", msgList.size());
     }
 
     const char *getCurrentMessage()
@@ -216,9 +203,7 @@ public:
 protected:
     void loadMessagesFromEEPROM()
     {
-#if DEBUG == 1
-        Serial.println("Loading messages from eeprom");
-#endif
+        ESP_LOGD(TAG, "Loading messages from eeprom");
 
         eepromMsgList.clear();
         size_t idx = 0;
@@ -232,9 +217,7 @@ protected:
             idx++;
         }
 
-#if DEBUG == 1
-        Serial.printf("Loaded %d messages\n", eepromMsgList.size());
-#endif
+        ESP_LOGD(TAG, "Loaded %zu messages", eepromMsgList.size());
     }
 
     uint8_t promptMode;

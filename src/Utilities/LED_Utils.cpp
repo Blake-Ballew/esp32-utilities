@@ -1,5 +1,6 @@
 #include "LED_Utils.h"
 
+
 std::unordered_map<uint8_t, uint8_t> LED_Utils::inputIdLedPins;
 CRGB LED_Utils::_ThemeColor;
 
@@ -179,10 +180,8 @@ void LED_Utils::iteratePatterns(void *pvParameters)
         {
             // Clear the notification
             xTaskNotifyStateClear(_IteratePatternsTaskHandle);
-            
-            #if DEBUG == 1
-            // Serial.println("LED_Utils::iteratePatterns: Single iteration");
-            #endif
+
+            ESP_LOGV(TAG, "LED_Utils::iteratePatterns: Single iteration");
             if (registeredPatterns[patternID].enabled)
             {
                 registeredPatterns[patternID].pattern->iterateFrame();
@@ -202,9 +201,7 @@ void LED_Utils::iteratePatterns(void *pvParameters)
 
 void LED_Utils::iteratePattern(int patternID)
 {
-    #if DEBUG == 1
-    // Serial.println("LED_Utils::iteratePattern");
-    #endif
+    ESP_LOGV(TAG, "LED_Utils::iteratePattern");
     if (_IteratePatternsTaskHandle != nullptr && patternID > -1)
     {
         vTaskResume(_IteratePatternsTaskHandle);
@@ -222,14 +219,7 @@ void LED_Utils::setThemeColor(uint8_t r, uint8_t g, uint8_t b)
 
 void LED_Utils:: setThemeColor(CRGB color)
 {
-    #if DEBUG == 1
-        // Serial.print("LED_Utils::setThemeColor: ");
-        // Serial.print(color.r);
-        // Serial.print(", ");
-        // Serial.print(color.g);
-        // Serial.print(", ");
-        // Serial.println(color.b);
-    #endif
+    ESP_LOGV(TAG, "LED_Utils::setThemeColor: %d, %d, %d", color.r, color.g, color.b);
     _ThemeColor = color;
     LED_Pattern_Interface::SetThemeColor(_ThemeColor);
 }

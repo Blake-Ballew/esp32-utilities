@@ -106,9 +106,7 @@ Content_Node *OLED_Content_List::getCurrentNode()
 
 void OLED_Content_List::encUp()
 {
-#if DEBUG == 1
-    Serial.println("void OLED_Content::encUp()");
-#endif
+    ESP_LOGV(TAG, "void OLED_Content::encUp()");
     current = current->prev;
     OLED_Content_List::printContent();
     display->display();
@@ -116,9 +114,7 @@ void OLED_Content_List::encUp()
 
 void OLED_Content_List::encDown()
 {
-#if DEBUG == 1
-    Serial.println("void OLED_Content::encDown()");
-#endif
+    ESP_LOGV(TAG, "void OLED_Content::encDown()");
     current = current->next;
     OLED_Content_List::printContent();
     display->display();

@@ -100,17 +100,13 @@ void Home_Content::printContent()
 
 void Home_Content::stop()
 {
-#if DEBUG == 1
-    Serial.println("Stopping Home Content");
-#endif
+    ESP_LOGV(TAG, "Stopping Home Content");
     Display_Utils::disableRefreshTimer();
 }
 
 void Home_Content::start()
 {
-#if DEBUG == 1
-    Serial.println("Starting Home Content");
-#endif
+    ESP_LOGV(TAG, "Starting Home Content");
     Display_Utils::enableRefreshTimer(HOME_CONTENT_TIMER_PERIOD);
 }
 

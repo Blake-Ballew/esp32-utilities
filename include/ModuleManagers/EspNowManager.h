@@ -10,6 +10,9 @@ namespace ConnectivityModule
 
     class EspNowManager
     {
+    private:
+        static constexpr const char *TAG = "EspNowManager";
+
     public:
         EspNowManager() {}
         ~EspNowManager() {}
@@ -26,28 +29,24 @@ namespace ConnectivityModule
             esp_now_send_cb_t dataSentCallback = nullptr)
         {
             // Ensure ESP-NOW is deinitialized before initializing
-            Serial.println("Deinitializing any existing ESP-NOW instance");
+            ESP_LOGI(TAG, "Deinitializing any existing ESP-NOW instance");
             // esp_now_deinit();
 
-            Serial.println("Enabling WiFi radio");
+            ESP_LOGI(TAG, "Enabling WiFi radio");
             RadioUtils::EnableRadio();
 
-            Serial.println("Setting WiFi mode to WIFI_STA for ESP-NOW");
+            ESP_LOGI(TAG, "Setting WiFi mode to WIFI_STA for ESP-NOW");
             WiFi.mode(WIFI_STA);
 
             if (esp_now_init() != ESP_OK)
             {
-                #if DEBUG == 1
-                Serial.println("Error initializing ESP-NOW");
-                #endif
+                ESP_LOGE(TAG, "Error initializing ESP-NOW");
                 return;
             }
 
             if (!Utilities::InitializeRpcQueue())
             {
-                #if DEBUG == 1
-                Serial.println("Error initializing RPC queue");
-                #endif
+                ESP_LOGE(TAG, "Error initializing RPC queue");
                 return;
             }
             
@@ -83,9 +82,7 @@ namespace ConnectivityModule
 
             if (rpcQueueID == -1)
             {
-                #if DEBUG == 1
-                Serial.println("RPC queue is not initialized");
-                #endif
+                ESP_LOGW(TAG, "RPC queue is not initialized");
                 return false;
             }
 
@@ -93,39 +90,31 @@ namespace ConnectivityModule
 
             if (rpcQueueHandle == nullptr)
             {
-                #if DEBUG == 1
-                Serial.println("Error getting RPC queue handle");
-                #endif
+                ESP_LOGE(TAG, "Error getting RPC queue handle");
                 return false;
             }
 
             RpcData rpcRequestPacket;
             if (xQueueReceive(rpcQueueHandle, &rpcRequestPacket, 0) != pdTRUE)
             {
-                #if DEBUG == 1
-                // Serial.println("No RPC packet in queue");
-                #endif
+                ESP_LOGV(TAG, "No RPC packet in queue");
                 return false;
             }
 
-            #if DEBUG == 1
-            Serial.println("Received RPC packet from queue");
-            #endif
+            ESP_LOGD(TAG, "Received RPC packet from queue");
 
             auto err = deserializeMsgPack(doc, (const char *)rpcRequestPacket.data, rpcRequestPacket.length);
 
             if (err != DeserializationError::Ok)
             {
-                Serial.printf("Error deserializing RPC packet: %d\n", err);
+                ESP_LOGE(TAG, "Error deserializing RPC packet: %d", err);
                 return false;
             }
 
-            #if DEBUG == 1
-            Serial.println("Successfully deserialized RPC packet");
-            serializeJsonPretty(doc, Serial);
-            Serial.println();
-            #endif
-            
+            std::string buf;
+            serializeJsonPretty(doc, buf);
+            ESP_LOGV(TAG, "Successfully deserialized RPC packet: %s", buf.c_str());
+
             return true;
         }
 
@@ -134,9 +123,7 @@ namespace ConnectivityModule
             auto result = esp_now_send(macAddress, data, len);
             if (result != ESP_OK)
             {
-                #if DEBUG == 1
-                Serial.printf("Error sending data: %d\n", result);
-                #endif
+                ESP_LOGE(TAG, "Error sending data: %d", result);
                 return false;
             }
 

@@ -4,6 +4,7 @@
 #include "OLED_Window.h"
 #include "Menu_State.h"
 
+
 class Menu_Window : public OLED_Window
 {
 public:
@@ -51,16 +52,9 @@ public:
     //     transferState(transferData);
     // }
 
-    CallbackData *getCallbackDataByInputID(uint8_t inputID) 
+    CallbackData *getCallbackDataByInputID(uint8_t inputID)
     {
-        #if DEBUG == 1
-        // Serial.println("Menu_Window::getCallbackDataByInputID");
-        #endif
         CallbackData *callbackData = OLED_Window::getCallbackDataByInputID(inputID);
-
-        #if DEBUG == 1
-        // Serial.printf("Menu_Window::getCallbackDataByInputID: inputID: %d\n", inputID);
-        #endif
 
         if (callbackData != nullptr && callbackData->callbackID == ACTION_SELECT) {
             auto menuCallback = menuState->getMenuItemCallback();

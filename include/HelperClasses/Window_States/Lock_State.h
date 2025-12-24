@@ -8,7 +8,8 @@
 #include "Button_Flash.h"
 #include "LED_Utils.h"
 
-/// @brief The Lock_State class is a Window_State that clears the display and 
+
+/// @brief The Lock_State class is a Window_State that clears the display and
 /// prompts the user to unlock the device with a sequence of button presses.
 /// It can also be used any time a sequence of button presses is required.
 class Lock_State : public Window_State
@@ -61,10 +62,7 @@ public:
 
         if (inputID == *currentInput)
         {
-            #if DEBUG == 1
-                Serial.println("Lock_State::processInput");
-                Serial.printf("inputID: %d\n", inputID);
-            #endif
+            ESP_LOGD(TAG, "Lock_State::processInput inputID: %d", inputID);
             StaticJsonDocument<200> cfg;
             auto array = cfg.createNestedArray("inputStates");
 
@@ -91,10 +89,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1
-                Serial.println("Lock_State::processInput resetting");
-                Serial.printf("inputID: %d\n", inputID);
-            #endif
+            ESP_LOGD(TAG, "Lock_State::processInput resetting inputID: %d", inputID);
             resetLock();
         }
     }
