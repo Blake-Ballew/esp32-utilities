@@ -1,5 +1,7 @@
 #include "Settings_Manager.h"
 
+static const char *TAG = "Settings_Manager";
+
 ArduinoJson::DynamicJsonDocument Settings_Manager::settings = ArduinoJson::DynamicJsonDocument(SIZE_SETTINGS_OBJECT);
 ArduinoJson::DynamicJsonDocument Settings_Manager::savedMessages = ArduinoJson::DynamicJsonDocument(SIZE_SAVED_MESSAGES_OBJECT);
 ArduinoJson::DynamicJsonDocument Settings_Manager::savedCoordinates = ArduinoJson::DynamicJsonDocument(SIZE_COORDS_OBJECT);
@@ -10,30 +12,29 @@ void Settings_Manager::init()
 {
 #ifdef USE_SPIFFS
     SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED);
+
+    ESP_LOGI(TAG, "SPIFFS Info:");
+    ESP_LOGI(TAG, "Used Bytes: %u\n", SPIFFS.usedBytes());
+    ESP_LOGI(TAG, "Total Bytes: %u\n", SPIFFS.totalBytes());
+    ESP_LOGI(TAG, "Free Bytes: %u\n", SPIFFS.totalBytes() - SPIFFS.usedBytes());
 #else
     EEPROM.begin(SIZE_SETTINGS_OBJECT);
 #endif
     // #if UPLOAD_SETTINGS != 1
     readSettingsFromEEPROM();
 
-    Serial.println("SPIFFS Info:");
-    Serial.printf("Total Bytes: %u\n", SPIFFS.totalBytes());
-    Serial.printf("Used Bytes: %u\n", SPIFFS.usedBytes());
-    Serial.printf("Free Bytes: %u\n", SPIFFS.totalBytes() - SPIFFS.usedBytes());
+    
     // #endif
 }
 
 bool Settings_Manager::readSettingsFromEEPROM()
 {
-#if DEBUG == 1
-    Serial.println();
-    Serial.println("Reading settings from EEPROM");
-#endif
+    ESP_LOGI(TAG, "Reading settings from EEPROM");
 #ifdef USE_SPIFFS
     File settingsFile = SPIFFS.open("/settings.json", FILE_READ);
     if (!settingsFile)
     {
-        Serial.println("Failed to open settings file");
+        ESP_LOGE(TAG, "Failed to open settings file");
         return false;
     }
     deserializeMsgPack(settings, settingsFile);
@@ -54,7 +55,7 @@ bool Settings_Manager::writeSettingsToEEPROM()
     File settingsFile = SPIFFS.open("/settings.json", FILE_WRITE);
     if (!settingsFile)
     {
-        Serial.println("Failed to open settings file");
+        ESP_LOGE(TAG, "Failed to open settings file");
         return false;
     }
     serializeMsgPack(settings, settingsFile);
@@ -99,7 +100,7 @@ bool Settings_Manager::readMessagesFromEEPROM()
     File msgFile = SPIFFS.open("/messages.json", FILE_READ);
     if (!msgFile)
     {
-        Serial.println("Failed to open messages file");
+        ESP_LOGE(TAG, "Failed to open messages file");
         return false;
     }
     deserializeMsgPack(savedMessages, msgFile);
@@ -118,7 +119,7 @@ bool Settings_Manager::writeMessagesToEEPROM()
     File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
     if (!msgFile)
     {
-        Serial.println("Failed to open messages file");
+        ESP_LOGE(TAG, "Failed to open messages file");
         return false;
     }
     serializeMsgPack(savedMessages, msgFile);
@@ -152,7 +153,6 @@ bool Settings_Manager::writeMessagesToSerial()
         return false;
     }
     serializeJson(savedMessages, Serial);
-    Serial.println();
     return true;
 }
 
@@ -160,16 +160,12 @@ bool Settings_Manager::addMessage(const char *msg, size_t msgLength)
 {
     if (msgLength > maxMsgLength)
     {
-#if DEBUG == 1
-        Serial.println("Message too long");
-#endif
+        ESP_LOGW(TAG, "Message too long");
         return false;
     }
     if (savedMessages["Messages"].as<JsonArray>().size() >= maxMsges)
     {
-#if DEBUG == 1
-        Serial.println("Too many messages");
-#endif
+        ESP_LOGW(TAG, "Too many messages");
         return false;
     }
     savedMessages["Messages"].as<JsonArray>().add(msg);
@@ -181,21 +177,14 @@ bool Settings_Manager::deleteMessage(size_t msgIdx)
 
     if (msgIdx >= savedMessages["Messages"].size())
     {
-#if DEBUG == 1
-        Serial.printf("msgIdx: %d is out of bounds\n", msgIdx);
-#endif
+        ESP_LOGD(TAG, "msgIdx: %zu is out of bounds", msgIdx);
         return false;
     }
-#if DEBUG == 1
-    Serial.print("Deleting message at index: ");
-    Serial.println(msgIdx);
-    Serial.printf("Message: %s\n", savedMessages["Messages"][msgIdx].as<const char *>());
-    Serial.printf("Array size before: %d\n", savedMessages["Messages"].as<JsonArray>().size());
-#endif
+    ESP_LOGD(TAG, "Deleting message at index: %zu", msgIdx);
+    ESP_LOGD(TAG, "Message: %s", savedMessages["Messages"][msgIdx].as<const char *>());
+    ESP_LOGD(TAG, "Array size before: %d", savedMessages["Messages"].as<JsonArray>().size());
     savedMessages["Messages"].as<JsonArray>().remove(msgIdx);
-#if DEBUG == 1
-    Serial.printf("Array size after: %d\n", savedMessages["Messages"].as<JsonArray>().size());
-#endif
+    ESP_LOGD(TAG, "Array size after: %d", savedMessages["Messages"].as<JsonArray>().size());
     return true;
 }
 
@@ -240,7 +229,7 @@ bool Settings_Manager::readCoordsFromEEPROM()
     File coordFile = SPIFFS.open("/coords.json", FILE_READ);
     if (!coordFile)
     {
-        Serial.println("Failed to open coords file");
+        ESP_LOGE(TAG, "Failed to open coords file");
         return false;
     }
     deserializeMsgPack(savedCoordinates, coordFile);
@@ -253,7 +242,7 @@ bool Settings_Manager::writeCoordsToEEPROM()
     File coordFile = SPIFFS.open("/coords.json", FILE_WRITE);
     if (!coordFile)
     {
-        Serial.println("Failed to open coords file");
+        ESP_LOGE(TAG, "Failed to open coords file");
         return false;
     }
     serializeMsgPack(savedCoordinates, coordFile);
@@ -289,9 +278,7 @@ bool Settings_Manager::addCoordinate(const char *name, double lat, double lon)
 {
     if (savedCoordinates["Coords"].as<JsonArray>().size() >= maxCoords)
     {
-#if DEBUG == 1
-        Serial.println("Too many coordinates");
-#endif
+        ESP_LOGW(TAG, "Too many coordinates");
         return false;
     }
     JsonObject coord = savedCoordinates["Coords"].as<JsonArray>().createNestedObject();
@@ -307,21 +294,14 @@ bool Settings_Manager::deleteCoordinate(size_t coordIdx)
 {
     if (coordIdx >= savedCoordinates["Coords"].size())
     {
-#if DEBUG == 1
-        Serial.printf("coordIdx: %d is out of bounds\n", coordIdx);
-#endif
+        ESP_LOGD(TAG, "coordIdx: %zu is out of bounds", coordIdx);
         return false;
     }
-#if DEBUG == 1
-    Serial.print("Deleting coordinate at index: ");
-    Serial.println(coordIdx);
-    Serial.printf("Coordinate: %s\n", savedCoordinates["Coords"][coordIdx]["n"].as<const char *>());
-    Serial.printf("Array size before: %d\n", savedCoordinates["Coords"].as<JsonArray>().size());
-#endif
+    ESP_LOGD(TAG, "Deleting coordinate at index: %zu", coordIdx);
+    ESP_LOGD(TAG, "Coordinate: %s", savedCoordinates["Coords"][coordIdx]["n"].as<const char *>());
+    ESP_LOGD(TAG, "Array size before: %d", savedCoordinates["Coords"].as<JsonArray>().size());
     savedCoordinates["Coords"].as<JsonArray>().remove(coordIdx);
-#if DEBUG == 1
-    Serial.printf("Array size after: %d\n", savedCoordinates["Coords"].as<JsonArray>().size());
-#endif
+    ESP_LOGD(TAG, "Array size after: %d", savedCoordinates["Coords"].as<JsonArray>().size());
     return true;
 }
 
@@ -507,7 +487,7 @@ void Settings_Manager::flashSettings()
     File settingsFile = SPIFFS.open("/settings.json", FILE_WRITE);
     if (!settingsFile)
     {
-        Serial.println("Failed to open settings file");
+        ESP_LOGE(TAG, "Failed to open settings file");
         return;
     }
     serializeJson(doc, Serial);
@@ -517,7 +497,7 @@ void Settings_Manager::flashSettings()
     File msgFile = SPIFFS.open("/messages.json", FILE_WRITE);
     if (!msgFile)
     {
-        Serial.println("Failed to open messages file");
+        ESP_LOGE(TAG, "Failed to open messages file");
         return;
     }
     serializeJson(msgDoc, Serial);
@@ -527,7 +507,7 @@ void Settings_Manager::flashSettings()
     File coordFile = SPIFFS.open("/coords.json", FILE_WRITE);
     if (!coordFile)
     {
-        Serial.println("Failed to open coords file");
+        ESP_LOGE(TAG, "Failed to open coords file");
         return;
     }
     serializeJson(coordDoc, Serial);

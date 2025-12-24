@@ -4,6 +4,11 @@
 #include "TcpConnectionBroadcast.h"
 #include "Window_State.h"
 
+namespace
+{
+    static const char *TAG = "BroadcastTcpState";
+}
+
 class BroadcastTcpState : public Window_State
 {
 public:
@@ -39,15 +44,11 @@ public:
     {
         if (!_broadcast.EstablishConnection(ConnectivityModule::IpUtils::GetWiFiBroadcastIP(), _broadcast.PortToBroadcast()))
         {
-            #if DEBUG == 1
-            Serial.println("Failed to establish broadcast connection");
-            #endif
+            ESP_LOGE(TAG, "Failed to establish broadcast connection");
         }
         else
         {
-            #if DEBUG == 1
-            Serial.println("Broadcast connection established");
-            #endif
+            ESP_LOGI(TAG, "Broadcast connection established");
         }
         
         _broadcast.SetPortToBroadcast(ConnectivityModule::IpUtils::RPC_PORT);

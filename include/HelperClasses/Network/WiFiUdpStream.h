@@ -3,9 +3,11 @@
 #include "NetworkStreamInterface.h"
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#define LOG_TAG __FILE__
 
 namespace ConnectivityModule
 {
+
     class WiFiUdpStream : public NetworkStreamInterface
     {
     public:
@@ -24,17 +26,12 @@ namespace ConnectivityModule
 
         void Flush() { _udp.flush(); }
 
-        bool EstablishConnection(IPAddress ip, uint16_t port) 
-        { 
-            #if DEBUG == 1
-            Serial.print("Connecting to: ");
-            Serial.print(ip);
-            Serial.print(":");
-            Serial.println(port);
-            #endif
+        bool EstablishConnection(IPAddress ip, uint16_t port)
+        {
+            ESP_LOGI(TAG, "Connecting to: %s:%d", ip.toString().c_str(), port);
             _remoteIP = ip;
             _remotePort = port;
-            return _udp.begin(WiFi.localIP(), port) == 1; 
+            return _udp.begin(WiFi.localIP(), port) == 1;
         }
 
     protected:

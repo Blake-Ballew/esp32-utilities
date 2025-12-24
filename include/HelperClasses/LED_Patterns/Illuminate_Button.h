@@ -3,6 +3,7 @@
 #include "LED_Pattern_Interface.h"
 #include <unordered_map>
 
+
 class Illuminate_Button : public LED_Pattern_Interface
 {
 public:
@@ -33,9 +34,7 @@ public:
 
     bool iterateFrame()
     {
-        #if DEBUG == 1
-            Serial.println("Illuminate_Button::iterateFrame");
-        #endif
+        ESP_LOGV(TAG, "Illuminate_Button::iterateFrame");
         for (auto kvp : inputIdLedPins)
         {
             if (inputIdState[kvp.first])

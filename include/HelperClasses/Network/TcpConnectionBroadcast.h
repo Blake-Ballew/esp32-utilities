@@ -3,6 +3,7 @@
 #include "NetworkUtils.h"
 #include "WiFiUdpStream.h"
 #include <ArduinoJson.h>
+#define LOG_TAG __FILE__
 
 namespace
 {
@@ -27,43 +28,18 @@ namespace ConnectivityModule
 
             if (!BeginPacket())
             {
-                #if DEBUG == 1
-                Serial.println("Failed to begin broadcast packet");
-                #endif
-
+                ESP_LOGE(TAG, "Failed to begin broadcast packet");
                 return;
-            }
-            else
-            {
-                #if DEBUG == 1
-                // Serial.println("Broadcast packet started");
-                #endif
             }
 
             if (serializeMsgPack(doc, GetStream()) == 0)
             {
-                #if DEBUG == 1
-                // Serial.println("Failed to serialize broadcast packet");
-                #endif
-            }
-            else
-            {
-                #if DEBUG == 1
-                // Serial.println("Broadcast packet serialized");
-                #endif
+                ESP_LOGV(TAG, "Failed to serialize broadcast packet");
             }
 
             if (!EndPacket())
             {
-                #if DEBUG == 1
-                // Serial.println("Failed to end broadcast packet");
-                #endif
-            }
-            else
-            {
-                #if DEBUG == 1
-                // Serial.println("Broadcast packet ended");
-                #endif
+                ESP_LOGV(TAG, "Failed to end broadcast packet");
             }
 
             Flush();

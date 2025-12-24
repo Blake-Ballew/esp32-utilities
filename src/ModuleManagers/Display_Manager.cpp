@@ -37,13 +37,13 @@ void Display_Manager::init()
         displayCommandQueueStorage, 
         displayCommandQueueBuffer);
 
-    if (displayCmdQueueID != -1) 
+    if (displayCmdQueueID != -1)
     {
         displayCommandQueue = System_Utils::getQueue(displayCmdQueueID);
-    } 
+    }
     else
     {
-        Serial.println("Unable to initialize display command queue");
+        ESP_LOGE(TAG, "Unable to initialize display command queue");
     }
 
     Display_Utils::setDisplayCommandQueue(displayCommandQueue);
@@ -59,16 +59,14 @@ void Display_Manager::init()
 
     // Register refresh timer
     // Display_Manager::refreshTimerID = System_Utils::registerTimer("Display Refresh", 10000, Display_Manager::refreshTimerCallback);
-    // #if DEBUG == 1
     // if (Display_Manager::refreshTimerID == -1)
     // {
-    //     Serial.println("Display_Manager::init: Failed to register refresh timer");
+    //     ESP_LOGV(TAG, "Display_Manager::init: Failed to register refresh timer");
     // }
     // else
     // {
-    //     Serial.printf("Display_Manager::init: Registered refresh timer with ID %d\n", Display_Manager::refreshTimerID);
+    //     ESP_LOGV(TAG, "Display_Manager::init: Registered refresh timer with ID %d", Display_Manager::refreshTimerID);
     // }
-    // #endif
     // OLED_Content::setTimerID(Display_Manager::refreshTimerID);
     // Display_Utils::setRefreshTimerID(refreshTimerID);
 
@@ -178,8 +176,8 @@ void Display_Manager::processCommandQueue(void *taskParams)
             }
 
             // System_Utils::sendDisplayContents(&display);
-            Serial.println();
-            
+            ESP_LOGV(TAG, "");
+
         }
         else
         {
@@ -193,9 +191,7 @@ void Display_Manager::processCommandQueue(void *taskParams)
 
 void Display_Manager::initializeCallbacks()
 {
-#if DEBUG == 1
-    Serial.println("Display_Manager::initializeCallbacks");
-#endif
+    ESP_LOGI(TAG, "Display_Manager::initializeCallbacks");
     registerCallback(ACTION_BACK, goBack);
     registerCallback(ACTION_SELECT, select);
     registerCallback(ACTION_GENERATE_HOME_WINDOW, generateHomeWindow);
@@ -228,9 +224,7 @@ void Display_Manager::initializeCallbacks()
 
     registerInputCallback(MESSAGE_RECEIVED, processMessageReceived);
     registerInputCallback(BUTTON_SOS, openSOS);
-#if DEBUG == 1
-    Serial.println("Display_Manager::initializeCallbacks: done");
-#endif
+    ESP_LOGI(TAG, "Display_Manager::initializeCallbacks: done");
 }
 
 void Display_Manager::returnFromFunctionWindowState(uint8_t inputID)
@@ -243,11 +237,8 @@ void Display_Manager::returnFromFunctionWindowState(uint8_t inputID)
 
 void Display_Manager::processEventCallback(uint32_t resourceID, uint8_t inputID)
 {
-#if DEBUG == 1
-    Serial.println("Display_Manager::processEventCallback");
-    Serial.print("resourceID: ");
-    Serial.println(resourceID, HEX);
-#endif
+    ESP_LOGD(TAG, "Display_Manager::processEventCallback");
+    ESP_LOGD(TAG, "resourceID: %lX", (unsigned long)resourceID);
 
     if (Display_Manager::callbackMap.find(resourceID) != Display_Manager::callbackMap.end())
     {
@@ -317,18 +308,12 @@ void Display_Manager::select(uint8_t inputID)
 
 void Display_Manager::generateHomeWindow(uint8_t inputID)
 {
-#if DEBUG == 1
-    Serial.println("Display_Manager::generateHomeWindow");
-#endif
+    ESP_LOGD(TAG, "Display_Manager::generateHomeWindow");
     OLED_Window *newWindow = new Home_Window();
-#if DEBUG == 1
-    Serial.println("Display_Manager::generateHomeWindow: created new window");
-#endif
+    ESP_LOGD(TAG, "Display_Manager::generateHomeWindow: created new window");
     Display_Manager::attachNewWindow(newWindow);
 
-#if DEBUG == 1
-    Serial.println("Display_Manager::generateHomeWindow: attached new window");
-#endif
+    ESP_LOGD(TAG, "Display_Manager::generateHomeWindow: attached new window");
     currentWindow->drawWindow();
 }
 

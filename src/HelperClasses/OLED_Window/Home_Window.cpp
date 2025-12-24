@@ -1,5 +1,6 @@
 #include "Home_Window.h"
 
+
 Home_Window::Home_Window(OLED_Window *parent) : OLED_Window(parent)
 {
     Home_Window();
@@ -90,9 +91,7 @@ void Home_Window::drawWindow()
 
 void Home_Window::transferState(State_Transfer_Data &transferData)
 {
-#if DEBUG == 1
-    Serial.println("Home_Window::transferState()");
-#endif
+    ESP_LOGV(TAG, "Home_Window::transferState()");
 
     Window_State *oldState = transferData.oldState;
     Window_State *newState = transferData.newState;
@@ -116,9 +115,7 @@ void Home_Window::transferState(State_Transfer_Data &transferData)
     // Location selected and moving to select message state
     else if (oldState == selectLocationState && transferData.serializedData != nullptr)
     {
-#if DEBUG == 1
-        Serial.println("Detecting return from select location state");
-#endif
+        ESP_LOGV(TAG, "Detecting return from select location state");
         DynamicJsonDocument *doc = (DynamicJsonDocument *)transferData.serializedData;
 
         if (doc->containsKey("Name")

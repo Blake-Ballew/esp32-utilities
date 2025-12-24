@@ -14,6 +14,7 @@ namespace RpcModule
 
     namespace
     {
+        static const char *TAG = "RpcManager";
         const size_t RPC_THREAD_DELAY_MS = 100;
     }
 
@@ -52,10 +53,7 @@ namespace RpcModule
                 {
                     if (channel.second.IsActive)
                     {
-                        #if DEBUG == 1
-                        // Serial.print("Polling channel ");
-                        // Serial.println(channel.second.ChannelID);
-                        #endif
+                        ESP_LOGV(TAG, "Polling channel %d", channel.second.ChannelID);
 
                         DynamicJsonDocument rpcPayload(channel.second.BufferMaxSize);
                         auto channelID = channel.second.ChannelID;
@@ -64,13 +62,9 @@ namespace RpcModule
                             continue;
                         }
 
-                        #if DEBUG == 1
-                        Serial.print("MsgPack found on channel ");
-                        Serial.print(channelID);
-                        Serial.println(": ");
-                        serializeJson(rpcPayload, Serial);
-                        Serial.println();
-                        #endif
+                        std::string buf;
+                        serializeJson(rpcPayload, buf);
+                        ESP_LOGI(TAG, "MsgPack found on channel %d: %s", channelID, buf.c_str());
 
                         if (rpcPayload.containsKey(Utilities::RPC_FUNCTION_NAME_FIELD())) 
                         {
@@ -131,9 +125,7 @@ namespace RpcModule
             std::function<void(AsyncWebServerRequest *request)> onRpcCallback = [](AsyncWebServerRequest *request) {  };
 
             onRpcCallbackBody = [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-                #if DEBUG == 1
-                Serial.println("Received request body");
-                #endif
+                ESP_LOGI(TAG, "Received request body");
 
                 // Deserialize MessagePack to JSON
                 DynamicJsonDocument doc(16000);
@@ -233,19 +225,15 @@ namespace RpcModule
 
         int _serialRpcChannelID = -1;
 
-        static void BoundRpcTask(void *pvParameters) 
+        static void BoundRpcTask(void *pvParameters)
         {
-            #if DEBUG == 1
-            Serial.println("Rpc loop started");
-            #endif
+            ESP_LOGI(TAG, "Rpc loop started");
 
             Manager *manager = (Manager *)pvParameters;
             manager->RegisterSerialRpc();
             manager->ProcessRpcChannels();
 
-            #if DEBUG == 1
-            Serial.println("Rpc loop exited");
-            #endif
+            ESP_LOGI(TAG, "Rpc loop exited");
 
             vTaskDelete(NULL);
         }

@@ -39,11 +39,10 @@ public:
         NavigationUtils::EndCalibration();
         NavigationUtils::GetCalibrationData(calibrationData);
 
-        #if DEBUG == 1
-            Serial.println("Calibration data:");
-            serializeJson(calibrationData, Serial);
-        #endif
-        
+        std::string buf;
+        serializeJson(calibrationData, buf);
+        ESP_LOGI(TAG, "Calibration data: %s", buf.c_str());
+
         FilesystemModule::Utilities::WriteFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
     }
 

@@ -74,9 +74,7 @@ void Received_Messages_Content::printContent()
 {
     Display_Utils::clearContentArea();
 
-#if DEBUG == 1
-    Serial.println("Received_Messages_Content::printContent()");
-#endif
+    ESP_LOGV(TAG, "Received_Messages_Content::printContent()");
 
     size_t numMsgs;
 

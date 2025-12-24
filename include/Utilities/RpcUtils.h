@@ -11,6 +11,8 @@ namespace RpcModule
     // using RpcFunction = void (*)(JsonDocument &doc);
     using RpcFunction = std::function<void(JsonDocument &doc)>;
 
+    static const char *TAG = "RpcModule";
+
     namespace
     {
         std::unordered_map<std::string, RpcFunction> _rpcMap;
@@ -52,20 +54,13 @@ namespace RpcModule
         {
             if (_rpcMap.find(name) != _rpcMap.end())
             {
-                #if DEBUG == 1
-                Serial.print("Calling function ");
-                Serial.println(name.c_str());
-                #endif
+                ESP_LOGV(TAG, "Calling function %s", name.c_str());
 
                 _rpcMap[name](doc);
                 return RpcReturnCode::RPC_SUCCESS;
             }
 
-            #if DEBUG == 1
-            Serial.print("Function ");
-            Serial.print(name.c_str());
-            Serial.println(" not registered");
-            #endif
+            ESP_LOGV(TAG, "Function %s not registered", name.c_str());
             return RpcReturnCode::RPC_FUNCTION_NOT_REGISTERED;
         }
 
@@ -78,19 +73,13 @@ namespace RpcModule
 
             if (result.second)
             {
-                #if DEBUG == 1
-                Serial.print("Added channel ");
-                Serial.println(channelID);
-                #endif
+                ESP_LOGV(TAG, "Added channel %d", channelID);
 
                 return channelID;
             }
             else
             {
-                #if DEBUG == 1
-                Serial.print("Failed to add channel ");
-                Serial.println(channelID);
-                #endif
+                ESP_LOGV(TAG, "Failed to add channel %d", channelID);
                 return -1;
             }
         }
@@ -99,10 +88,7 @@ namespace RpcModule
         {
             if (RpcChannels().find(channelID) != RpcChannels().end())
             {
-                #if DEBUG == 1
-                Serial.print("Removing channel ");
-                Serial.println(channelID);
-                #endif
+                ESP_LOGV(TAG, "Removing channel %d", channelID);
                 RpcChannels().erase(channelID);
             }
         }
@@ -111,19 +97,13 @@ namespace RpcModule
         {
             if (RpcChannels().find(channelID) != RpcChannels().end())
             {
-                #if DEBUG == 1
-                Serial.print("Enabling channel "); 
-                Serial.println(channelID);
-                #endif
+                ESP_LOGV(TAG, "Enabling channel %d", channelID);
                 RpcChannels()[channelID].IsActive = true;
             }
-            #if DEBUG == 1
             else
             {
-                Serial.print("Failed to enable channel "); 
-                Serial.println(channelID);
+                ESP_LOGV(TAG, "Failed to enable channel %d", channelID);
             }
-            #endif
         }
 
         static void DisableRpcChannel(int channelID)

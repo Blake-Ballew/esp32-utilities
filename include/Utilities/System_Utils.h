@@ -16,10 +16,13 @@
 #include "mbedtls/base64.h"
 
 #include "esp_rom_crc.h"
+#include "esp_log.h"
 
 #include "FilesystemUtils.h"
 #include "Bluetooth_Utils.h"
 #include "VersionUtils.h"
+
+static const char *TAG = "System_Utils";
 
 namespace 
 {

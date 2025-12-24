@@ -41,9 +41,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-        #if DEBUG == 1
-        Serial.println("Enter Repeat Message State");
-        #endif
+        ESP_LOGI(TAG, "Enter Repeat Message State");
         Window_State::enterState(transferData);
         
         ringPulseID = Ring_Pulse::RegisteredPatternID();
@@ -59,11 +57,9 @@ public:
                 message = nullptr;
             }
 
-            if (messageType == MessagePing::MessageType()) 
+            if (messageType == MessagePing::MessageType())
             {
-                #if DEBUG == 1
-                Serial.println("Repeat_Message_State::enterState: MessagePing");
-                #endif
+                ESP_LOGD(TAG, "enterState: MessagePing");
                 MessagePing *ping = new MessagePing();
                 ping->deserialize(*doc);
                 message = ping;
@@ -77,10 +73,7 @@ public:
                 cfg["gOverride"] = msgG;
                 cfg["bOverride"] = msgB;
 
-                #if DEBUG == 1
-                Serial.print("RingPulseID: ");
-                Serial.println(ringPulseID);
-                #endif
+                ESP_LOGD(TAG, "RingPulseID: %d", ringPulseID);
 
                 LED_Utils::setAnimationLengthMS(ringPulseID, 3000);
                 LED_Utils::configurePattern(ringPulseID, cfg);
@@ -126,11 +119,9 @@ public:
             {
                 MessagePing *ping = (MessagePing *)message;
 
-                if (ping->IsLive) 
+                if (ping->IsLive)
                 {
-                    #if DEBUG == 1
-                    Serial.println("Repeat_Message_State::displayState: Updating GPS");
-                    #endif
+                    ESP_LOGD(TAG, "displayState: Updating GPS");
                     NavigationUtils::UpdateGPS();
 
                     ping->lat = NavigationUtils::GetLocation().lat();

@@ -54,17 +54,11 @@ TinyGPSDate NavigationUtils::GetDate()
 
 uint64_t NavigationUtils::GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
 {
-#if DEBUG == 1
-    // Serial.println("Navigation_Manager::getTimeDifference()");
-    // Serial.print("time1: ");
-    // Serial.println(time1);
-    // Serial.print("date1: ");
-    // Serial.println(date1);
-    // Serial.print("time2: ");
-    // Serial.println(time2);
-    // Serial.print("date2: ");
-    // Serial.println(date2);
-#endif
+    ESP_LOGD(TAG, "Navigation_Manager::getTimeDifference()");
+    ESP_LOGD(TAG, "time1: %lu", time1);
+    ESP_LOGD(TAG, "date1: %lu", date1);
+    ESP_LOGD(TAG, "time2: %lu", time2);
+    ESP_LOGD(TAG, "date2: %lu", date2);
 
     uint8_t csec1, sec1, min1, hour1, day1, month1 = 0;
     uint16_t year1 = 0;
@@ -87,36 +81,20 @@ uint64_t NavigationUtils::GetTimeDifference(uint32_t time1, uint32_t date1, uint
     month2 = (date2 / 100) % 100;
     year2 = (date2 / 10000) % 10000;
 
-    #if DEBUG == 1
-    // Serial.print("csec1: ");
-    // Serial.println(csec1);
-    // Serial.print("sec1: ");
-    // Serial.println(sec1);
-    // Serial.print("min1: ");
-    // Serial.println(min1);
-    // Serial.print("hour1: ");
-    // Serial.println(hour1);
-    // Serial.print("day1: ");
-    // Serial.println(day1);
-    // Serial.print("month1: ");
-    // Serial.println(month1);
-    // Serial.print("year1: ");
-    // Serial.println(year1);
-    // Serial.print("csec2: ");
-    // Serial.println(csec2);
-    // Serial.print("sec2: ");
-    // Serial.println(sec2);
-    // Serial.print("min2: ");
-    // Serial.println(min2);
-    // Serial.print("hour2: ");
-    // Serial.println(hour2);
-    // Serial.print("day2: ");
-    // Serial.println(day2);
-    // Serial.print("month2: ");
-    // Serial.println(month2);
-    // Serial.print("year2: ");
-    // Serial.println(year2);
-    #endif
+    ESP_LOGV(TAG, "csec1: %d", csec1);
+    ESP_LOGV(TAG, "sec1: %d", sec1);
+    ESP_LOGV(TAG, "min1: %d", min1);
+    ESP_LOGV(TAG, "hour1: %d", hour1);
+    ESP_LOGV(TAG, "day1: %d", day1);
+    ESP_LOGV(TAG, "month1: %d", month1);
+    ESP_LOGV(TAG, "year1: %d", year1);
+    ESP_LOGV(TAG, "csec2: %d", csec2);
+    ESP_LOGV(TAG, "sec2: %d", sec2);
+    ESP_LOGV(TAG, "min2: %d", min2);
+    ESP_LOGV(TAG, "hour2: %d", hour2);
+    ESP_LOGV(TAG, "day2: %d", day2);
+    ESP_LOGV(TAG, "month2: %d", month2);
+    ESP_LOGV(TAG, "year2: %d", year2);
 
     uint64_t diff = 0;
 
@@ -208,10 +186,7 @@ uint64_t NavigationUtils::GetTimeDifference(uint32_t time1, uint32_t date1, uint
     // Years
     diff |= ((uint64_t)(year2 - year1) << 48);
 
-#if DEBUG == 1
-    // Serial.print("diff: ");
-    // Serial.println(diff);
-#endif
+    ESP_LOGV(TAG, "diff: %llu", diff);
 
     return diff;    
 }
@@ -245,17 +220,11 @@ double NavigationUtils::GetDistanceTo(double lat, double lon)
     //     return -1;
     // }
 
-    #if DEBUG == 1
-    Serial.println("GetDistanceTo()");
-    Serial.print("My Lat: ");
-    Serial.println(_LastCoordinate.lat());
-    Serial.print("My Lon: ");
-    Serial.println(_LastCoordinate.lng());
-    Serial.print("Target Lat: ");
-    Serial.println(lat);
-    Serial.print("Target Lon: ");
-    Serial.println(lon);
-    #endif
+    ESP_LOGI(TAG, "GetDistanceTo()");
+    ESP_LOGI(TAG, "My Lat: %f", _LastCoordinate.lat());
+    ESP_LOGI(TAG, "My Lon: %f", _LastCoordinate.lng());
+    ESP_LOGI(TAG, "Target Lat: %f", lat);
+    ESP_LOGI(TAG, "Target Lon: %f", lon);
 
     return _GPS.distanceBetween(_LastCoordinate.lat(), _LastCoordinate.lng(), lat, lon);
 }
@@ -336,11 +305,9 @@ void NavigationUtils::SerializeSavedLocations(JsonDocument &doc)
         locationObject["Lng"] = location.Longitude;
     }
 
-    #if DEBUG == 1
-    // Serial.println("Saving location list: ");
-    // serializeJson(doc, Serial);
-    // Serial.println();
-    #endif
+    std::string buf;
+    serializeJson(doc, buf);
+    ESP_LOGV(TAG, "Saving location list: %s", buf.c_str());
 }
 
 void NavigationUtils::DeserializeSavedLocations(JsonDocument &doc)
@@ -465,10 +432,9 @@ void NavigationUtils::RpcGetSavedLocations(JsonDocument &doc)
         locationObject["Lng"] = location.Longitude;
     }
 
-    #if DEBUG == 1
-    serializeJsonPretty(doc, Serial);
-    Serial.println();
-    #endif
+    std::string buf;
+    serializeJsonPretty(doc, buf);
+    ESP_LOGV(TAG, "%s", buf.c_str());
 }
 
 void NavigationUtils::FlashSampleLocations()

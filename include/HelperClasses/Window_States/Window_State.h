@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 #include <map>
 
+
 class Function_State;
 class Window_State;
 
@@ -83,9 +84,7 @@ public:
 
     virtual void displayState()
     {
-#if DEBUG == 1
-        // Serial.println("Window_State::displayState");
-#endif
+        ESP_LOGV(TAG, "Window_State::displayState");
         if (renderContent != nullptr)
             renderContent->printContent();
     }

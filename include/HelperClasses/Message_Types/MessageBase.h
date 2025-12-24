@@ -158,9 +158,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No message ID found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No message ID found");
             msgID = 0;
         }
 
@@ -170,9 +168,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No bounces left found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No bounces left found");
             bouncesLeft = 0;
         }
 
@@ -182,9 +178,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No recipient found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No recipient found");
             recipient = 0;
         }
 
@@ -194,9 +188,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No sender found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No sender found");
             sender = 0;
         }
 
@@ -209,9 +201,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No time found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No time found");
             time = 0;
         }
 
@@ -221,9 +211,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1 
-            Serial.println("MessageBase::deserialize: No date found");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::deserialize: No date found");
             date = 0;
         }
     }
@@ -277,14 +265,7 @@ public:
         uint8_t diffHours = (timeDiff & 0xFF000000) >> 24;
         uint8_t diffMinutes = (timeDiff & 0xFF0000) >> 16;
 
-#if DEBUG == 1
-        // Serial.print("Time diff: ");
-        // Serial.println(timeDiff);
-        // Serial.print("Hours: ");
-        // Serial.println(diffHours);
-        // Serial.print("Minutes: ");
-        // Serial.println(diffMinutes);
-#endif
+        ESP_LOGV(TAG, "Time diff: %llu, Hours: %d, Minutes: %d", timeDiff, diffHours, diffMinutes);
 
         std::string ageStr;
 
@@ -308,11 +289,9 @@ public:
         return ageStr;
     }
 
-    static MessageBase *MessageFactory(uint8_t *buffer, size_t len) 
+    static MessageBase *MessageFactory(uint8_t *buffer, size_t len)
     {
-        #if DEBUG == 1
-        Serial.println("MessageBase::MessageFactory");
-        #endif
+        ESP_LOGD(TAG, "MessageBase::MessageFactory");
         MessageBase *msg = new MessageBase();
         StaticJsonDocument<MSG_BASE_SIZE> doc;
 
@@ -330,9 +309,7 @@ public:
         }
         else
         {
-            #if DEBUG == 1
-            Serial.println("MessageBase::MessageFactory: Invalid message");
-            #endif
+            ESP_LOGW(TAG, "MessageBase::MessageFactory: Invalid message");
             delete msg;
             return nullptr;
         }

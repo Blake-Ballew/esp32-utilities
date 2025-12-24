@@ -39,19 +39,15 @@ void LoraUtils::Init()
 }
 
 bool LoraUtils::SendMessage(MessageBase *msg, uint8_t numSendAttempts) {
-    if (msg == nullptr) 
+    if (msg == nullptr)
     {
-        #if DEBUG == 1
-        Serial.println("LoraUtils::SendMessage: msg is null");
-        #endif
+        ESP_LOGE(TAG, "LoraUtils::SendMessage: msg is null");
         return false;
     }
 
-    if (_MessageSendQueueID == -1) 
+    if (_MessageSendQueueID == -1)
     {
-        #if DEBUG == 1
-        Serial.println("LoraUtils::SendMessage: Message queue not initialized");
-        #endif
+        ESP_LOGE(TAG, "LoraUtils::SendMessage: Message queue not initialized");
         return false;
     }
 
@@ -69,10 +65,7 @@ bool LoraUtils::SendMessage(MessageBase *msg, uint8_t numSendAttempts) {
 
     OutboundMessageQueueItem item = {msgToSend, numSendAttempts};
 
-    #if DEBUG == 1
-    Serial.print("LoraUtils::SendMessage: Sending message to queue. Type: ");
-    Serial.println(msgToSend->GetInstanceMessageType());
-    #endif
+    ESP_LOGD(TAG, "LoraUtils::SendMessage: Sending message to queue. Type: %d", msgToSend->GetInstanceMessageType());
     return System_Utils::sendToQueue(_MessageSendQueueID, &item, 1000);
 }
 
@@ -216,28 +209,24 @@ bool LoraUtils::MessagePackSanityCheck(JsonDocument &doc)
     auto returnCode = deserializeMsgPack(doc2, buffer, sizeof(buffer));
     if (returnCode != DeserializationError::Ok)
     {
-        #if DEBUG == 1
-        Serial.print("LoraUtils::MessagePackSanityCheck: Deserialization error: ");
-        Serial.println(returnCode.c_str());
-        #endif
+        ESP_LOGE(TAG, "LoraUtils::MessagePackSanityCheck: Deserialization error: %s", returnCode.c_str());
         return false;
     }
 
-    #if DEBUG == 1
-    Serial.print("Doc1: ");
-    serializeJson(doc, Serial);
-    Serial.println();
-    Serial.print("Doc2: ");
-    serializeJson(doc2, Serial);
-    Serial.println();
-    Serial.println("Raw buffer:");
+    std::string buf1, buf2;
+    serializeJson(doc, buf1);
+    serializeJson(doc2, buf2);
+    ESP_LOGV(TAG, "Doc1: %s", buf1.c_str());
+    ESP_LOGV(TAG, "Doc2: %s", buf2.c_str());
+
+    std::string hexBuf;
     for (size_t i = 0; i < sizeof(buffer); i++)
     {
-        Serial.print(buffer[i], HEX);
-        Serial.print(" ");
+        char hexChar[4];
+        sprintf(hexChar, "%02X ", buffer[i]);
+        hexBuf += hexChar;
     }
-    Serial.println();
-    #endif
+    ESP_LOGV(TAG, "Raw buffer: %s", hexBuf.c_str());
 
     bool result = true;
 
@@ -245,22 +234,16 @@ bool LoraUtils::MessagePackSanityCheck(JsonDocument &doc)
     {
         if (!doc2.containsKey(kv.key()))
         {
-            #if DEBUG == 1
-            Serial.print("LoraUtils::MessagePackSanityCheck: Key not found: ");
-            Serial.println(kv.key().c_str());
-            #endif
+            ESP_LOGE(TAG, "LoraUtils::MessagePackSanityCheck: Key not found: %s", kv.key().c_str());
             result = false;
             continue;
         }
 
         if (doc2[kv.key()] != kv.value())
         {
-            #if DEBUG == 1
-            Serial.print("LoraUtils::MessagePackSanityCheck: Value mismatch for key: ");
-            Serial.println(kv.key().c_str());
-            Serial.printf("Expected: %s\n", kv.value().as<std::string>());
-            Serial.printf("Actual: %s\n", doc2[kv.key()].as<std::string>());
-            #endif
+            ESP_LOGE(TAG, "LoraUtils::MessagePackSanityCheck: Value mismatch for key: %s", kv.key().c_str());
+            ESP_LOGE(TAG, "Expected: %s", kv.value().as<std::string>().c_str());
+            ESP_LOGE(TAG, "Actual: %s", doc2[kv.key()].as<std::string>().c_str());
             result = false;
         }
     }

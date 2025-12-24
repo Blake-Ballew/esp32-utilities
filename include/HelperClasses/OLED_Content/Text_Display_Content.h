@@ -2,6 +2,7 @@
 
 #include "OLED_Content.h"
 
+
 class Text_Display_Content : public OLED_Content
 {
 public:
@@ -14,18 +15,13 @@ public:
 
     void printContent()
     {
-        #if DEBUG == 1
-            Serial.println("Text_Display_Content::printContent()");
-        #endif
+        ESP_LOGD(TAG, "printContent");
         for (auto txt : textData)
         {
             Display_Utils::printFormattedText(txt.text.c_str(), txt.format);
-            #if DEBUG == 1
-                Serial.print("Text_Display_Content::printContent(): ");
-                Serial.println(txt.text.c_str());
-            #endif
+            ESP_LOGV(TAG, "printContent: %s", txt.text.c_str());
         }
-        
+
         display->display();
     }
 

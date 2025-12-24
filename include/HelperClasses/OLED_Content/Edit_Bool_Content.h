@@ -13,9 +13,7 @@ public:
 
     ~Edit_Bool_Content()
     {
-#if DEBUG == 1
-        Serial.println("Edit_Bool_Content destructor");
-#endif
+        ESP_LOGD(TAG, "Destructor");
     }
 
     void encUp()

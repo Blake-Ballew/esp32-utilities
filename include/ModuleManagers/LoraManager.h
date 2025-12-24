@@ -40,6 +40,9 @@ enum RpcChannelState
 // template <typename RadioType>
 class LoraManager
 {
+private:
+    static constexpr const char *TAG = "LoraManager";
+
 public:
     // Constructor for manager with radios accepting a frequency and power level
     LoraManager(LoraDriverInterface *driver) : _Driver(driver)
@@ -80,6 +83,7 @@ public:
         LoraUtils::SavedMessageListUpdated() += SaveMessageList;
         this->LoadMessageList();
 
+        // Get rid of this
         if (LoraUtils::GetSavedMessageListSize() == 0)
         {
             LoraUtils::AddSavedMessage("Meet here");
@@ -105,11 +109,9 @@ public:
 
             if (_Driver->ReceiveMessage(jsondoc, MESSAGE_RECEIVE_TIMEOUT_MS))
             {
-                #if DEBUG == 1
-                Serial.print("Message received: ");
-                serializeJson(jsondoc, Serial);
-                Serial.println();
-                #endif
+                std::string buf;
+                serializeJson(jsondoc, buf);
+                ESP_LOGD(TAG, "Message received: %s", buf.c_str());
                 // Process received message
                 if (MessageBase::GetMessageTypeFromJson(jsondoc) != 0)
                 {
@@ -119,9 +121,7 @@ public:
                     {
                         if (!msg->IsValid())
                         {
-#if DEBUG == 1
-                            Serial.println("Invalid message");
-#endif
+                            ESP_LOGW(TAG, "Invalid message");
                             delete msg;   
                             msg = nullptr;
                         }
@@ -139,9 +139,7 @@ public:
                             // Dump message if it was sent from this node and came back
                             if (msg->sender == LoraUtils::UserID())
                             {
-                                #if DEBUG == 1
-                                // Serial.println("Message was sent from this node and came back");
-                                #endif
+                                ESP_LOGD(TAG, "Message was sent from this node and came back");
 
                                 delete msg;
                                 msg = nullptr;
@@ -158,9 +156,7 @@ public:
 
                                 if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
                                 {
-                                    #if DEBUG == 1
-                                    // Serial.println("Message directed to this node or broadcast");
-                                    #endif
+                                    ESP_LOGD(TAG, "Message directed to this node or broadcast");
                                     // Handle the message
                                     auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
                                     LoraUtils::SetReceivedMessage(msg->sender, msg);
@@ -182,9 +178,7 @@ public:
                 {
                     if (!_Driver->SendMessage(_SendBuffer))
                     {
-                        #if DEBUG == 1
-                        Serial.println("Failed to send message");
-                        #endif
+                        ESP_LOGE(TAG, "Failed to send message");
                     }
                     _SendBuffer.clear();
                     _SendBufferIdle = true;
@@ -224,17 +218,15 @@ public:
             {
                 QueuedMessageInfo info = {item.msg, item.numSendAttempts, 0};
 
-                #if DEBUG == 1
-                // Serial.print("Message queued to send: ");
-                // StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
-                // item.msg->serialize(jsondoc);
-                // serializeJson(jsondoc, Serial);
-                // Serial.println();
-                // Serial.println("Sanity checking message:");
-                // LoraUtils::MessagePackSanityCheck(jsondoc);
-                // Serial.print("Message length: ");
-                // Serial.println(measureMsgPack(jsondoc));
-                #endif
+                ESP_LOGD(TAG, "Message queued to send");
+                StaticJsonDocument<MSG_BASE_SIZE> jsondoc;
+                item.msg->serialize(jsondoc);
+                std::string buf;
+                serializeJson(jsondoc, buf);
+                ESP_LOGV(TAG, "Message: %s", buf.c_str());
+                ESP_LOGD(TAG, "Sanity checking message");
+                LoraUtils::MessagePackSanityCheck(jsondoc);
+                ESP_LOGD(TAG, "Message length: %d", measureMsgPack(jsondoc));
 
                 // Assign a random delay to the message
                 info.ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
@@ -258,12 +250,10 @@ public:
                     {
                         _SendBufferIdle = false;
                     }
-                    #if DEBUG == 1
                     else
                     {
-                        Serial.println("Message failed to serialize");
+                        ESP_LOGE(TAG, "Message failed to serialize");
                     }
-                    #endif
 
                     msgTimer->numSendAttempts--;
 
@@ -328,10 +318,7 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to save user list. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to save user list. Error code: %d", (int)returncode);
         }
     }
 
@@ -343,10 +330,7 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to load user list. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to load user list. Error code: %d", (int)returncode);
         }
         else
         {
@@ -364,10 +348,7 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to save message list. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to save message list. Error code: %d", (int)returncode);
         }
     }
 
@@ -379,10 +360,7 @@ public:
 
         if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
-            #if DEBUG == 1
-            Serial.print("Failed to load message list. Error code: ");
-            Serial.println((int)returncode);
-            #endif
+            ESP_LOGE(TAG, "Failed to load message list. Error code: %d", (int)returncode);
         }
         else
         {
@@ -398,13 +376,11 @@ public:
 
 protected:
 
-    bool ShouldMessageBeForwarded(MessageBase *msg) 
+    bool ShouldMessageBeForwarded(MessageBase *msg)
     {
         if (msg == nullptr)
         {
-            #if DEBUG == 1
-            // Serial.println("Message is null");
-            #endif
+            ESP_LOGD(TAG, "Message is null");
             return false;
         }
 
@@ -414,17 +390,13 @@ protected:
         // Don't forward messages that came from this node
         if (senderID == LoraUtils::UserID())
         {
-            #if DEBUG == 1
-            // Serial.println("Message came from this node");
-            #endif
+            ESP_LOGD(TAG, "Message came from this node");
             return false;
         }
 
         if (msg->bouncesLeft == 0)
         {
-            #if DEBUG == 1
-            // Serial.println("Message has no bounces left");
-            #endif
+            ESP_LOGD(TAG, "Message has no bounces left");
             return false;
         }
 
@@ -433,24 +405,18 @@ protected:
         {
             if (_lastReceivedMessages[senderID] == msgID)
             {
-                #if DEBUG == 1
-                // Serial.println("Message has already been received");
-                #endif
+                ESP_LOGD(TAG, "Message has already been received");
                 return false;
             }
             else
             {
-                #if DEBUG == 1
-                // Serial.println("Message has not been received. Resending");
-                #endif
+                ESP_LOGD(TAG, "Message has not been received. Resending");
                 return true;
             }
         }
         else
         {
-            #if DEBUG == 1
-            // Serial.println("Message from new user. Resending");
-            #endif
+            ESP_LOGD(TAG, "Message from new user. Resending");
             return true;
         }
     }

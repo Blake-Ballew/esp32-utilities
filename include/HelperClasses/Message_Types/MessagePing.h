@@ -151,9 +151,7 @@ public:
 
     static MessageBase *MessageFactory(uint8_t *buffer, size_t len)
     {
-        #if DEBUG == 1
-        // Serial.println("MessagePing::MessageFactory");
-        #endif
+        ESP_LOGV(TAG, "MessagePing::MessageFactory");
         MessageBase *msg = new MessagePing();
         StaticJsonDocument<MSG_BASE_SIZE> doc;
 
@@ -167,9 +165,7 @@ public:
 
         if (!msg->IsValid())
         {
-            #if DEBUG == 1
-            Serial.println("MessagePing::MessageFactory: Invalid message");
-            #endif
+            ESP_LOGW(TAG, "MessagePing::MessageFactory: Invalid message");
             delete msg;
             return nullptr;
         }

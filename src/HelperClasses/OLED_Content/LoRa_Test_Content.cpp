@@ -15,13 +15,11 @@ void LoRa_Test_Content::encDown()
 {
     if (LoraUtils::GetNumMessages() == 0)
     {
-#if DEBUG == 1
-        Serial.println("No messages");
-#endif
+        ESP_LOGV(TAG, "No messages");
         return;
     }
     LoraUtils::DecrementMessageIterator();
-    
+
     printContent();
 }
 
@@ -29,9 +27,7 @@ void LoRa_Test_Content::encUp()
 {
     if (LoraUtils::GetNumMessages() == 0)
     {
-#if DEBUG == 1
-        Serial.println("No messages");
-#endif
+        ESP_LOGV(TAG, "No messages");
         return;
     }
 
@@ -44,42 +40,28 @@ void LoRa_Test_Content::printContent()
 {
     display->fillRect(0, 8, OLED_WIDTH, OLED_HEIGHT - 16, BLACK);
 
-#if DEBUG == 1
-    Serial.print("LoraUtils::GetNumMessages(): ");
-    Serial.println(LoraUtils::GetNumMessages());
-#endif
+    ESP_LOGV(TAG, "LoraUtils::GetNumMessages(): %d", LoraUtils::GetNumMessages());
 
     if (LoraUtils::GetNumMessages() == 0)
     {
-#if DEBUG == 1
-        Serial.println("printContent(): No messages");
-#endif
+        ESP_LOGV(TAG, "printContent(): No messages");
         display->setCursor(20, 12);
         display->print("No messages");
         display->display();
         return;
     }
-#if DEBUG == 1
-    Serial.print("msgIdx: ");
-    Serial.println(msgIdx);
-#endif
+    ESP_LOGV(TAG, "msgIdx: %d", msgIdx);
     MessageBase *msg = LoraUtils::GetCurrentMessage();
 
     if (msg == nullptr)
     {
-#if DEBUG == 1
-        Serial.println("printContent(): Message is null. We shouldn't be here");
-#endif
+        ESP_LOGV(TAG, "printContent(): Message is null. We shouldn't be here");
     return;
     }
 
 
-#if DEBUG == 1
-    Serial.print("SenderName: ");
-    Serial.println(msg->senderName);
-    Serial.print("MsgID: 0x");
-    Serial.println(msg->msgID, HEX);
-#endif
+    ESP_LOGV(TAG, "SenderName: %s", msg->senderName);
+    ESP_LOGV(TAG, "MsgID: 0x%lX", (unsigned long)msg->msgID);
 
     display->setCursor(0, 8);
     display->print("Name: ");
@@ -106,9 +88,7 @@ uint8_t LoRa_Test_Content::sendBroadcast()
 
 void LoRa_Test_Content::updateMessages()
 {
-#if DEBUG == 1
-    Serial.println("Updating messages");
-#endif
+    ESP_LOGV(TAG, "Updating messages");
     printContent();
 }
 

@@ -9,6 +9,8 @@
 namespace FilesystemModule
 {
 
+    static const char *TAG = "FilesystemModule";
+
     enum FilesystemReturnCode
     {
         FILESYSTEM_OK = 0,
@@ -28,7 +30,7 @@ namespace FilesystemModule
         {
             if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
             {
-                Serial.println("SPIFFS Mount Failed. Rebooting...");
+                ESP_LOGE(TAG, "SPIFFS Mount Failed. Rebooting...");
                 vTaskDelay(pdMS_TO_TICKS(1000));
                 ESP.restart();
             }
@@ -36,60 +38,42 @@ namespace FilesystemModule
 
         // Reads a file from the SPIFFS filesystem into a JsonDocument
         static FilesystemReturnCode ReadFile(std::string filename, JsonDocument &doc)
-        {   
-            #if DEBUG == 1
-            Serial.print("Reading file: ");
-            Serial.println(filename.c_str());
-            #endif
+        {
+            ESP_LOGD(TAG, "Reading file: %s", filename.c_str());
 
             if (!SPIFFS.exists(filename.c_str()))
             {
-                #if DEBUG == 1
-                Serial.print("File not found: ");
-                Serial.println(filename.c_str());
-                #endif
+                ESP_LOGW(TAG, "File not found: %s", filename.c_str());
                 return FilesystemReturnCode::FILE_NOT_FOUND;
             }
-        
+
             File file = SPIFFS.open(filename.c_str(), FILE_READ);
-        
+
             if (!file)
             {
-                #if DEBUG == 1
-                Serial.print("Failed to open file: ");
-                Serial.println(filename.c_str());
-                #endif
+                ESP_LOGE(TAG, "Failed to open file: %s", filename.c_str());
                 return FilesystemReturnCode::READ_ERROR;
             }
-        
-            deserializeMsgPack(doc, file); 
+
+            deserializeMsgPack(doc, file);
             file.close();
-        
+
             if (doc.overflowed())
             {
-                #if DEBUG == 1
-                Serial.print("Buffer overflow while reading file: ");
-                Serial.println(filename.c_str());
-                #endif
+                ESP_LOGE(TAG, "Buffer overflow while reading file: %s", filename.c_str());
                 return FilesystemReturnCode::READ_BUFFER_OVERFLOW;
             }
-        
+
             if (doc.isNull())
             {
-                #if DEBUG == 1
-                Serial.print("Failed to deserialize file: ");
-                Serial.println(filename.c_str());
-                #endif
+                ESP_LOGE(TAG, "Failed to deserialize file: %s", filename.c_str());
                 return FilesystemReturnCode::READ_ERROR;
             }
             else
             {
-                #if DEBUG == 1
-                Serial.print("File read successfully: ");
-                Serial.println(filename.c_str());
-                serializeJson(doc, Serial);
-                Serial.println();
-                #endif
+                std::string buf;
+                serializeJson(doc, buf);
+                ESP_LOGV(TAG, "File read successfully: %s, content: %s", filename.c_str(), buf.c_str());
             }
             return FilesystemReturnCode::FILESYSTEM_OK;
         }
@@ -97,27 +81,24 @@ namespace FilesystemModule
         // Writes a file to the SPIFFS filesystem from a JsonDocument
         static FilesystemReturnCode WriteFile(std::string filename, JsonDocument &doc)
         {
-            #if DEBUG == 1
-            // Serial.print("Writing file: ");
-            // Serial.println(filename.c_str());
-            // serializeJson(doc, Serial);
-            // Serial.println();
-            #endif
+            std::string buf;
+            serializeJson(doc, buf);
+            ESP_LOGV(TAG, "Writing file: %s, content: %s", filename.c_str(), buf.c_str());
 
             File file = SPIFFS.open(filename.c_str(), FILE_WRITE);
             if (!file)
             {
                 return FilesystemReturnCode::WRITE_FAILED;
             }
-        
+
             auto bytesWritten = serializeMsgPack(doc, file);
             file.close();
-        
+
             if (bytesWritten == 0)
             {
                 return FilesystemReturnCode::WRITE_FAILED;
             }
-        
+
             return FilesystemReturnCode::FILESYSTEM_OK;
         }
 
@@ -164,7 +145,7 @@ namespace FilesystemModule
         {
             if (SettingsFileName().length() == 0 || SettingsFile().isNull())
             {
-                Serial.println("Settings file not loaded.");
+                ESP_LOGE(TAG, "Settings file not loaded.");
                 return FilesystemReturnCode::WRITE_FAILED;
             }
 

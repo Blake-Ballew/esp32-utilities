@@ -7,6 +7,7 @@
 #include "Display_Utils.h"
 #include "LoraMessageDisplay.h"
 
+
 class UnreadMessageState : public Window_State
 {
 public:
@@ -93,9 +94,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("UnreadMessageState::enterState()");
-#endif
+        ESP_LOGI(TAG, "enterState");
 
         Window_State::enterState(transferData);
         Display_Utils::disableRefreshTimer();
@@ -117,9 +116,7 @@ public:
 
         LED_Utils::enablePattern(_SolidRingPatternID);
 
-        #if DEBUG == 1
-        Serial.println("UnreadMessageState::enterState() - Done");
-        #endif
+        ESP_LOGI(TAG, "enterState - Done");
     }
 
     void exitState(State_Transfer_Data &transferData)
@@ -195,14 +192,9 @@ public:
             doc["gOverride"] = ping->color_G;
             doc["bOverride"] = ping->color_B;
 
-            #if DEBUG == 1
-            // Serial.println("LoraMessageDisplay::printContent(): Configuring SolidRing");
-            #endif
             LED_Utils::configurePattern(_SolidRingPatternID, doc);
 
-            #if DEBUG == 1
-            Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
-            #endif
+            ESP_LOGD(TAG, "Iterating SolidRing");
             LED_Utils::iteratePattern(_SolidRingPatternID);
         }
     }

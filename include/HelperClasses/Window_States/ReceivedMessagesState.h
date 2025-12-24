@@ -7,6 +7,7 @@
 #include "Display_Utils.h"
 #include "LoraMessageDisplay.h"
 
+
 class ReceivedMessagesState : public Window_State
 {
 public:
@@ -77,9 +78,7 @@ public:
 
     void enterState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        Serial.println("ReceivedMessageState::enterState()");
-#endif
+        ESP_LOGI(TAG, "enterState");
         if (renderContent != nullptr)
         {
             renderContent->start();
@@ -93,9 +92,7 @@ public:
             messageDisplay->SetDisplayMessage(msg);
         }
 
-        #if DEBUG == 1
-        Serial.println("ReceivedMessageState::enterState() - Done");
-        #endif
+        ESP_LOGI(TAG, "enterState - Done");
     }
 
     void exitState(State_Transfer_Data &transferData)
@@ -170,12 +167,10 @@ public:
             {
                 messageDisplay->SetDisplayMessage(msg);
             }
-            #if DEBUG == 1
             else
             {
-                Serial.println("ReceivedMessageState::displayState() - Message is null");
+                ESP_LOGW(TAG, "displayState - Message is null");
             }
-            #endif
 
             if (messageDisplay->DisplayMessage()->GetInstanceMessageType() == MessagePing::MessageType())
             {
@@ -186,14 +181,7 @@ public:
                 doc["gOverride"] = ping->color_G;
                 doc["bOverride"] = ping->color_B;
 
-                #if DEBUG == 1
-                // Serial.println("LoraMessageDisplay::printContent(): Configuring SolidRing");
-                #endif
                 LED_Utils::configurePattern(_SolidRingPatternID, doc);
-
-                #if DEBUG == 1
-                // Serial.println("LoraMessageDisplay::printContent(): Iterating SolidRing");
-                #endif
                 LED_Utils::iteratePattern(_SolidRingPatternID);
             }
         }

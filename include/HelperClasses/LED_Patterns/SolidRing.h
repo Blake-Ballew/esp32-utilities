@@ -48,30 +48,21 @@ public:
 
     bool iterateFrame()
     {
-        #if DEBUG == 1
-            Serial.println("SolidRing::iterateFrame");
-        #endif
+        ESP_LOGD(TAG, "SolidRing::iterateFrame");
 
         if (beginIdx == -1 || endIdx == -1)
         {
             return true;
         }
 
-        #if DEBUG == 1
-            // Serial.print("beginIdx: ");
-            // Serial.println(beginIdx);
-            // Serial.print("endIdx: ");
-            // Serial.println(endIdx);
-        #endif
+        ESP_LOGV(TAG, "beginIdx: %d, endIdx: %d", beginIdx, endIdx);
 
         for (int i = beginIdx; i <= endIdx; i++)
         {
             leds[i] = CRGB(rOverride, gOverride, bOverride);
         }
 
-        #if DEBUG == 1
-            // Serial.println("SolidRing::iterateFrame - Done");
-        #endif
+        ESP_LOGV(TAG, "SolidRing::iterateFrame - Done");
 
         return true;
     }

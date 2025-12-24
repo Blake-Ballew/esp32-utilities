@@ -4,11 +4,15 @@
 #include <memory>
 #include <Arduino.h>
 #include "System_Utils.h"
+#include "esp_now.h"
 // #include "WiFiManager.h"
 // #include "AlooWifiManager.h"
 
 namespace ConnectivityModule
 {
+    
+    static const char *TAG = "ConnectivityModule";
+
     struct RpcData {
         uint8_t data[250];  // ESP-NOW max size
         size_t length;
@@ -86,9 +90,7 @@ namespace ConnectivityModule
         {
             if (len <= 0)
             {
-                #if DEBUG == 1
-                Serial.println("Received empty RPC packet");
-                #endif
+                ESP_LOGW(TAG, "Received empty RPC packet");
                 return;
             }
 
@@ -103,27 +105,24 @@ namespace ConnectivityModule
             memcpy(data.data, incomingData, len);
             data.length = len;
 
-            #if DEBUG == 1
-            Serial.printf("Received %d bytes of RPC data\n", len);
+            ESP_LOGD(TAG, "Received %d bytes of RPC data", len);
 
+            std::string hexStr;
             for (int i = 0; i < len; i++)
             {
-                Serial.printf("%02X ", data.data[i]);
+                char hex[4];
+                snprintf(hex, sizeof(hex), "%02X ", data.data[i]);
+                hexStr += hex;
             }
-            Serial.println();
-            #endif
+            ESP_LOGV(TAG, "RPC data: %s", hexStr.c_str());
 
             if (!System_Utils::sendToQueue(RpcQueueID(), &data, 0))
             {
-                #if DEBUG == 1
-                Serial.println("Error sending RPC data to queue");
-                #endif
+                ESP_LOGE(TAG, "Error sending RPC data to queue");
             }
             else
             {
-                #if DEBUG == 1
-                Serial.println("RPC data sent to queue");
-                #endif
+                ESP_LOGD(TAG, "RPC data sent to queue");
             }
         }
 
@@ -131,9 +130,7 @@ namespace ConnectivityModule
         {
             if (ProvisioningMode() == WIFI_PROV_MODE_ESP_NOW)
             {
-                #if DEBUG == 1
-                Serial.println("Initializing ESP-NOW for WiFi Provisioning");
-                #endif
+                ESP_LOGI(TAG, "Initializing ESP-NOW for WiFi Provisioning");
                 InitializeEspNow().Invoke(DataReceivedRpc, nullptr);
             }
             else if (ProvisioningMode() == WIFI_PROV_MODE_TEMP_AP)

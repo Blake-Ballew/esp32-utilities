@@ -25,16 +25,10 @@ void GPS_Content::printContent()
 
     display->setCursor(0, 8);
     display->print(" Lat:");
-#if DEBUG == 1
-    Serial.print("Lat: ");
-    Serial.println(loc.lat(), 10);
-#endif
+    ESP_LOGV(TAG, "Lat: %f", loc.lat());
     display->print(loc.lat(), 10);
     display->setCursor(0, 16);
-#if DEBUG == 1
-    Serial.print("Long: ");
-    Serial.println(loc.lng(), 10);
-#endif
+    ESP_LOGV(TAG, "Long: %f", loc.lng());
     display->print("Long:");
     display->print(loc.lng(), 10);
 

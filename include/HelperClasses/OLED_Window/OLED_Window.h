@@ -10,11 +10,13 @@
 #include "LED_Manager.h"
 #include "Window_State.h"
 #include "globalDefines.h"
+#define LOG_TAG __FILE__
 
 #define BUTTON_TEXT_MAX 12
 
 class OLED_Window
 {
+
 public:
     OLED_Window();
     OLED_Window(OLED_Window *parent);
@@ -190,14 +192,10 @@ public:
 
     virtual void returnFromFunctionState(uint8_t inputID)
     {
-#if DEBUG == 1
-        // Serial.println("Returning from function state");
-#endif
+        ESP_LOGV(TAG, "Returning from function state");
         if (stateStack.empty())
         {
-#if DEBUG == 1
-            // Serial.println("State stack is empty");
-#endif
+            ESP_LOGV(TAG, "State stack is empty");
             return;
         }
 
@@ -252,9 +250,7 @@ protected:
     // After entering the new state, the return code is read
     virtual void transferState(State_Transfer_Data &transferData)
     {
-#if DEBUG == 1
-        // Serial.println("OLED_Window::transferState()");
-#endif
+        ESP_LOGV(TAG, "OLED_Window::transferState()");
 
         transferData.oldState->exitState(transferData);
 

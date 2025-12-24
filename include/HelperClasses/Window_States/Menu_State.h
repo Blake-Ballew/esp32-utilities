@@ -78,9 +78,7 @@ public:
 
     void Resume()
     {
-        #if DEBUG == 1
-        // Serial.println("Menu_State::Resume");
-        #endif
+        ESP_LOGV(TAG, "Menu_State::Resume");
         LED_Utils::enablePattern(_ScrollWheelPatternID);
         LED_Utils::iteratePattern(_ScrollWheelPatternID);
     }
@@ -110,17 +108,13 @@ public:
 
     void displayState()
     {
-        #if DEBUG == 1
-        // Serial.println("Menu_State::displayState");
-        #endif
-        
+        ESP_LOGV(TAG, "Menu_State::displayState");
+
         Window_State::displayState();
 
         if (menuItems.size() == 0 || currentMenuItem == menuItems.end())
         {
-            #if DEBUG == 1
-            // Serial.println("No menu items");
-            #endif
+            ESP_LOGV(TAG, "No menu items");
             return;
         }
 
@@ -131,33 +125,24 @@ public:
             doc["numItems"] = menuItems.size();
             doc["currItem"] = std::distance(menuItems.begin(), currentMenuItem);
 
-            #if DEBUG == 1
-            // serializeJson(doc, Serial);
-            #endif
+            std::string buf;
+            serializeJson(doc, buf);
+            ESP_LOGV(TAG, "ScrollWheel config: %s", buf.c_str());
+
             LED_Utils::configurePattern(_ScrollWheelPatternID, doc);
             LED_Utils::iteratePattern(_ScrollWheelPatternID);
         }
 
-        #if DEBUG == 1
-        // Serial.println("Rendering menu items");
-        #endif
+        ESP_LOGV(TAG, "Rendering menu items");
 
         const char *text = currentMenuItem->text;
 
-        #if DEBUG == 1
-        // Serial.print("Text: ");
-        // Serial.println(text);
-        // Serial.println("Setting cursor");
-        #endif
+        ESP_LOGV(TAG, "Text: %s, Setting cursor", text);
         display->setCursor(Display_Utils::centerTextHorizontal(text), Display_Utils::centerTextVertical());
-        #if DEBUG == 1
-        // Serial.println("Printing text");
-        #endif
+        ESP_LOGV(TAG, "Printing text");
         display->print(text);
 
-        #if DEBUG == 1
-        // Serial.println("Rendered menu item");
-        #endif
+        ESP_LOGV(TAG, "Rendered menu item");
 
         if (menuItems.size() > 1) 
         {
