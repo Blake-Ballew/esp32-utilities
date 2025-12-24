@@ -131,6 +131,8 @@ protected:
 
     float fadeDegrees;
     float directionDegrees;
+
+    const char *TAG = "RingPoint";
     
     float GetLEDPointBrightness(int ledIdx)
     {

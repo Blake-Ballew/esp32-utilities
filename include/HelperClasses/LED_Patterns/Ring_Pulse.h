@@ -126,4 +126,5 @@ protected:
 
     // Beginning/end of the ring
     int beginIdx, endIdx;
+    const char *TAG = "Ring_Pulse";
 };

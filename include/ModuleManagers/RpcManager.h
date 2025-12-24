@@ -14,7 +14,6 @@ namespace RpcModule
 
     namespace
     {
-        static const char *TAG = "RpcManager";
         const size_t RPC_THREAD_DELAY_MS = 100;
     }
 

@@ -87,6 +87,8 @@ protected:
     // Current scrolling item
     int currItem;
 
+    const char *TAG = "ScrollWheel";
+
     // Calculate the brightness of the LED at the given index
     float _CalculateLEDPointBrightness(int ledIdx)
     {

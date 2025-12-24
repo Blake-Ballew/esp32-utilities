@@ -93,4 +93,6 @@ protected:
     int beginIdx;
     int endIdx;
 
+    const char *TAG = "SolidRing";
+
 };

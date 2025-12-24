@@ -92,4 +92,5 @@ protected:
     uint8_t inputID;
 
     static int registeredPatternID;
+    const char *TAG = "Button_Flash";
 };
