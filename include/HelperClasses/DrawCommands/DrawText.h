@@ -1,11 +1,15 @@
 #include "DrawCommandInterface.h"
 #include "Display_Utils.h"
 
-class DrawText : public DrawCommandInterface
+namespace UxModule
 {
-public:
-    void draw() override
+    class DrawText : public DrawCommandInterface
     {
-        
+    public:
+        void Draw(DrawContext &context) override
+        {
+            
+        }
     }
 }
+

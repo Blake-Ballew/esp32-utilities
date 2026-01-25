@@ -154,15 +154,15 @@ namespace ConnectivityModule
             }
         }
 
-        static EventHandlerT<esp_now_recv_cb_t, esp_now_send_cb_t> &InitializeEspNow()
+        static EventHandler<esp_now_recv_cb_t, esp_now_send_cb_t> &InitializeEspNow()
         {
-            static EventHandlerT<esp_now_recv_cb_t, esp_now_send_cb_t> espNowEventHandler;
+            static EventHandler<esp_now_recv_cb_t, esp_now_send_cb_t> espNowEventHandler;
             return espNowEventHandler;
         }
 
-        static EventHandlerT<bool> &DeinitializeEspNow()
+        static EventHandler<bool> &DeinitializeEspNow()
         {
-            static EventHandlerT<bool> espNowDeinitEventHandler;
+            static EventHandler<bool> espNowDeinitEventHandler;
             return espNowDeinitEventHandler;
         }
 

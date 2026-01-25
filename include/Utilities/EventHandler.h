@@ -1,63 +1,49 @@
 #pragma once
 
 #include <vector>
-#include <algorithm>
+#include <functional>
 
-// Generic event handler for callbacks with no arguments
+template <typename... Args>
 class EventHandler
 {
 public:
-    EventHandler();
+    using CallbackType = std::function<void(Args...)>;
+    using FunctionPtr = void (*)(Args...);
 
-    // += operator to add a callback
-    void operator+=(void (*callback)());
+    EventHandler() {}
 
-    // -= operator to remove callback
-    void operator-=(void (*callback)());
-    
-    void Invoke();
-
-protected:
-    std::vector<void (*)()> _callbacks;
-};
-
-// Templated event handler for custom callback arguments
-template <typename... Args>
-class EventHandlerT
-{
-public:
-    EventHandlerT()
+    // += for any callable (lambdas, function pointers, bind expressions, etc.)
+    void operator+=(CallbackType callback)
     {
-        _callbacks.clear();
+        _callbacks.push_back(std::move(callback));
     }
 
-    // += operator to add a callback
-    void operator+=(void (*callback)(Args...))
+    // -= for function pointers (finds by comparing underlying pointer)
+    void operator-=(FunctionPtr callback)
     {
-        if (std::find(_callbacks.begin(), _callbacks.end(), callback) == _callbacks.end())
+        for (auto it = _callbacks.begin(); it != _callbacks.end(); ++it)
         {
-            _callbacks.push_back(callback);
-        }
-    }   
-
-    // -= operator to remove callback
-    void operator-=(void (*callback)(Args...))
-    {
-        auto it = std::find(_callbacks.begin(), _callbacks.end(), callback);
-        if (it != _callbacks.end()) 
-        {
-            _callbacks.erase(it);
+            auto* ptr = it->template target<FunctionPtr>();
+            if (ptr && *ptr == callback)
+            {
+                _callbacks.erase(it);
+                return;
+            }
         }
     }
-    
+
     void Invoke(Args... args)
     {
-        for (auto &callback : _callbacks) 
+        for (auto& callback : _callbacks)
         {
             callback(args...);
         }
     }
 
 protected:
-    std::vector<void (*)(Args...)> _callbacks;
+    std::vector<CallbackType> _callbacks;
 };
+
+// Backwards compatibility alias
+template <typename... Args>
+using EventHandlerT = EventHandler<Args...>;

@@ -62,12 +62,12 @@ void Home_Content::printContent()
     if (ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_STA ||
         ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_AP)
     {
-        _wifiIcon.draw();
+        // _wifiIcon.Draw();
     }
     else if (ConnectivityModule::RadioUtils::RadioState() == ConnectivityModule::WiFiRadioState::RADIO_STATE_ESP_NOW)
     {
         // maybe make a different icon later
-        _wifiIcon.draw();
+        // _wifiIcon.Draw();
     }
 
     if (unreadMsgs > 0)

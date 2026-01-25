@@ -6,7 +6,7 @@ Stream &NavigationUtils::_GpsInputStream = Serial2;
 
 TinyGPSLocation NavigationUtils::_LastCoordinate;
 
-EventHandler NavigationUtils::_SavedLocationsUpdated;
+EventHandler<> NavigationUtils::_SavedLocationsUpdated;
 std::vector<SavedLocation> NavigationUtils::_SavedLocations;
 
 void NavigationUtils::Init(CompassInterface *compass)

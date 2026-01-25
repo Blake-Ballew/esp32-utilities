@@ -10,8 +10,8 @@ uint32_t Display_Utils::refreshTimerInterval = 0;
 
 QueueHandle_t Display_Utils::displayCommandQueue = nullptr;
 
-EventHandlerT<uint8_t> Display_Utils::inputRaised;
-EventHandler Display_Utils::_UpdateDisplay;
+EventHandler<uint8_t> Display_Utils::inputRaised;
+EventHandler<> Display_Utils::_UpdateDisplay;
 
 // Input IDs
 uint8_t Display_Utils::_SelectButtonInputID = 0;

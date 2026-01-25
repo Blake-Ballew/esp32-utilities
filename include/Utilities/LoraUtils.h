@@ -62,7 +62,7 @@ public:
     static uint32_t UserID() { return _UserID; }
     static std::string UserName() { return _UserName; }
     static uint8_t NodeID() { return _NodeID; }
-    static EventHandlerT<uint32_t, bool> &MessageReceived() { return _MessageReceived; }
+    static EventHandler<uint32_t, bool> &MessageReceived() { return _MessageReceived; }
     static uint8_t DefaultSendAttempts() { return _DefaultSendAttempts; }
     static size_t GetNumMessages() { return _ReceivedMessages.size(); }
     static size_t GetNumUnreadMessages() { return _UnreadMessages.size(); }
@@ -227,7 +227,7 @@ public:
         return _UnreadMessageIterator == _UnreadMessages.end();
     }
 
-    static EventHandler &SavedMessageListUpdated() { return _SavedMessageListUpdated; }
+    static EventHandler<> &SavedMessageListUpdated() { return _SavedMessageListUpdated; }
 
     static std::vector<std::string>::iterator SavedMessageListBegin() { return _SavedMessageList.begin(); }
     static std::vector<std::string>::iterator SavedMessageListEnd() { return _SavedMessageList.end(); }
@@ -249,7 +249,7 @@ public:
     static void SerializeSavedMessageList(JsonDocument &doc);
     static void DeserializeSavedMessageList(JsonDocument &doc);
 
-    static EventHandler &UserInfoListUpdated() { return _UserInfoListUpdated; }
+    static EventHandler<> &UserInfoListUpdated() { return _UserInfoListUpdated; }
 
     static std::vector<UserInfo>::iterator UserInfoListBegin() { return _UserInfoList.begin(); }
     static std::vector<UserInfo>::iterator UserInfoListEnd() { return _UserInfoList.end(); }
@@ -274,13 +274,13 @@ protected:
 
     // Invoked when a message is received with the UserID of the sender and
     // a boolean indicating if the message is new or an update of an old message
-    static EventHandlerT<uint32_t, bool> _MessageReceived;
+    static EventHandler<uint32_t, bool> _MessageReceived;
 
     // Invoked when the UserInfo list is updated
-    static EventHandler _UserInfoListUpdated;
+    static EventHandler<> _UserInfoListUpdated;
 
     // Invoked when saved message list is updated
-    static EventHandler _SavedMessageListUpdated;
+    static EventHandler<> _SavedMessageListUpdated;
 
     // List of saved users
     static std::vector<UserInfo> _UserInfoList;

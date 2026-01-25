@@ -68,7 +68,7 @@ public:
         tdd.format.line = 2;
 
         TextFormat countdown;
-        char countdownText[5];
+        char countdownText[10];
         sprintf(countdownText, "%d", ((int)_CalibrationTimer / 1000) + 1);
 
         countdown.horizontalAlignment = TextAlignmentHorizontal::ALIGN_CENTER_HORIZONTAL;

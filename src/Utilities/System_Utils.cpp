@@ -24,9 +24,9 @@ bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
 
 // Event Handlers
-EventHandler System_Utils::enableInterrupts;
-EventHandler System_Utils::disableInterrupts;
-EventHandler System_Utils::systemShutdown;
+EventHandler<> System_Utils::enableInterrupts;
+EventHandler<> System_Utils::disableInterrupts;
+EventHandler<> System_Utils::systemShutdown;
 
 void System_Utils::init()
 {

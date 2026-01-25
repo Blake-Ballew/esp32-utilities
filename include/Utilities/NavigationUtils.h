@@ -50,7 +50,7 @@ public:
     static const char *GetCalibrationFilename() { return COMPASS_CALIBRATION_FILENAME; }
 
     // Saved Locations
-    static EventHandler &SavedLocationsUpdated() { return _SavedLocationsUpdated; }
+    static EventHandler<> &SavedLocationsUpdated() { return _SavedLocationsUpdated; }
 
     static void AddSavedLocation(SavedLocation location, bool updateSavedLocations = true);
     static void RemoveSavedLocation(std::vector<SavedLocation>::iterator &locationIt);
@@ -81,7 +81,7 @@ protected:
 
     static TinyGPSLocation _LastCoordinate;
 
-    static EventHandler _SavedLocationsUpdated;
+    static EventHandler<> _SavedLocationsUpdated;
 
     static std::vector<SavedLocation> _SavedLocations;
 };

@@ -31,5 +31,5 @@ public:
 
 private:
     std::map<uint64_t, MessageBase *>::iterator msgIterator;
-    DrawWifiIcon _wifiIcon;
+    UxModule::DrawWifiIcon _wifiIcon;
 };

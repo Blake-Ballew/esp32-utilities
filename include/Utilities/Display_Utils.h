@@ -107,7 +107,7 @@ public:
     static void SetFunction2ButtonInputID(uint8_t inputID);
     static void SetEncUpInputID(uint8_t inputID);
     static void SetEncDownInputID(uint8_t inputID);
-    static void SetUpdateDisplay(EventHandler &handler) { _UpdateDisplay = handler; }
+    static void SetUpdateDisplay(EventHandler<> &handler) { _UpdateDisplay = handler; }
 
     // Getters
     static Adafruit_GFX *getDisplay();
@@ -120,10 +120,10 @@ public:
     static uint8_t Function2ButtonInputID();
     static uint8_t EncUpInputID();
     static uint8_t EncDownInputID();
-    static EventHandler &UpdateDisplay() { return _UpdateDisplay; }
+    static EventHandler<> &UpdateDisplay() { return _UpdateDisplay; }
 
     // Event Handlers
-    static EventHandlerT<uint8_t> &getInputRaised() { return inputRaised; }
+    static EventHandler<uint8_t> &getInputRaised() { return inputRaised; }
 
     // Graphics Helper Functions
 
@@ -208,6 +208,6 @@ protected:
     static QueueHandle_t displayCommandQueue;
 
     // Event handlers
-    static EventHandlerT<uint8_t> inputRaised;
-    static EventHandler _UpdateDisplay;
+    static EventHandler<uint8_t> inputRaised;
+    static EventHandler<> _UpdateDisplay;
 };

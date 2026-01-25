@@ -216,7 +216,7 @@ namespace FilesystemModule
         }
 
         // SettingsUpdated event handler getter
-        static EventHandlerT<ArduinoJson::JsonDocument &> &SettingsUpdated() { return _SettingsUpdated; }
+        static EventHandler<ArduinoJson::JsonDocument &> &SettingsUpdated() { return _SettingsUpdated; }
 
     protected:
         // Settings File
@@ -224,6 +224,6 @@ namespace FilesystemModule
         static std::string _SettingsFilename;
 
         // Event handler for settings file updates
-        static EventHandlerT<ArduinoJson::JsonDocument &> _SettingsUpdated;
+        static EventHandler<ArduinoJson::JsonDocument &> _SettingsUpdated;
     };
 };

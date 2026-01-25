@@ -5,12 +5,12 @@ std::map<uint32_t, MessageBase *> LoraUtils::_UnreadMessages;
 
 MessageBase *LoraUtils::_MyLastBroadcast = nullptr;
 
-EventHandlerT<uint32_t, bool> LoraUtils::_MessageReceived;
+EventHandler<uint32_t, bool> LoraUtils::_MessageReceived;
 
-EventHandler LoraUtils::_SavedMessageListUpdated;
+EventHandler<> LoraUtils::_SavedMessageListUpdated;
 std::vector<std::string> LoraUtils::_SavedMessageList;
 
-EventHandler LoraUtils::_UserInfoListUpdated;
+EventHandler<> LoraUtils::_UserInfoListUpdated;
 std::vector<UserInfo> LoraUtils::_UserInfoList;
 
 int LoraUtils::_MessageSendQueueID = -1;
