@@ -6,7 +6,6 @@
 #include "DisplayUtilities.hpp"
 #include "LoraUtils.h"
 #include "NavigationUtils.h"
-#include "Settings_Manager.h"
 #include "MessageBase.h"
 #include <string>
 
