@@ -39,7 +39,7 @@ public:
 
     void Invoke(Args... args)
     {
-        ESP_LOGI("EventHandler", "Invoking event with %d subscribers", (int)_callbacks.size());
+        ESP_LOGV("EventHandler", "Invoking event with %d subscribers", (int)_callbacks.size());
         for (auto& callback : _callbacks)
         {
             callback(args...);

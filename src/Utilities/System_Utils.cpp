@@ -430,13 +430,6 @@ bool System_Utils::enableWiFi()
     return true;
 }
 
-void System_Utils::initBluetooth()
-{
-    // Can't have both wifi and bluetooth enabled at the same time on the ESP32
-    disableWiFi();
-    Bluetooth_Utils::initBluetooth();
-}
-
 void System_Utils::disableWiFi()
 {
     disableRadio();
@@ -672,6 +665,7 @@ void System_Utils::EndOtaRpc(JsonDocument &doc)
 
 void System_Utils::GetSystemInfoRpc(JsonDocument &doc)
 {
+    ESP_LOGV(TAG, "GetSystemInfoRpc called");
     doc["DeviceName"] = System_Utils::DeviceName;
     doc["DeviceID"] = System_Utils::DeviceID;
     doc["FirmwareVersion"] = FIRMWARE_VERSION_STRING;
