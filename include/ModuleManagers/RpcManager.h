@@ -93,14 +93,17 @@ namespace RpcModule
             {
                 if (Serial.available() > 0) 
                 {
-                    auto result = deserializeMsgPack(payload, Serial);
+                    auto line = Serial.readStringUntil('\n');
+                    ESP_LOGI(TAG, "Received line over serial: %s", line.c_str());
 
-                    if (result != DeserializationError::Ok)
-                    {
-                        return false;
+                    if (line.startsWith("RPC-->")) {
+                        line = line.substring(6);
+                        auto res = deserializeJson(payload, line);
+                        if (res != DeserializationError::Ok) {
+                            return false;
+                        }
+                        return true;
                     }
-
-                    return true;
                 }
 
                 return false;
@@ -110,12 +113,14 @@ namespace RpcModule
             {
                 if (Serial.availableForWrite() > 0) 
                 {
-                    serializeMsgPack(payload, Serial);
+                    Serial.print("RPC<--");
+                    serializeJson(payload, Serial);
+                    Serial.println();
                 }
             };
 
             _serialRpcChannelID = Utilities::AddRpcChannel(512, pollFunctionPointer, replyFunctionPointer);
-            // Utilities::EnableRpcChannel(_serialRpcChannelID);
+            Utilities::EnableRpcChannel(_serialRpcChannelID);
         }
 
         void RegisterWebServerRpc(AsyncWebServer &server)
