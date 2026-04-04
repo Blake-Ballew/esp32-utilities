@@ -32,10 +32,13 @@ public:
     static TinyGPSDate GetDate();
     static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2);
     static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1);
+    static int GetSatelliteCount() { return _GPS.satellites.value(); }
 
     // Compass Functionality
     static int GetAzimuth();
+    static double GetDistance(TinyGPSLocation &loc, double lat, double lon);
     static double GetDistanceTo(double lat, double lon);
+    static double GetHeading(TinyGPSLocation &loc, double lat, double lon);
     static double GetHeadingTo(double lat, double lon);
     static int GetX();
     static int GetY();

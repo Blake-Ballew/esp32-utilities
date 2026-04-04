@@ -1,3 +1,2 @@
-#include "Edit_String_Content.h"
-
-const char Edit_String_Content::legalChars[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}\\|;:'\",./<>?`~";
+// SUPERSEDED — rendering logic replaced by DrawCommand-based system.
+// See include/HelperClasses/Window/States/ for the replacement.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NetworkUtils.h"
+#include "ConnectivityUtils.h"
 #include "WiFiUdpStream.h"
 #include <ArduinoJson.h>
 #define LOG_TAG __FILE__

@@ -1,7 +1,13 @@
+// SUPERSEDED — generic OLED_Content_List scrolling state.
+// In the new DisplayModule system, use SelectKeyValueState (for key/value
+// selection) or build draw commands directly in a WindowState subclass.
+// Safe to delete once the legacy Window_States tree is retired.
+
 #pragma once
 
 #include "Window_State.h"
 #include "OLED_Content.h"
+#include "DisplayTypes.hpp"
 
 class Select_Content_List_State : public Window_State
 {
@@ -16,10 +22,10 @@ public:
         renderContent = content;
         contentList = content;
 
-        assignInput(BUTTON_3, ACTION_BACK, "Back");
-        assignInput(BUTTON_4, ACTION_SELECT, "Select");
-        assignInput(ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
-        assignInput(ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
+        assignInput(DisplayModule::InputID::BUTTON_3, ACTION_BACK, "Back");
+        assignInput(DisplayModule::InputID::BUTTON_4, ACTION_SELECT, "Select");
+        assignInput(DisplayModule::InputID::ENC_UP, ACTION_DEFER_CALLBACK_TO_WINDOW);
+        assignInput(DisplayModule::InputID::ENC_DOWN, ACTION_DEFER_CALLBACK_TO_WINDOW);
     }
 
     ~Select_Content_List_State()
@@ -39,10 +45,10 @@ public:
     {
         switch (inputID)
         {
-        case ENC_UP:
+        case DisplayModule::InputID::ENC_UP:
             renderContent->encUp();
             break;
-        case ENC_DOWN:
+        case DisplayModule::InputID::ENC_DOWN:
             renderContent->encDown();
             break;
         default:

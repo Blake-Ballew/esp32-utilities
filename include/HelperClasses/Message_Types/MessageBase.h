@@ -73,7 +73,7 @@ public:
     }
 
     // Constructor for message created by this node
-    MessageBase(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID)
+    MessageBase(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const std::string &senderName, uint32_t msgID)
     {
         this->time = time;
         this->date = date;
@@ -81,7 +81,10 @@ public:
         this->sender = sender;
         this->bouncesLeft = 5;
 
-        memcpy(this->senderName, senderName, NAME_LENGTH);
+        size_t nameLen = senderName.length();
+        if (nameLen > NAME_LENGTH) nameLen = NAME_LENGTH;
+        memcpy(this->senderName, senderName.c_str(), nameLen);
+        this->senderName[nameLen] = '\0';
         if (msgID != 0)
         {
             this->msgID = msgID;
@@ -333,4 +336,3 @@ public:
 protected:
     static uint8_t _MessageType;
 };
-

@@ -22,13 +22,20 @@ void NavigationUtils::Init(CompassInterface *compass, Stream &gpsInputStream)
 
 void NavigationUtils::UpdateGPS()
 {
+    ESP_LOGI(TAG, "Updating GPS data...");
+
     while (_GpsInputStream.available() > 0) {
         _GPS.encode(_GpsInputStream.read());
     }
 
     if (_GPS.location.isValid())
     {
+        ESP_LOGI(TAG, "Valid GPS location received. Latitude: %f, Longitude: %f", _GPS.location.lat(), _GPS.location.lng());
         _LastCoordinate = _GPS.location;
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Invalid GPS location. Sattelite count: %d", _GPS.satellites.value());
     }
 }
 
@@ -211,6 +218,11 @@ int NavigationUtils::GetAzimuth()
     return _Compass->GetAzimuth();
 }
 
+double NavigationUtils::GetDistance(TinyGPSLocation &loc, double lat, double lon)
+{
+    return _GPS.distanceBetween(loc.lat(), loc.lng(), lat, lon);
+}
+
 double NavigationUtils::GetDistanceTo(double lat, double lon)
 {
     UpdateGPS();
@@ -227,6 +239,18 @@ double NavigationUtils::GetDistanceTo(double lat, double lon)
     ESP_LOGI(TAG, "Target Lon: %f", lon);
 
     return _GPS.distanceBetween(_LastCoordinate.lat(), _LastCoordinate.lng(), lat, lon);
+}
+
+double NavigationUtils::GetHeading(TinyGPSLocation &loc, double lat, double lon)
+{
+    UpdateGPS();
+
+    if (!_LastCoordinate.isValid())
+    {
+        return -1;
+    }
+    
+    return _GPS.courseTo(loc.lat(), loc.lng(), lat, lon);
 }
 
 double NavigationUtils::GetHeadingTo(double lat, double lon)

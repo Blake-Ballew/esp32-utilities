@@ -1,12 +1,3 @@
+// SUPERSEDED — replaced by include/HelperClasses/Window/LoRaTestWindow.hpp
+// Retained for reference only. Do not include in new code.
 #pragma once
-
-#include "OLED_Window.h"
-#include "LoRa_Test_Content.h"
-
-class LoRa_Test_Window : public OLED_Window
-{
-public:
-    LoRa_Test_Window(OLED_Window *parent);
-
-    void execBtnCallback(uint8_t inputID);
-};

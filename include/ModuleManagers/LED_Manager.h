@@ -5,7 +5,8 @@
 #include "Button_Flash.h"
 #include "Settings_Manager.h"
 #include "LED_Utils.h"
-#include "Display_Utils.h"
+// #include "Display_Utils.h"
+#include "DisplayUtilities.hpp"
 #include <utility>
 #include <vector>
 
@@ -36,7 +37,7 @@ public:
 
     // Initialize button flash animation with a list of input ID to LED index pairs
     static void initializeButtonFlashAnimation();
-    static void inputButtonFlash(uint8_t inputID);
+    static void inputButtonFlash(const DisplayModule::InputContext &ctx);
 
     static void pointNorth(int Azimuth);
     static void pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b);

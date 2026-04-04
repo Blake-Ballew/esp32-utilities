@@ -19,9 +19,19 @@ int Bluetooth_Utils::bluetoothPin()
     return gBluetoothPin;
 }
 
+void Bluetooth_Utils::SettingsUpdated(JsonDocument &doc)
+{
+    // This function is called when the settings file is updated. We can use it to update any relevant Bluetooth settings.
+    if (doc.containsKey("Device Name")) {
+        _DeviceName() = doc["Device Name"].as<std::string>();
+        BLEDevice::setDeviceName(_DeviceName());
+    }
+}
+
 class SystemBLEServer : public NimBLEServerCallbacks {
     void onConnect(BLEServer* pServer, NimBLEConnInfo& connInfo) override {
         // Require all connections to be paired.
+        ESP_LOGI("SystemBLEServer", "Client connected, starting security");
         BLEDevice::startSecurity(connInfo.getConnHandle());
         gBluetoothConnected = true;
     }
@@ -33,6 +43,7 @@ class SystemBLEServer : public NimBLEServerCallbacks {
     }
 
     void onAuthenticationComplete(NimBLEConnInfo& connInfo) override {
+        ESP_LOGI("SystemBLEServer", "Authentication complete for client");
         if (connInfo.isBonded()) {
             gBluetoothPaired = true;
         } else {
@@ -42,6 +53,7 @@ class SystemBLEServer : public NimBLEServerCallbacks {
 
     uint32_t onPassKeyDisplay() override {
         uint32_t pass_key = random(100000, 999999);
+        ESP_LOGI("SystemBLEServer", "Passkey for pairing: %06u", pass_key);
         gBluetoothPin = pass_key;
         return pass_key;
     }
@@ -96,20 +108,36 @@ public:
         DynamicJsonDocument doc(1000);
         DeserializationError error = deserializeMsgPack(doc, _incomingPacketBuffer, _incomingPacketBufferIndex);
         if (error) {
-            Serial.println("[BLE] Invalid MessagePack data");
+            ESP_LOGW("[BLE]", "Failed to deserialize incoming RPC packet");
             return;
         }
 
+        std::string debugStr;
+        serializeJson(doc, debugStr);
+        ESP_LOGI("[BLE]", "Received RPC request: %s", debugStr.c_str());
+        
         auto returnCode = RpcModule::Utilities::CallRpc(doc[RpcModule::Utilities::RPC_FUNCTION_NAME_FIELD()].as<std::string>(), doc);
+
+        if (returnCode != RpcModule::RpcReturnCode::RPC_SUCCESS) 
+        {
+            ESP_LOGW("RpcCharacteristicCallbacks", "RPC function returned code %d", returnCode);
+        } 
+        else 
+        {
+            ESP_LOGV("RpcCharacteristicCallbacks", "RPC function returned code %d", returnCode);
+        }
 
         size_t packedSize = measureMsgPack(doc);
         if (packedSize > MAX_BLE_RPC_PACKET_SIZE) {
-            Serial.println("[BLE] Outgoing RPC packet too large");
+            ESP_LOGW("[BLE]", "Outgoing RPC packet too large");
             return;
         }
         _outgoingPacketBufferIndex = 0;
         _outgoingPacketSize = packedSize;
-        Serial.printf("[BLE] Outgoing RPC packet size: %d\n", packedSize);
+
+        debugStr.clear();
+        serializeJson(doc, debugStr);
+        ESP_LOGI("[BLE]", "Sending RPC response: %s", debugStr.c_str());
 
         serializeMsgPack(doc, _outgoingPacketBuffer, packedSize);
     }
@@ -145,9 +173,11 @@ public:
 
 void Bluetooth_Utils::initBluetooth()
 {
-    std::string device_name = FilesystemModule::Utilities::SettingsFile()["Device Name"]["cfgVal"];
-    std::string ble_name = "DegenBeacon " + device_name;
-    BLEDevice::init(ble_name);
+    // Can't have WiFi and BT active
+    WiFi.disconnect(true);  // Disconnect from the network
+    WiFi.mode(WIFI_OFF);    // Switch WiFi off
+
+    BLEDevice::init(_DeviceName());
     NimBLEDevice::setMTU(BLE_ATT_MTU_MAX); // Use maximum MTU for largest packets.
 
     // -- Set security parameters
@@ -175,7 +205,7 @@ void Bluetooth_Utils::initBluetooth()
     pService->start();
 
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->setName(ble_name);
+    pAdvertising->setName(_DeviceName().c_str());
     pAdvertising->addServiceUUID(DEGEN_SERVICE_UUID);
     // Show up with a watch icon lol.
     #define BLE_APPEARANCE_GENERIC_WATCH 192

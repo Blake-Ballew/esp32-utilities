@@ -1,15 +1,26 @@
-#include "DrawCommandInterface.h"
-#include "Display_Utils.h"
+#include "DrawCommand.hpp"
 
-namespace UxModule
+namespace DisplayModule
 {
-    class DrawWifiIcon : public DrawCommandInterface
+    // -------------------------------------------------------------------------
+    // DrawWifiIcon
+    // -------------------------------------------------------------------------
+    // Draws a 12×8 px Wi-Fi signal icon at (x, y).
+    //
+    // The icon is a series of concentric arcs with a dot in the center:
+    //
+    //   .       (dot)
+    //   ┌───┐   (small arc)
+    //  ┌─────┐  (medium arc)
+    // ┌───────┐ (large arc)
+{
+    class DrawWifiIcon : public DrawCommand
     {
         public:
         int x = 0;
         int y = 0;
 
-        void Draw(DrawContext &context) override
+        void draw(DrawContext &context) override
         {
             auto display = context.display;
             display->fillRect(x, y, context.height, context.width, BLACK);

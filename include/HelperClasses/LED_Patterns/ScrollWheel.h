@@ -42,6 +42,7 @@ public:
     {
         if (beginIdx == -1 || endIdx == -1 || numItems == -1 || currItem == -1)
         {
+            ESP_LOGW(TAG, "ScrollWheel::iterateFrame: Invalid configuration, cannot iterate frame");
             return true;
         }
 

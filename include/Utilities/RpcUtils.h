@@ -45,10 +45,10 @@ namespace RpcModule
         }
 
         static bool RpcResponseNullDestination(int channelID, JsonDocument &payload)
-    {
-        // Do nothing
-        return true;
-    }
+        {
+            // Do nothing
+            return true;
+        }
 
         static RpcReturnCode CallRpc(std::string name, JsonDocument &doc)
         {
@@ -60,7 +60,7 @@ namespace RpcModule
                 return RpcReturnCode::RPC_SUCCESS;
             }
 
-            ESP_LOGV(TAG, "Function %s not registered", name.c_str());
+            ESP_LOGW(TAG, "Function %s not registered", name.c_str());
             return RpcReturnCode::RPC_FUNCTION_NOT_REGISTERED;
         }
 

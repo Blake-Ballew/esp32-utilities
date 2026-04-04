@@ -430,13 +430,6 @@ bool System_Utils::enableWiFi()
     return true;
 }
 
-void System_Utils::initBluetooth()
-{
-    // Can't have both wifi and bluetooth enabled at the same time on the ESP32
-    disableWiFi();
-    Bluetooth_Utils::initBluetooth();
-}
-
 void System_Utils::disableWiFi()
 {
     disableRadio();
@@ -672,6 +665,7 @@ void System_Utils::EndOtaRpc(JsonDocument &doc)
 
 void System_Utils::GetSystemInfoRpc(JsonDocument &doc)
 {
+    ESP_LOGV(TAG, "GetSystemInfoRpc called");
     doc["DeviceName"] = System_Utils::DeviceName;
     doc["DeviceID"] = System_Utils::DeviceID;
     doc["FirmwareVersion"] = FIRMWARE_VERSION_STRING;
@@ -717,11 +711,22 @@ void System_Utils::UpdateSettings(JsonDocument &settings)
 {
     if (settings.containsKey("UserID"))
     {
-        DeviceID = 0 | settings["UserID"]["cfgVal"].as<int>();
+        DeviceID = 0 | settings["UserID"].as<int>();
     }
 
     if (settings.containsKey("Device Name"))
     {
-        DeviceName = settings["Device Name"]["cfgVal"].as<std::string>();
+        DeviceName = settings["Device Name"].as<std::string>();
+    }
+
+    if (settings.containsKey("Silent Mode"))
+    {
+        silentMode = settings["Silent Mode"].as<bool>();
+        ESP_LOGI(TAG, "Assigning silentMode %d", silentMode);
+    }
+
+    if (settings.containsKey("24H Time"))
+    {
+        time24Hour = settings["24H Time"].as<bool>();
     }
 }
