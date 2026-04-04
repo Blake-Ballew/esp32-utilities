@@ -128,12 +128,21 @@ namespace ConnectivityModule
             EnableRadio();
             WiFi.disconnect();
             WiFi.mode(WIFI_STA);
-            auto reuslt = WiFi.begin() == WL_CONNECTED;
-            if (reuslt)
+            WiFi.begin();
+
+            uint32_t start = millis();
+            while (WiFi.status() != WL_CONNECTED)
             {
-                RadioState() = RADIO_STATE_STA;
+                if (millis() - start > 10000)  // 10 second timeout
+                {
+                    ESP_LOGW(TAG, "WiFi connection timed out");
+                    return false;
+                }
+                vTaskDelay(pdMS_TO_TICKS(250));
             }
-            return reuslt;
+
+            RadioState() = RADIO_STATE_STA;
+            return true;
         }
 
         static bool ConnectToAccessPoint(std::string ssid, std::string password)
@@ -141,25 +150,54 @@ namespace ConnectivityModule
             EnableRadio();
             WiFi.disconnect();
             WiFi.mode(WIFI_STA);
-            auto reuslt = WiFi.begin(ssid.c_str(), password.c_str()) == WL_CONNECTED;
-            if (reuslt)
+            WiFi.begin(ssid.c_str(), password.c_str());
+
+            uint32_t start = millis();
+            while (WiFi.status() != WL_CONNECTED)
             {
-                RadioState() = RADIO_STATE_STA;
+                if (millis() - start > 10000)  // 10 second timeout
+                {
+                    ESP_LOGW(TAG, "WiFi connection timed out");
+                    return false;
+                }
+                vTaskDelay(pdMS_TO_TICKS(250));
             }
-            return reuslt;
+
+            RadioState() = RADIO_STATE_STA;
+            ESP_LOGI(TAG, "Connected to %s, IP: %s", ssid.c_str(), WiFi.localIP().toString().c_str());
+            return true;
         }
 
         // AP
-        static std::string ApSSID()
+        static std::string &ApSSID()
         {
             static std::string _ApSSID = "ESP32-Utilities-AP";
             return _ApSSID;
         }
 
-        static std::string ApPassword()
+        static std::string &ApPassword()
         {
             static std::string _ApPassword = "esp-ap-password";
             return _ApPassword;
+        }
+
+        static std::string GetWiFiIpAddress()
+        {
+            if (RadioState() == RADIO_STATE_AP)
+            {
+                ESP_LOGI(TAG, "Returning AP IP address: %s", WiFi.softAPIP().toString().c_str());
+                return WiFi.softAPIP().toString().c_str();
+            }
+            else if (RadioState() == RADIO_STATE_STA)
+            {
+                ESP_LOGI(TAG, "Returning STA IP address: %s", WiFi.localIP().toString().c_str());
+                return WiFi.localIP().toString().c_str();
+            }
+            else
+            {
+                ESP_LOGI(TAG, "Radio state is %d, returning default IP address", RadioState());
+                return "0.0.0.0";
+            }
         }
 
         static bool StartAccessPoint()

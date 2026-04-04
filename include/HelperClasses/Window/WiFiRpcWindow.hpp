@@ -8,64 +8,130 @@
 
 namespace DisplayModule
 {
-    // -------------------------------------------------------------------------
-    // WiFiRpcWindow
-    // -------------------------------------------------------------------------
-    // WiFi RPC server flow:
-    //
-    //   AwaitWifiState (connect to WiFi)
-    //     ↓ WiFi connected (detected each tick)
-    //   BroadcastTcpState (broadcast IP:port every 500 ms)
-    //     ↓ WiFi lost (detected each tick)
-    //   AwaitWifiState (reconnect)
-    //
-    // Radio is shut down on destruction.
-    // BUTTON_3 pops the window from either state.
-    //
-    // Usage:
-    //   Utilities::pushWindow(std::make_shared<WiFiRpcWindow>());
-
     class WiFiRpcWindow : public Window
     {
     public:
-        WiFiRpcWindow()
+        WiFiRpcWindow(bool useApMode = true) : _useApMode(useApMode)
         {
-            _awaitState     = std::make_shared<AwaitWifiState>();
-            _broadcastState = std::make_shared<BroadcastTcpState>();
+            _state = std::make_shared<WindowState>();
 
-            registerInput(InputID::BUTTON_3, "Back");
-            addInputCommand(InputID::BUTTON_3,
+            if (useApMode)
+            {
+                _initWiFiAp();
+            }
+            else
+            {
+                _initWiFiSta();
+            }
+            _buildDrawCommands();
+
+            _state->bindInput(InputID::BUTTON_3, "Back",
                 [](const InputContext &) { Utilities::popWindow(); });
 
-            setInitialState(_awaitState);
+            _state->refreshIntervalMs = 5000; // Refresh every 5 seconds to update IP address, etc.
+
+            setInitialState(_state);
         }
 
         ~WiFiRpcWindow()
         {
+            ConnectivityModule::RadioUtils::StopAccessPoint();
+
             if (ConnectivityModule::RadioUtils::IsRadioActive())
+            {
                 ConnectivityModule::RadioUtils::DisableRadio();
+            }            
         }
 
-        // Switch states based on WiFi link status each autonomous tick
         void onTick() override
         {
-            Window::onTick(); // dispatch to current state
-
-            if (_currentState == _awaitState
-                && ConnectivityModule::RadioUtils::IsWiFiActive())
-            {
-                switchState(_broadcastState);
-            }
-            else if (_currentState == _broadcastState
-                     && !ConnectivityModule::RadioUtils::IsWiFiActive())
-            {
-                switchState(_awaitState);
-            }
+            _buildDrawCommands();
         }
 
     private:
-        std::shared_ptr<AwaitWifiState>     _awaitState;
-        std::shared_ptr<BroadcastTcpState>  _broadcastState;
+        std::shared_ptr<WindowState>        _state;
+        std::string                         _ssid;
+        std::string                         _password;
+        bool                                _useApMode;
+
+        void _initWiFiAp()
+        {
+            // TODO: Make the password somewhat more persistent
+            _generateApCredentials();
+            ConnectivityModule::RadioUtils::ApSSID() = _ssid;
+            ConnectivityModule::RadioUtils::ApPassword() = _password;
+            ConnectivityModule::RadioUtils::StartAccessPoint();
+        }
+
+        // Testing purposes
+        void _initWiFiSta()
+        {
+            _ssid = "";
+            _password = "";
+            ConnectivityModule::RadioUtils::ConnectToAccessPoint(_ssid, _password);
+        }
+
+        void _generateApCredentials()
+        {
+            // SSID = ESP32-Utils-<DeviceID Hex>
+            auto deviceID = System_Utils::DeviceID;
+            char ssidBuffer[20];
+            sprintf(ssidBuffer, "ESP-CFG-%04X", deviceID & 0xFFFF);
+            _ssid = ssidBuffer;
+            _password = FilesystemModule::Utilities::FetchStringSetting("WiFi AP Password", "esp-pass");
+        }
+
+        void _buildDrawCommands()
+        {
+            if (_useApMode)
+            {
+                _buildApModeDrawCommands();
+            }
+            else
+            {
+                _buildStaModeDrawCommands();
+            }
+        }
+
+        void _buildApModeDrawCommands()
+        {
+            _state->clearDrawCommands();
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "Access Point Active", TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 1}));
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "SSID: " + _ssid, TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 2}));
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "Password: " + _password, TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 3}));
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "Ip: " + ConnectivityModule::RadioUtils::GetWiFiIpAddress(), TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 4}));
+        }
+
+        void _buildStaModeDrawCommands()
+        {
+            _state->clearDrawCommands();
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "Station Mode Active", TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 1}));
+
+            _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                "SSID: " + _ssid, TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 2}));
+
+            auto ipAddress = ConnectivityModule::RadioUtils::GetWiFiIpAddress();
+            if (ipAddress != "0.0.0.0")
+            {
+                _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                    "Connected with IP: " + ipAddress, TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 3}));
+            }
+            else
+            {
+                _state->addDrawCommand(std::make_shared<TextDrawCommand>(
+                    "Not Connected", TextFormat{TextAlignH::CENTER, TextAlignV::LINE, 3}));
+            }
+        }
     };
 
 } // namespace DisplayModule
