@@ -119,7 +119,7 @@ namespace RpcModule
                 }
             };
 
-            _serialRpcChannelID = Utilities::AddRpcChannel(512, pollFunctionPointer, replyFunctionPointer);
+            _serialRpcChannelID = Utilities::AddRpcChannel(4096, pollFunctionPointer, replyFunctionPointer);
             Utilities::EnableRpcChannel(_serialRpcChannelID);
         }
 
