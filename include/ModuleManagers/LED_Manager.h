@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FastLED.h>
-#include "globalDefines.h"
 #include "Button_Flash.h"
 #include "Settings_Manager.h"
 #include "LED_Utils.h"

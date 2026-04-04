@@ -1,6 +1,5 @@
 #pragma once
 
-#include "globalDefines.h"
 #include "FastLED.h"
 #include "ArduinoJson.h"
 

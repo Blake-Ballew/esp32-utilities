@@ -1,6 +1,5 @@
 #pragma once
 
-#include "globalDefines.h"
 #include <ArduinoJson.h>
 #include "LED_Manager.h"
 #include "NavigationUtils.h"

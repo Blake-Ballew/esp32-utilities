@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FastLED.h>
-#include "globalDefines.h"
 #include "LED_Pattern_Interface.h"
 #include <unordered_map>
 #include <vector>
