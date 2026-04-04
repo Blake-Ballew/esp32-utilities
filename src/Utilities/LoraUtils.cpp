@@ -254,6 +254,7 @@ bool LoraUtils::MessagePackSanityCheck(JsonDocument &doc)
 void LoraUtils::AddSavedMessage(std::string msg, bool flash)
 {
     _SavedMessageList.push_back(msg);
+    ESP_LOGI(TAG, "Added saved message: %s", msg.c_str());
 
     if (flash)
         _SavedMessageListUpdated.Invoke();

@@ -166,7 +166,12 @@ public:
 
     static void UpdateSettings(JsonDocument &settings);
 
- 
+    // DEBUGGING FUNCTIONS
+    static void PrintHeapFragmentation() {
+        float frag = static_cast<float>(ESP.getMaxAllocHeap())
+            / static_cast<float>(ESP.getFreeHeap());
+        ESP_LOGI(TAG, "Heap fragmentation: %.2f%%", frag * 100);
+    }
 
 private:
     // Event Handlers

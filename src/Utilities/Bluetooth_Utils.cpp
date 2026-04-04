@@ -19,6 +19,15 @@ int Bluetooth_Utils::bluetoothPin()
     return gBluetoothPin;
 }
 
+void Bluetooth_Utils::SettingsUpdated(JsonDocument &doc)
+{
+    // This function is called when the settings file is updated. We can use it to update any relevant Bluetooth settings.
+    if (doc.containsKey("Device Name")) {
+        _DeviceName() = doc["Device Name"].as<std::string>();
+        BLEDevice::setDeviceName(_DeviceName());
+    }
+}
+
 class SystemBLEServer : public NimBLEServerCallbacks {
     void onConnect(BLEServer* pServer, NimBLEConnInfo& connInfo) override {
         // Require all connections to be paired.
@@ -145,9 +154,7 @@ public:
 
 void Bluetooth_Utils::initBluetooth()
 {
-    std::string device_name = FilesystemModule::Utilities::SettingsFile()["Device Name"]["cfgVal"];
-    std::string ble_name = "DegenBeacon " + device_name;
-    BLEDevice::init(ble_name);
+    BLEDevice::init(_DeviceName());
     NimBLEDevice::setMTU(BLE_ATT_MTU_MAX); // Use maximum MTU for largest packets.
 
     // -- Set security parameters
@@ -175,7 +182,7 @@ void Bluetooth_Utils::initBluetooth()
     pService->start();
 
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->setName(ble_name);
+    pAdvertising->setName(_DeviceName().c_str());
     pAdvertising->addServiceUUID(DEGEN_SERVICE_UUID);
     // Show up with a watch icon lol.
     #define BLE_APPEARANCE_GENERIC_WATCH 192

@@ -14,8 +14,11 @@ int LED_Utils::registerPattern(LED_Pattern_Interface *pattern)
 {
     if (pattern == nullptr)
     {
+        ESP_LOGW(TAG, "LED_Utils::registerPattern: Attempted to register null pattern");
         return -1;
     }
+
+    ESP_LOGV(TAG, "LED_Utils::registerPattern: Registering pattern with ID %d", nextPatternID);
 
     registeredPatterns[nextPatternID] = {nextPatternID, pattern, 0, false};
     pattern->SetRegisteredPatternID(nextPatternID);
@@ -67,8 +70,13 @@ void LED_Utils::configurePattern(int patternID, JsonDocument &config)
 {
     if (registeredPatterns.find(patternID) == registeredPatterns.end())
     {
+        ESP_LOGW(TAG, "LED_Utils::configurePattern: Attempted to configure non-existent pattern with ID %d", patternID);
         return;
     }
+
+    std::string configStr;
+    serializeJson(config, configStr);
+    ESP_LOGV(TAG, "LED_Utils::configurePattern: Configuring pattern with ID %d with config: %s", patternID, configStr.c_str());
 
     registeredPatterns[patternID].pattern->configurePattern(config);
 }   
@@ -90,9 +98,11 @@ void LED_Utils::enablePattern(int patternID)
 {
     if (registeredPatterns.find(patternID) == registeredPatterns.end())
     {
+        ESP_LOGW(TAG, "LED_Utils::enablePattern: Attempted to enable non-existent pattern with ID %d", patternID);
         return;
     }
 
+    ESP_LOGV(TAG, "LED_Utils::enablePattern: Enabling pattern with ID %d", patternID);
     registeredPatterns[patternID].enabled = true;
 }
 
@@ -204,9 +214,22 @@ void LED_Utils::iteratePattern(int patternID)
     ESP_LOGV(TAG, "LED_Utils::iteratePattern");
     if (_IteratePatternsTaskHandle != nullptr && patternID > -1)
     {
+        ESP_LOGV(TAG, "LED_Utils::iteratePattern: Notifying task to iterate pattern with ID %d", patternID);
         vTaskResume(_IteratePatternsTaskHandle);
         uint32_t notificationPatternID = (uint32_t)patternID;
         xTaskNotify(_IteratePatternsTaskHandle, notificationPatternID, eSetValueWithOverwrite);
+    }
+    else
+    {
+        if (_IteratePatternsTaskHandle == nullptr)
+        {
+            ESP_LOGW(TAG, "LED_Utils::iteratePattern: Cannot iterate pattern because task handle is null");
+        }
+
+        if (patternID <= -1)
+        {
+            ESP_LOGW(TAG, "LED_Utils::iteratePattern: Cannot iterate pattern because pattern ID is invalid: %d", patternID);
+        }
     }
 }
 

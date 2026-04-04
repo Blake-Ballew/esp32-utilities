@@ -1,3 +1,7 @@
+// SUPERSEDED — fully commented-out dead code.
+// Ping functionality is now handled by RepeatMessageState + SosWindow.
+// Safe to delete once the legacy OLED_Window tree is retired.
+
 // #pragma once
 
 // #include "OLED_Window.h"

@@ -17,10 +17,14 @@ void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
     leds = new CRGB[numLeds];
     LED_Utils::setLeds(leds, numLeds);
 
+    ESP_LOGI(TAG, "Initializing FastLED with %d LEDs", numLeds);
+
     FastLED.addLeds<LED_TYPE, LED_PIN, LED_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(255);
     FastLED.clear();
     FastLED.show();
+
+    ESP_LOGI(TAG, "Starting LED pattern task on CPU core %d", cpuCore);
 
     patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 1, cpuCore);
     LED_Utils::SetIteratePatternTaskHandle(System_Utils::getTask(patternTaskID));
@@ -43,15 +47,14 @@ void LED_Manager::initializeButtonFlashAnimation()
     buttonFlashPatternID = LED_Utils::registerPattern(btnFlash);
     LED_Utils::enablePattern(buttonFlashPatternID);
     LED_Utils::setAnimationLengthMS(buttonFlashPatternID, 300);
-    Display_Utils::getInputRaised() += inputButtonFlash;
+    // Display_Utils::getInputRaised() += inputButtonFlash;
 }
 
-void LED_Manager::inputButtonFlash(uint8_t inputID)
+void LED_Manager::inputButtonFlash(const DisplayModule::InputContext &ctx)
 {
-    ESP_LOGD(TAG, "Button flash input: %d", inputID);
+    ESP_LOGI(TAG, "Button flash input: %d", ctx.inputID);
     StaticJsonDocument<64> cfg;
-    cfg["inputID"] = inputID;
-
+    cfg["inputID"] = ctx.inputID;
     LED_Utils::configurePattern(buttonFlashPatternID, cfg);
     LED_Utils::loopPattern(buttonFlashPatternID, 1);
 }
@@ -114,11 +117,13 @@ void LED_Manager::toggleFlashlight()
 {
 
     #if HARDWARE_VERSION == 1
+    ESP_LOGI(TAG, "Toggling flashlight version 1");
     size_t beginFlashlightIdx = 23;
     size_t endFlashlightIdx = 30;
     #endif
 
     #if HARDWARE_VERSION == 2
+    ESP_LOGI(TAG, "Toggling flashlight version 2");
     size_t beginFlashlightIdx = 23;
     size_t endFlashlightIdx = 31;
     #endif
@@ -129,6 +134,7 @@ void LED_Manager::toggleFlashlight()
         {
             leds[i] = CRGB::Black;
         }
+        ESP_LOGI(TAG, "Turning flashlight off");
         FastLED.show();
         flashlightOn = false;
     }
@@ -138,6 +144,7 @@ void LED_Manager::toggleFlashlight()
         {
             leds[i] = CRGB::White;
         }
+        ESP_LOGI(TAG, "Turning flashlight on");
         FastLED.show();
         flashlightOn = true;
     }

@@ -23,7 +23,7 @@ public:
         this->IsLive = false;
     }
 
-    MessagePing(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const char *senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const char *status)
+    MessagePing(uint32_t time, uint32_t date, uint32_t recipient, uint32_t sender, const std::string &senderName, uint32_t msgID, uint8_t color_R, uint8_t color_G, uint8_t color_B, double lat, double lng, const std::string &status)
         : MessageBase(time, date, recipient, sender, senderName, msgID)
     {
         this->color_R = color_R;
@@ -35,11 +35,11 @@ public:
 
         this->IsLive = false;
 
-        size_t strLen = strlen(status);
+        size_t strLen = status.length();
         if (strLen > STATUS_LENGTH)
             strLen = STATUS_LENGTH;
 
-        memcpy(this->status, status, strLen);
+        memcpy(this->status, status.c_str(), strLen);
         this->status[strLen] = '\0';
     }
 
@@ -160,6 +160,10 @@ public:
             delete msg;
             return nullptr;
         }
+
+        std::string debugStr;
+        serializeJson(doc, debugStr);
+        ESP_LOGI(TAG, "Incoming Ping: %s", debugStr.c_str());
 
         msg->deserialize(doc);
 

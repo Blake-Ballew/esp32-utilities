@@ -2,12 +2,21 @@
 
 #include "ArduinoJson.h"
 #include "System_Utils.h"
+#include "SettingsInterface.hpp"
 #include <StreamUtils.h>
 #include <SPIFFS.h>
 #include <string>
+#include <vector>
+#include <utility>
+#include <functional>
+#include <memory>
+#include <cstdint>
+#include <cstddef>
+#include <map>
 
 namespace FilesystemModule
 {
+    using SettingsMap = std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>>;
 
     static const char *TAG = "FilesystemModule";
 
@@ -34,6 +43,9 @@ namespace FilesystemModule
                 vTaskDelay(pdMS_TO_TICKS(1000));
                 ESP.restart();
             }
+
+            SettingsPreference().begin(SettingsInterface::preference_namespace, false);
+            DeviceInfo().begin("DeviceInfo", false);
         }
 
         // Reads a file from the SPIFFS filesystem into a JsonDocument
@@ -102,68 +114,114 @@ namespace FilesystemModule
             return FilesystemReturnCode::FILESYSTEM_OK;
         }
 
-        // Loads the settings file from the given path
-        // static FilesystemReturnCode LoadSettingsFile(std::string filename)
-        // {
-        //     _SettingsFile.clear();
-        //     auto returncode = ReadFile(filename, _SettingsFile);
-        
-        //     if (returncode == FilesystemReturnCode::FILESYSTEM_OK)
-        //     {
-        //         _SettingsFilename = filename;
-        //     }
-        
-        //     return returncode;
-        // }
+        // =============== Settings Management ===============
 
-        // Settings file getter
-        static JsonDocument &SettingsFile() { return _SettingsFile; }
-
-        static FilesystemReturnCode LoadSettingsFile(JsonDocument &doc) { return ReadFile(SettingsFileName(), doc); }
-
-        static std::string &SettingsFileName()
+        static SettingsMap &DeviceSettings() 
         {
-            static std::string _SettingsFile = "/Settings.msgpk";
-            return _SettingsFile;
+            static SettingsMap _DeviceSettings;
+            return _DeviceSettings;
         }
 
-        // print settings file to Serial
-        static void PrintSettingsFile() { serializeJson(_SettingsFile, Serial); }
-
-        // Settings file setter
-        static FilesystemReturnCode WriteSettingsFile(std::string filename, JsonDocument &doc) 
+        static Preferences &SettingsPreference()
         {
-            auto returncode = WriteFile(SettingsFileName(), doc);
-            if (returncode == FilesystemReturnCode::FILESYSTEM_OK && &doc != &_SettingsFile)
-            {
-                _SettingsFile.set(doc);
-            }
-            return returncode;
+            static Preferences _SettingsPreference;
+            return _SettingsPreference;
         }
 
-        static FilesystemReturnCode WriteSettingsFileToFlash()
+        static Preferences &DeviceInfo()
         {
-            if (SettingsFileName().length() == 0 || SettingsFile().isNull())
-            {
-                ESP_LOGE(TAG, "Settings file not loaded.");
-                return FilesystemReturnCode::WRITE_FAILED;
-            }
-
-            
-            auto returnCode = WriteFile(SettingsFileName(), SettingsFile());
-            if (returnCode == FilesystemReturnCode::FILESYSTEM_OK)
-            {
-                _SettingsUpdated.Invoke(SettingsFile());
-            }
-
-            return returnCode;
+            static Preferences _DeviceInfo;
+            return _DeviceInfo;
         }
 
         static void RpcGetSettingsFile(JsonDocument &doc)
         {
             doc.clear();
-            LoadSettingsFile(doc);
+            
+            for (auto &setting : DeviceSettings())
+            {
+                auto obj = doc.createNestedObject(setting.first);
+                setting.second->toJson(obj);
+            }
         }
+
+        // ================ Fetch Settings Helpers ================
+
+        static bool FetchBoolSetting(std::string key, bool defaultVal = false)
+        {
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                if (setting->getType() == "bool")
+                {
+                    auto boolSetting = std::static_pointer_cast<BoolSetting>(setting);
+                    return boolSetting->value;
+                }
+            }
+            return defaultVal;
+        }
+        
+        static int FetchIntSetting(std::string key, int defaultVal = 0)
+        {
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                if (setting->getType() == "int")
+                {
+                    auto intSetting = std::static_pointer_cast<IntSetting>(setting);
+                    return intSetting->value;
+                }
+            }
+            return defaultVal;
+        }
+
+        static float FetchFloatSetting(std::string key, float defaultVal = 0.0f)
+        {
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                if (setting->getType() == "float")
+                {
+                    auto floatSetting = std::static_pointer_cast<FloatSetting>(setting);
+                    return floatSetting->value;
+                }
+            }
+            return defaultVal;
+        }
+
+        static std::string FetchStringSetting(std::string key, std::string defaultVal = "")
+        {
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                if (setting->getType() == "string")
+                {
+                    auto stringSetting = std::static_pointer_cast<StringSetting>(setting);
+                    return stringSetting->value;
+                }
+            }
+            return defaultVal;
+        }
+
+        static int FetchEnumSetting(std::string key, int defaultVal = 0)
+        {
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                if (setting->getType() == "enum")
+                {
+                    auto enumSetting = std::static_pointer_cast<EnumSetting>(setting);
+                    return enumSetting->value;
+                }
+            }
+            return defaultVal;
+        }
+
+        // ================ Write Settings Helpers ================
+
+        
+
+        // ================ Rpc Functions ================
 
         static void RpcUpdateSettingsFile(JsonDocument &doc)
         {
@@ -179,14 +237,26 @@ namespace FilesystemModule
         static void RpcUpdateSetting(JsonDocument &doc) 
         {
             auto key = doc["SettingKey"].as<std::string>();
-            auto value = doc["SettingValue"].as<std::string>();
 
-            // serializeJson(doc, Serial);
+            if (DeviceSettings().find(key) != DeviceSettings().end())
+            {
+                auto &setting = DeviceSettings()[key];
+                doc[SettingsInterface::write_key] = doc["SettingValue"];
+                auto obj = doc.as<ArduinoJson::JsonObjectConst>();
+                setting->fromJson(obj);
+                setting->saveToPreferences(SettingsPreference());
+                ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), doc["SettingValue"].as<const char*>());
 
-            SettingsFile()[key]["cfgVal"] = value;
-
-            doc.clear();
-            doc["Success"] = WriteSettingsFileToFlash() == FilesystemReturnCode::FILESYSTEM_OK;
+                doc.clear();
+                doc["Success"] = true;
+            }
+            else
+            {
+                ESP_LOGW(TAG, "Setting not found: %s", key.c_str());
+                doc.clear();
+                doc["Success"] = false;
+                return;
+            }
         }
 
         static void RpcUpdateSettings(JsonDocument &doc) 
@@ -195,16 +265,27 @@ namespace FilesystemModule
 
             if (doc.containsKey("Settings") && doc["Settings"].is<JsonArray>())
             {
+                Preferences& prefs = SettingsPreference();
                 auto settingsArray = doc["Settings"].as<JsonArray>();
-                for (auto setting : settingsArray)
+
+                for (JsonVariant setting : settingsArray)
                 {
                     auto key = setting["SettingKey"].as<std::string>();
-                    auto value = setting["SettingValue"].as<std::string>();
 
-                    SettingsFile()[key]["cfgVal"] = value;
+                    if (DeviceSettings().find(key) == DeviceSettings().end())
+                    {
+                        ESP_LOGW(TAG, "Setting not found: %s", key.c_str());
+                        success = false;
+                        continue;
+                    }
+
+                    auto& s = DeviceSettings()[key];
+                    setting[SettingsInterface::write_key] = setting["SettingValue"];
+                    auto obj = setting.as<JsonObjectConst>();
+                    s->fromJson(obj);
+                    s->saveToPreferences(prefs);
+                    ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), setting["SettingValue"].as<const char*>());
                 }
-
-                success = WriteSettingsFileToFlash() == FilesystemReturnCode::FILESYSTEM_OK;
             }
             else
             {
@@ -215,8 +296,27 @@ namespace FilesystemModule
             doc["Success"] = success;
         }
 
-        // SettingsUpdated event handler getter
-        static EventHandler<ArduinoJson::JsonDocument &> &SettingsUpdated() { return _SettingsUpdated; }
+        static void InvokeSettingsUpdated(SettingsMap &settings, size_t jsonDocSize = 2048)
+        {
+            DynamicJsonDocument doc(jsonDocSize);
+
+            for (auto &setting : settings)
+            {
+                setting.second->toJsonSettingsDoc(doc);
+                auto valueStr = doc[setting.first.c_str()].as<std::string>();
+                ESP_LOGD(TAG, "Setting %s: %s", setting.first.c_str(), valueStr.c_str());
+            }
+
+            _SettingsUpdated.Invoke(doc);
+        }
+
+        static EventHandler<JsonDocument &> &SettingsUpdated() { return _SettingsUpdated; }
+
+        static EventHandler<> &RequestSettingsRefresh() 
+        {
+            static EventHandler<> _requestSettingsRefresh;
+            return _requestSettingsRefresh;
+        }
 
     protected:
         // Settings File
@@ -224,6 +324,6 @@ namespace FilesystemModule
         static std::string _SettingsFilename;
 
         // Event handler for settings file updates
-        static EventHandler<ArduinoJson::JsonDocument &> _SettingsUpdated;
+        static EventHandler<JsonDocument&> _SettingsUpdated;
     };
 };

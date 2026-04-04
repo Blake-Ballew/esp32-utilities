@@ -75,6 +75,9 @@ public:
             return false;
         }
 
+        auto userID = FilesystemModule::Utilities::DeviceInfo().getUInt("UserID");
+        LoraUtils::SetUserID(userID);
+
         LoraUtils::Init();
 
         LoraUtils::UserInfoListUpdated() += SaveUserInfoList;
@@ -82,14 +85,6 @@ public:
 
         LoraUtils::SavedMessageListUpdated() += SaveMessageList;
         this->LoadMessageList();
-
-        // Get rid of this
-        if (LoraUtils::GetSavedMessageListSize() == 0)
-        {
-            LoraUtils::AddSavedMessage("Meet here");
-            LoraUtils::AddSavedMessage("Point of interest");
-            LoraUtils::AddSavedMessage("I have a quest");
-        }
 
         _sendQueue = System_Utils::getQueue(LoraUtils::MessageSendQueueID());
 
@@ -130,6 +125,7 @@ public:
                             // Fill in time received if not set
                             if (msg->time == 0 && msg->date == 0 && NavigationUtils::IsGPSConnected())
                             {
+                                ESP_LOGI(TAG, "Filling in timestamp for incoming message");
                                 msg->time = NavigationUtils::GetTime().value();
                                 msg->date = NavigationUtils::GetDate().value();
                             }
@@ -139,7 +135,7 @@ public:
                             // Dump message if it was sent from this node and came back
                             if (msg->sender == LoraUtils::UserID())
                             {
-                                ESP_LOGD(TAG, "Message was sent from this node and came back");
+                                ESP_LOGI(TAG, "Message was sent from this node and came back");
 
                                 delete msg;
                                 msg = nullptr;
@@ -156,7 +152,7 @@ public:
 
                                 if (msg->recipient == LoraUtils::UserID() || msg->recipient == BROADCAST_ID)
                                 {
-                                    ESP_LOGD(TAG, "Message directed to this node or broadcast");
+                                    ESP_LOGI(TAG, "Message directed to this node or broadcast");
                                     // Handle the message
                                     auto msgExists = LoraUtils::MessageExists(msg->sender, msg->msgID);
                                     LoraUtils::SetReceivedMessage(msg->sender, msg);
@@ -380,7 +376,7 @@ protected:
     {
         if (msg == nullptr)
         {
-            ESP_LOGD(TAG, "Message is null");
+            ESP_LOGI(TAG, "Message is null");
             return false;
         }
 
@@ -390,13 +386,13 @@ protected:
         // Don't forward messages that came from this node
         if (senderID == LoraUtils::UserID())
         {
-            ESP_LOGD(TAG, "Message came from this node");
+            ESP_LOGI(TAG, "Message came from this node");
             return false;
         }
 
         if (msg->bouncesLeft == 0)
         {
-            ESP_LOGD(TAG, "Message has no bounces left");
+            ESP_LOGI(TAG, "Message has no bounces left");
             return false;
         }
 
@@ -405,18 +401,18 @@ protected:
         {
             if (_lastReceivedMessages[senderID] == msgID)
             {
-                ESP_LOGD(TAG, "Message has already been received");
+                ESP_LOGI(TAG, "Message has already been received");
                 return false;
             }
             else
             {
-                ESP_LOGD(TAG, "Message has not been received. Resending");
+                ESP_LOGI(TAG, "Message has not been received. Resending");
                 return true;
             }
         }
         else
         {
-            ESP_LOGD(TAG, "Message from new user. Resending");
+            ESP_LOGI(TAG, "Message from new user. Resending");
             return true;
         }
     }

@@ -170,7 +170,7 @@ namespace ConnectivityModule
         {
             if (doc.containsKey("WiFi Provisioning"))
             {
-                auto mode = doc["WiFi Provisioning"]["cfgVal"].as<int>();
+                auto mode = doc["WiFi Provisioning"].as<int>();
                 if (mode >= WIFI_PROV_MODE_NONE && mode <= WIFI_PROV_MODE_TEMP_AP)
                 {
                     ProvisioningMode() = static_cast<WiFiProvisioningMode>(mode);

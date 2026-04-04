@@ -48,12 +48,12 @@
 #define ENC_A 23
 #define ENC_B 2
 
-#define BUTTON_1 1
-#define BUTTON_2 2
-#define BUTTON_3 3
-#define BUTTON_4 4
-#define ENC_DOWN 5
-#define ENC_UP 6
+// #define BUTTON_1 1
+// #define BUTTON_2 2
+// #define BUTTON_3 3
+// #define BUTTON_4 4
+// #define ENC_DOWN 5
+// #define ENC_UP 6
 #define MESSAGE_RECEIVED 7
 #define BUTTON_SOS 8
 

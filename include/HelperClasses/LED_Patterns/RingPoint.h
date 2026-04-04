@@ -67,7 +67,7 @@ public:
 
     bool iterateFrame()
     {
-        ESP_LOGV(TAG, "RingPoint::iterateFrame");
+        ESP_LOGI(TAG, "RingPoint::iterateFrame");
         if (beginIdx == -1 || endIdx == -1)
         {
             ESP_LOGW(TAG, "RingPoint::iterateFrame: Invalid begin or end index");

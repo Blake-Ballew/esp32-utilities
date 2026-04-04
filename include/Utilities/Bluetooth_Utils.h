@@ -1,6 +1,7 @@
 #pragma once
 
 #include <NimBLEDevice.h>
+#include "ArduinoJson.h"
 
 namespace 
 {
@@ -15,4 +16,12 @@ public:
     static bool bluetoothConnected();
     static bool bluetoothPaired();
     static int bluetoothPin();
+
+    static void SettingsUpdated(JsonDocument &doc);
+
+private:
+    static std::string &_DeviceName() {
+        static std::string device_name = "Beacon";
+        return device_name;
+    }
 };
