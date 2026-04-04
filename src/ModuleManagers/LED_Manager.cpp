@@ -11,15 +11,14 @@ int LED_Manager::buttonFlashPatternID = -1;
 
 int LED_Manager::patternTaskID = -1;
 
-void LED_Manager::init(size_t numLeds, uint8_t cpuCore)
+void LED_Manager::init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore)
 {
     ESP_LOGI(TAG, "LED_Manager::init");
-    leds = new CRGB[numLeds];
+    leds = ledBuffer;
     LED_Utils::setLeds(leds, numLeds);
 
     ESP_LOGI(TAG, "Initializing FastLED with %d LEDs", numLeds);
 
-    FastLED.addLeds<LED_TYPE, LED_PIN, LED_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(255);
     FastLED.clear();
     FastLED.show();
@@ -123,6 +122,12 @@ void LED_Manager::toggleFlashlight()
     #endif
 
     #if HARDWARE_VERSION == 2
+    ESP_LOGI(TAG, "Toggling flashlight version 2");
+    size_t beginFlashlightIdx = 23;
+    size_t endFlashlightIdx = 31;
+    #endif
+
+    #if HARDWARE_VERSION == 3
     ESP_LOGI(TAG, "Toggling flashlight version 2");
     size_t beginFlashlightIdx = 23;
     size_t endFlashlightIdx = 31;
