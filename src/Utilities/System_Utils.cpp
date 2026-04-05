@@ -40,6 +40,10 @@ void System_Utils::init()
 // TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
+#if HARDWARE_VERSION >= 3
+    // TODO: Implement battery percentage calculation for hardware version 3 and above
+    return 100;
+#else
     auto BATT_SENSE_PIN = 39;
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
 
@@ -62,6 +66,7 @@ long System_Utils::getBatteryPercentage()
     }
     long percentage = map(voltage, 1750, 2100, 0, 100);
     return percentage;
+#endif
 }
 
 // TODO: Move this into application
