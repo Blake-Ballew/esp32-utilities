@@ -115,6 +115,9 @@ namespace DisplayModule
                             InputContext ctx;
                             ctx.inputID = item.commandData.inputCommand.inputID;
                             Utilities::handleInput(ctx);
+
+                            // haptic feedback
+                            LED_Manager::applyHapticFeedback(150);
                             break;
                         }
 

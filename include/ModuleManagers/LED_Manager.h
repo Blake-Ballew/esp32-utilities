@@ -15,6 +15,7 @@
 #define BUZZER_PIN 4
 #else
 #define BUZZER_PIN 7
+#define HAPTIC_VIBRATION_PIN 6
 #endif
 
 /*
@@ -56,6 +57,8 @@ public:
     static void pulseButton(uint8_t buttonNumber);
 
     static void pulseCircle(uint8_t r, uint8_t g, uint8_t b, size_t tick);
+
+    static void applyHapticFeedback(uint8_t intensity);
 
 private:
     static bool flashlightOn;

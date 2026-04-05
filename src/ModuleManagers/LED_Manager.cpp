@@ -175,6 +175,15 @@ void LED_Manager::ledShutdownAnimation()
     }
 }
 
+void LED_Manager::applyHapticFeedback(uint8_t intensity)
+{
+#if HARDWARE_VERSION >= 3
+    analogWrite(HAPTIC_VIBRATION_PIN, intensity);
+    delay(80);
+    analogWrite(HAPTIC_VIBRATION_PIN, 0);
+#endif
+}
+
 // void LED_Manager::pulseButton(uint8_t buttonNumber)
 // {
 //     size_t ledIdx;
