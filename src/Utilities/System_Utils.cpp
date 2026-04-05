@@ -1,5 +1,11 @@
 #include "System_Utils.h"
 
+#if HARDWARE_VERSION >= 3
+#include <BQ25672.h> // power management IC
+
+static BQ25672 charger(Wire);
+#endif
+
 std::string System_Utils::DeviceName = "ESP32";
 size_t System_Utils::DeviceID = 0;
 
@@ -41,11 +47,15 @@ void System_Utils::init()
 long System_Utils::getBatteryPercentage()
 {
 #if HARDWARE_VERSION >= 3
-    // TODO: Implement battery percentage calculation for hardware version 3 and above
-    return 100;
+    uint16_t voltage;
+    if (!charger.readVbat_mV(voltage)) {
+        ESP_LOGE(TAG, "Failed to read battery voltage");
+        return 0;
+    }
 #else
     auto BATT_SENSE_PIN = 39;
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
+#endif
 
     ESP_LOGV(TAG, "Battery voltage: %u", voltage);
 
@@ -66,7 +76,6 @@ long System_Utils::getBatteryPercentage()
     }
     long percentage = map(voltage, 1750, 2100, 0, 100);
     return percentage;
-#endif
 }
 
 // TODO: Move this into application
