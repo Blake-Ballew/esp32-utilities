@@ -1,9 +1,7 @@
 #pragma once
 
 #include <FastLED.h>
-#include "globalDefines.h"
 #include "Button_Flash.h"
-#include "Settings_Manager.h"
 #include "LED_Utils.h"
 // #include "Display_Utils.h"
 #include "DisplayUtilities.hpp"
@@ -12,6 +10,12 @@
 
 #define NUM_COMPASS_LEDS 16
 #define LED_MS_PER_FRAME 50
+
+#if HARDWARE_VERSION < 3
+#define BUZZER_PIN 4
+#else
+#define BUZZER_PIN 7
+#endif
 
 /*
 LED Mappings:
@@ -29,7 +33,7 @@ LED Mappings:
 class LED_Manager
 {
 public:
-    static void init(size_t numLeds, uint8_t cpuCore);
+    static void init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore);
     static CRGB *leds;
 
     // Initialize InputID to LED index mapping
@@ -44,7 +48,7 @@ public:
     static void lightRing(uint8_t r, uint8_t g, uint8_t b);
     static void clearRing();
     static void toggleFlashlight();
-    static void buzzerNotification(uint16_t frequency = DEFAULT_TONE, size_t duration = 100);
+    static void buzzerNotification(uint16_t frequency = 1000, size_t duration = 100);
     static void ledShutdownAnimation();
 
     static void displayScrollWheel(size_t currentIdx, size_t listSize);

@@ -40,6 +40,7 @@ void System_Utils::init()
 // TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
+    auto BATT_SENSE_PIN = 39;
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
 
     ESP_LOGV(TAG, "Battery voltage: %u", voltage);
@@ -63,8 +64,10 @@ long System_Utils::getBatteryPercentage()
     return percentage;
 }
 
+// TODO: Move this into application
 void System_Utils::monitorSystemHealth(TimerHandle_t xTimer)
 {
+    auto BATT_SENSE_PIN = 39;
     uint16_t voltage = analogRead(BATT_SENSE_PIN);
 
     if (voltage < 1750)
@@ -72,6 +75,7 @@ void System_Utils::monitorSystemHealth(TimerHandle_t xTimer)
         // Battery is low. Shut down.
 
         // Show message and flash leds before turning off
+        auto KEEP_ALIVE_PIN = 5;
 
         digitalWrite(KEEP_ALIVE_PIN, LOW);
     }

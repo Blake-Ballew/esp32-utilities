@@ -3,7 +3,6 @@
 #include "LoraUtils.h"
 #include "FilesystemUtils.h"
 #include "LoraDriverInterface.h"
-#include "Settings_Manager.h"
 
 namespace 
 {

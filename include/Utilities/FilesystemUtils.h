@@ -37,7 +37,7 @@ namespace FilesystemModule
         // Initializes the SPIFFS filesystem. Formats the filesystem if it doesn't exist and reboots the device
         static void Init()
         {
-            if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
+            if (!SPIFFS.begin(true))
             {
                 ESP_LOGE(TAG, "SPIFFS Mount Failed. Rebooting...");
                 vTaskDelay(pdMS_TO_TICKS(1000));

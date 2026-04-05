@@ -1,6 +1,5 @@
 #pragma once
 
-#include "globalDefines.h"
 #include <Arduino.h>
 #include <unordered_map>
 #include <vector>
