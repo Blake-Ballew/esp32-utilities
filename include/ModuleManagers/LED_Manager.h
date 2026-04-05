@@ -10,7 +10,12 @@
 
 #define NUM_COMPASS_LEDS 16
 #define LED_MS_PER_FRAME 50
+
+#if HARDWARE_VERSION < 3
 #define BUZZER_PIN 4
+#else
+#define BUZZER_PIN 7
+#endif
 
 /*
 LED Mappings:
