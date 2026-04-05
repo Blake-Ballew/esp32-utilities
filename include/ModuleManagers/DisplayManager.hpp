@@ -109,6 +109,9 @@ namespace DisplayModule
                                 break;
                             lastButtonPressTick = now;
 
+                            // haptic feedback
+                            LED_Manager::applyHapticFeedback(150);
+
                             // Drain duplicates that arrived during the debounce window
                             xQueueReset(Utilities::getDisplayCommandQueue());
 
@@ -116,8 +119,6 @@ namespace DisplayModule
                             ctx.inputID = item.commandData.inputCommand.inputID;
                             Utilities::handleInput(ctx);
 
-                            // haptic feedback
-                            LED_Manager::applyHapticFeedback(150);
                             break;
                         }
 
