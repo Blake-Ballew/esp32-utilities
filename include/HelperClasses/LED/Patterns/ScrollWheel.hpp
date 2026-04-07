@@ -42,7 +42,7 @@ public:
         for (size_t i = 0; i < _segment.length(); i++)
         {
             float ledBrightness = _CalculateLEDPointBrightness(i);
-            _segment[i] = CRGB(themeColor.r * ledBrightness, themeColor.g * ledBrightness, themeColor.b * ledBrightness);
+            _segment[i] = CRGB((ThemeColor().r) * ledBrightness, (ThemeColor().g) * ledBrightness, (ThemeColor().b) * ledBrightness);
         }
 
         return true;
@@ -69,11 +69,11 @@ protected:
 
     const char *TAG = "ScrollWheel";
 
-    float _CalculateLEDPointBrightness(size_t segIdx)
+    __attribute__((noinline)) float _CalculateLEDPointBrightness(size_t segIdx)
     {
         if (numItems == -1 || currItem == -1)
         {
-            return 0;
+            return 0.0f;
         }
 
         float targetAngle = ((float)currItem / numItems) * 360.0;
@@ -94,7 +94,8 @@ protected:
             return 0;
         }
 
-        float returnVal = (-1.0 * pow(angleDiff / fadeDegrees, 2.0)) + 1.0;
+        float t = angleDiff / fadeDegrees;
+        float returnVal = (-1.0f * (t * t)) + 1.0f;
 
         ESP_LOGV(TAG, "segIdx: %d currItem: %d numItems: %d targetAngle: %f LEDangle: %f angleDiff: %f returnVal: %f fadeDegrees: %f",
                  segIdx, currItem, numItems, targetAngle, angle, angleDiff, returnVal, fadeDegrees);

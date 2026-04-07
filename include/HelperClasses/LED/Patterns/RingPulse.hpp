@@ -64,7 +64,7 @@ public:
         }
         else
         {
-            color = CRGB(themeColor.r * brightness, themeColor.g * brightness, themeColor.b * brightness);
+            color = CRGB(ThemeColor().r * brightness, ThemeColor().g * brightness, ThemeColor().b * brightness);
         }
 
         for (size_t i = 0; i < _segment.length(); i++)

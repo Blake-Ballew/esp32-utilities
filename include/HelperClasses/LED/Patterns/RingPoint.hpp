@@ -62,7 +62,7 @@ public:
         CRGB outColor;
         if (rOverride == 0 && gOverride == 0 && bOverride == 0)
         {
-            outColor = themeColor;
+            outColor = ThemeColor();
         }
         else
         {

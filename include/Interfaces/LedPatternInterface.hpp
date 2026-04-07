@@ -35,17 +35,17 @@ public:
     }
 
     void setAnimationLengthMS(size_t ms) {
-        animationTicks = ms / msPerTick;
+        animationTicks = ms / _MsPerTick();
         animationMS = ms;
     }
 
     void setAnimationLengthTicks(size_t ticks) {
         animationTicks = ticks;
-        animationMS = ticks * msPerTick;
+        animationMS = ticks * _MsPerTick();
     }
 
     static void setTickRate(size_t ms) {
-        msPerTick = ms;
+        _MsPerTick() = ms;
     }
 
     // Called to iterate a single frame of the animation
@@ -64,16 +64,29 @@ public:
     virtual void SetRegisteredPatternID(int patternID) = 0;
 
     static void SetThemeColor(CRGB &color) {
-        themeColor = color;
+        _ThemeColor() = color;
     }
 
-    static CRGB &ThemeColor() { return themeColor; }
+    static CRGB &ThemeColor()
+    {
+        static CRGB themeColor = CRGB(0, 0, 0);
+        return themeColor;
+    }
 
 protected:
     LedSegment _segment;
 
-    static size_t msPerTick;
-    static CRGB &themeColor;
+    static size_t &_MsPerTick()
+    {
+        static size_t msPerTick = 15;
+        return msPerTick;
+    }
+
+    static CRGB &_ThemeColor()
+    {
+        static CRGB themeColor = CRGB(0, 0, 0);
+        return themeColor;
+    }
 
     // Length of an animation loop
     size_t animationTicks;

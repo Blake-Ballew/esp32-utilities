@@ -46,7 +46,7 @@ public:
         {
             if (_inputIdState[kvp.first])
             {
-                _segment[kvp.second] = themeColor;
+                _segment[kvp.second] = ThemeColor();
             }
             else
             {

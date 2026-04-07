@@ -47,7 +47,7 @@ public:
 
         size_t segIdx = it->second;
         float brightness = 1.0 - (float)(xTaskGetTickCount() - startTime) / (float)animationMS;
-        _segment[segIdx] = CRGB(themeColor.r * brightness, themeColor.g * brightness, themeColor.b * brightness);
+        _segment[segIdx] = CRGB(ThemeColor().r * brightness, ThemeColor().g * brightness, ThemeColor().b * brightness);
 
         currTick++;
 
