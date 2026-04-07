@@ -1,34 +1,22 @@
 #pragma once
 
-#include "LED_Pattern_Interface.h"
+#include "LedPatternInterface.hpp"
 
 
 // Fades in entire LED ring then fades out
-class Ring_Pulse : public LED_Pattern_Interface
+class RingPulse : public LedPatternInterface
 {
 public:
-    Ring_Pulse() 
+    RingPulse(LedSegment segment)
+        : LedPatternInterface(std::move(segment))
     {
         rOverride = 0;
         gOverride = 0;
         bOverride = 0;
-
-        beginIdx = -1;
-        endIdx = -1;
     }
 
     void configurePattern(JsonDocument &config)
     {
-        if (config.containsKey("beginIdx"))
-        {
-            beginIdx = config["beginIdx"];
-        }
-
-        if (config.containsKey("endIdx"))
-        {
-            endIdx = config["endIdx"];
-        }
-
         if (config.containsKey("rOverride"))
         {
             rOverride = config["rOverride"];
@@ -48,12 +36,8 @@ public:
     bool iterateFrame()
     {
         ESP_LOGV(TAG, "Ring Pulse");
-        if (beginIdx == -1 || endIdx == -1)
-        {
-            return true;
-        }
 
-        if (startTime == 0) 
+        if (startTime == 0)
         {
             startTime = xTaskGetTickCount();
         }
@@ -83,10 +67,9 @@ public:
             color = CRGB(themeColor.r * brightness, themeColor.g * brightness, themeColor.b * brightness);
         }
 
-        // Set the color for the entire ring
-        for (uint32_t i = beginIdx; i <= endIdx; i++)
+        for (size_t i = 0; i < _segment.length(); i++)
         {
-            leds[i] = color;
+            _segment[i] = color;
         }
 
         if (currMS >= animationMS)
@@ -100,31 +83,17 @@ public:
         }
     }
 
-    void clearPattern()
-    {
-        if (beginIdx == -1 || endIdx == -1)
-        {
-            return;
-        }
-
-        for (uint32_t i = beginIdx; i <= endIdx; i++)
-        {
-            leds[i] = CRGB(0, 0, 0);
-        }
-
-        resetPattern();
-    }
-
-    void SetRegisteredPatternID(int patternID) { registeredPatternID = patternID; }
-    static int RegisteredPatternID() { return registeredPatternID; }
+    void SetRegisteredPatternID(int patternID) { _RegisteredPatternId() = patternID; }
+    static int RegisteredPatternID() { return _RegisteredPatternId(); }
 
 protected:
-    static int registeredPatternID;
+    static int &_RegisteredPatternId()
+    {
+        static int id = -1;
+        return id;
+    }
 
-    // Override colors
     uint8_t rOverride, gOverride, bOverride;
 
-    // Beginning/end of the ring
-    int beginIdx, endIdx;
     const char *TAG = "Ring_Pulse";
 };

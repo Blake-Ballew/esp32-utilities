@@ -7,7 +7,7 @@
 #include "WindowState.hpp"
 #include "DisplayUtilities.hpp"
 #include "TextDrawCommand.hpp"
-#include "ScrollWheel.h"
+#include "ScrollWheel.hpp"
 
 namespace DisplayModule
 {

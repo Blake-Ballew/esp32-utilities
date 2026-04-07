@@ -2,11 +2,21 @@
 
 #include "FastLED.h"
 #include "ArduinoJson.h"
+#include "LedSegment.hpp"
 
-class LED_Pattern_Interface
+class LedPatternInterface
 {
 public:
-    LED_Pattern_Interface() {
+    LedPatternInterface() {
+        currTick = 0;
+        animationTicks = 0;
+        animationMS = 0;
+        startTime = 0;
+    }
+
+    LedPatternInterface(LedSegment segment)
+        : _segment(std::move(segment))
+    {
         currTick = 0;
         animationTicks = 0;
         animationMS = 0;
@@ -34,11 +44,6 @@ public:
         animationMS = ticks * msPerTick;
     }
 
-    static void setLeds(CRGB *leds, size_t numLeds) {
-        LED_Pattern_Interface::leds = leds;
-        LED_Pattern_Interface::numLeds = numLeds;
-    }
-
     static void setTickRate(size_t ms) {
         msPerTick = ms;
     }
@@ -48,8 +53,11 @@ public:
     // Returns true if the last frame of the loop has played
     virtual bool iterateFrame() { return true; }
 
-    // Clears LEDs and resets the pattern
-    virtual void clearPattern() {}
+    // Clears the segment and resets animation state
+    virtual void clearPattern() {
+        _segment.clear();
+        resetPattern();
+    }
 
     // Every pattern should have a static member holding the registered pattern id
     // This is so different modules can use the same pattern without re-registering it
@@ -62,8 +70,8 @@ public:
     static CRGB &ThemeColor() { return themeColor; }
 
 protected:
-    static CRGB *leds;
-    static size_t numLeds;
+    LedSegment _segment;
+
     static size_t msPerTick;
     static CRGB &themeColor;
 
@@ -73,7 +81,7 @@ protected:
 
     // Current progress of animation
     size_t currTick;
-    
+
     // Timestamp an animation was started
     size_t startTime;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FastLED.h>
-#include "Button_Flash.h"
+#include "ButtonFlash.hpp"
 #include "LED_Utils.h"
 // #include "Display_Utils.h"
 #include "DisplayUtilities.hpp"
@@ -36,13 +36,6 @@ class LED_Manager
 public:
     static void init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore);
     static CRGB *leds;
-
-    // Initialize InputID to LED index mapping
-    static void InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx);
-
-    // Initialize button flash animation with a list of input ID to LED index pairs
-    static void initializeButtonFlashAnimation();
-    static void inputButtonFlash(const DisplayModule::InputContext &ctx);
 
     static void pointNorth(int Azimuth);
     static void pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b);

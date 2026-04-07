@@ -1,0 +1,104 @@
+#pragma once
+
+#include "LedPatternInterface.hpp"
+
+
+// Uses the LED ring to display scrolling progress
+class ScrollWheel : public LedPatternInterface
+{
+public:
+    ScrollWheel(LedSegment segment)
+        : LedPatternInterface(std::move(segment))
+    {
+        numItems = -1;
+        currItem = -1;
+
+        setAnimationLengthTicks(1);
+    }
+
+    void configurePattern(JsonDocument &config)
+    {
+        if (config.containsKey("numItems"))
+        {
+            numItems = config["numItems"];
+        }
+
+        if (config.containsKey("currItem"))
+        {
+            currItem = config["currItem"];
+        }
+    }
+
+    bool iterateFrame()
+    {
+        if (numItems == -1 || currItem == -1)
+        {
+            ESP_LOGW(TAG, "ScrollWheel::iterateFrame: Invalid configuration, cannot iterate frame");
+            return true;
+        }
+
+        ESP_LOGV(TAG, "ScrollWheel::iterateFrame numItems: %d currItem: %d", numItems, currItem);
+
+        for (size_t i = 0; i < _segment.length(); i++)
+        {
+            float ledBrightness = _CalculateLEDPointBrightness(i);
+            _segment[i] = CRGB(themeColor.r * ledBrightness, themeColor.g * ledBrightness, themeColor.b * ledBrightness);
+        }
+
+        return true;
+    }
+
+    void clearPattern()
+    {
+        LedPatternInterface::clearPattern();
+        FastLED.show();
+    }
+
+    void SetRegisteredPatternID(int patternID) { _RegisteredPatternId() = patternID; }
+    static int RegisteredPatternID() { return _RegisteredPatternId(); }
+
+protected:
+    static int &_RegisteredPatternId()
+    {
+        static int id = -1;
+        return id;
+    }
+
+    int numItems;
+    int currItem;
+
+    const char *TAG = "ScrollWheel";
+
+    float _CalculateLEDPointBrightness(size_t segIdx)
+    {
+        if (numItems == -1 || currItem == -1)
+        {
+            return 0;
+        }
+
+        float targetAngle = ((float)currItem / numItems) * 360.0;
+
+        float fadeDegrees = max((360.0f / (float)numItems) / 2.0f, (360.0f / (float)_segment.length()));
+
+        float angle = (float)segIdx * 360.0f / (float)_segment.length();
+
+        float angleDiff = abs(angle - targetAngle);
+
+        if (angleDiff > 180)
+        {
+            angleDiff = 360 - angleDiff;
+        }
+
+        if (angleDiff > fadeDegrees)
+        {
+            return 0;
+        }
+
+        float returnVal = (-1.0 * pow(angleDiff / fadeDegrees, 2.0)) + 1.0;
+
+        ESP_LOGV(TAG, "segIdx: %d currItem: %d numItems: %d targetAngle: %f LEDangle: %f angleDiff: %f returnVal: %f fadeDegrees: %f",
+                 segIdx, currItem, numItems, targetAngle, angle, angleDiff, returnVal, fadeDegrees);
+
+        return returnVal;
+    }
+};

@@ -9,7 +9,7 @@
 #include "MessagePing.h"
 #include "NavigationUtils.h"
 #include "LED_Utils.h"
-#include "Ring_Pulse.h"
+#include "RingPulse.hpp"
 
 namespace DisplayModule
 {
@@ -57,7 +57,7 @@ namespace DisplayModule
         {
             _deleteMessage();
 
-            _ringPulseID = Ring_Pulse::RegisteredPatternID();
+            _ringPulseID = RingPulse::RegisteredPatternID();
 
             if (data.payload)
             {
