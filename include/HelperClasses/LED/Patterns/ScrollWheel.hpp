@@ -78,7 +78,8 @@ protected:
 
         float targetAngle = ((float)currItem / numItems) * 360.0;
 
-        float fadeDegrees = max((360.0f / (float)numItems) / 2.0f, (360.0f / (float)_segment.length()));
+        // float fadeDegrees = max((360.0f / (float)numItems) / 2.0f, (360.0f / (float)_segment.length()));
+        float fadeDegrees = max((360.0f / (float)numItems) / 2.0f, (360.0f / (float)_segment.length())) * 1.5f;
 
         float angle = (float)segIdx * 360.0f / (float)_segment.length();
 
@@ -94,8 +95,10 @@ protected:
             return 0;
         }
 
+        // float t = angleDiff / fadeDegrees;
+        // float returnVal = (-1.0f * (t * t)) + 1.0f;
         float t = angleDiff / fadeDegrees;
-        float returnVal = (-1.0f * (t * t)) + 1.0f;
+        float returnVal = cosf(t * M_PI * 0.5f);  // cos(0) = 1, cos(90°) = 0
 
         ESP_LOGV(TAG, "segIdx: %d currItem: %d numItems: %d targetAngle: %f LEDangle: %f angleDiff: %f returnVal: %f fadeDegrees: %f",
                  segIdx, currItem, numItems, targetAngle, angle, angleDiff, returnVal, fadeDegrees);

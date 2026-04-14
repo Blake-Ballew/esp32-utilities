@@ -63,8 +63,8 @@ public:
     // This is so different modules can use the same pattern without re-registering it
     virtual void SetRegisteredPatternID(int patternID) = 0;
 
-    static void SetThemeColor(CRGB &color) {
-        _ThemeColor() = color;
+    static void SetThemeColor(CRGB color) {
+        ThemeColor() = color;
     }
 
     static CRGB &ThemeColor()
@@ -80,12 +80,6 @@ protected:
     {
         static size_t msPerTick = 15;
         return msPerTick;
-    }
-
-    static CRGB &_ThemeColor()
-    {
-        static CRGB themeColor = CRGB(0, 0, 0);
-        return themeColor;
     }
 
     // Length of an animation loop
