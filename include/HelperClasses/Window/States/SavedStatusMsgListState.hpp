@@ -7,7 +7,7 @@
 #include "TextDrawCommand.hpp"
 #include "LoraUtils.h"
 #include "LED_Utils.h"
-#include "ScrollWheel.h"
+#include "ScrollWheel.hpp"
 
 namespace DisplayModule
 {

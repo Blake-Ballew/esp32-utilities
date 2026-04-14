@@ -3,14 +3,14 @@
 #include "ArduinoJson.h"
 #include "System_Utils.h"
 #include "FastLED.h"
-#include "LED_Pattern_Interface.h"
+#include "LedPatternInterface.hpp"
 #include <unordered_map>
 
 // Struct to hold pattern objects and their status
 struct LED_Pattern_Status
 {
     int animationID;
-    LED_Pattern_Interface *pattern;
+    LedPatternInterface *pattern;
     int loopsRemaining;
     bool enabled;
 };
@@ -19,7 +19,7 @@ class LED_Utils
 {
 public:
     // Registers a pattern and returns the pattern ID
-    static int registerPattern(LED_Pattern_Interface *pattern);
+    static int registerPattern(LedPatternInterface *pattern);
 
     // Unregisters a pattern and deletes it
     static void unregisterPattern(int patternID);
@@ -48,9 +48,6 @@ public:
 
     // Clears the given pattern's LEDs and stops it from looping
     static void clearPattern(int patternID);
-
-    // Sets the LED array to be used by the patterns
-    static void setLeds(CRGB *leds, size_t numLeds);
 
     // Sets the tick rate for the LED patterns
     static void setTickRate(size_t ms);

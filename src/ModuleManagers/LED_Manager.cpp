@@ -15,7 +15,6 @@ void LED_Manager::init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore)
 {
     ESP_LOGI(TAG, "LED_Manager::init");
     leds = ledBuffer;
-    LED_Utils::setLeds(leds, numLeds);
 
     ESP_LOGI(TAG, "Initializing FastLED with %d LEDs", numLeds);
 
@@ -30,32 +29,7 @@ void LED_Manager::init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore)
 
     LED_Utils::setTickRate(LED_MS_PER_FRAME);
 
-    LED_Pattern_Interface::SetThemeColor(LED_Utils::ThemeColor());
-}
-
-void LED_Manager::InitializeInputIdLedPins(std::unordered_map<uint8_t, uint8_t> inputIDLedIdx)
-{
-    LED_Utils::setInputIdLedPins(inputIDLedIdx);
-}
-
-void LED_Manager::initializeButtonFlashAnimation()
-{
-    auto inputIDLedIdx = LED_Utils::InputIdLedPins();
-    auto btnFlash = new Button_Flash(inputIDLedIdx);
-
-    buttonFlashPatternID = LED_Utils::registerPattern(btnFlash);
-    LED_Utils::enablePattern(buttonFlashPatternID);
-    LED_Utils::setAnimationLengthMS(buttonFlashPatternID, 300);
-    // Display_Utils::getInputRaised() += inputButtonFlash;
-}
-
-void LED_Manager::inputButtonFlash(const DisplayModule::InputContext &ctx)
-{
-    ESP_LOGI(TAG, "Button flash input: %d", ctx.inputID);
-    StaticJsonDocument<64> cfg;
-    cfg["inputID"] = ctx.inputID;
-    LED_Utils::configurePattern(buttonFlashPatternID, cfg);
-    LED_Utils::loopPattern(buttonFlashPatternID, 1);
+    LedPatternInterface::SetThemeColor(LED_Utils::ThemeColor());
 }
 
 void LED_Manager::pointNorth(int Azimuth)

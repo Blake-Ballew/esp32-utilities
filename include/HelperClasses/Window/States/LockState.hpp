@@ -6,8 +6,8 @@
 #include "WindowState.hpp"
 #include "DisplayUtilities.hpp"
 #include "TextDrawCommand.hpp"
-#include "Illuminate_Button.h"
-#include "Button_Flash.h"
+#include "IlluminateButton.hpp"
+#include "ButtonFlash.hpp"
 
 namespace DisplayModule
 {
@@ -86,8 +86,8 @@ namespace DisplayModule
             _step = 0;
             _rebuildDrawCommands();
             onSequenceReset();
-            LED_Utils::disablePattern(Button_Flash::RegisteredPatternID());
-            _illuminateID = Illuminate_Button::RegisteredPatternID();
+            LED_Utils::disablePattern(ButtonFlash::RegisteredPatternID());
+            _illuminateID = IlluminateButton::RegisteredPatternID();
             LED_Utils::enablePattern(_illuminateID);
             _configureLed();
         }
@@ -95,7 +95,7 @@ namespace DisplayModule
         void onExit() override
         {
             LED_Utils::disablePattern(_illuminateID);
-            LED_Utils::enablePattern(Button_Flash::RegisteredPatternID());
+            LED_Utils::enablePattern(ButtonFlash::RegisteredPatternID());
             WindowState::onExit();
         }
 

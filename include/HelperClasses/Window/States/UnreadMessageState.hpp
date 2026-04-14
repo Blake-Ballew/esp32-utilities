@@ -10,7 +10,7 @@
 #include "MessageBase.h"
 #include "MessagePing.h"
 #include "LED_Utils.h"
-#include "SolidRing.h"
+#include "SolidRing.hpp"
 
 namespace DisplayModule
 {
@@ -86,11 +86,6 @@ namespace DisplayModule
             LoraUtils::ResetUnreadMessageIterator();
 
             _solidRingID = SolidRing::RegisteredPatternID();
-            if (_solidRingID < 0)
-            {
-                auto *ring   = new SolidRing();
-                _solidRingID = LED_Utils::registerPattern(ring);
-            }
 
             _currentMsg = LoraUtils::GetCurrentUnreadMessage();
             _configureLed();

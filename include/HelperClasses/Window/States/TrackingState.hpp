@@ -6,7 +6,7 @@
 #include "TextDrawCommand.hpp"
 #include "NavigationUtils.h"
 #include "LED_Utils.h"
-#include "RingPoint.h"
+#include "RingPoint.hpp"
 
 namespace DisplayModule
 {
@@ -74,11 +74,6 @@ namespace DisplayModule
 
             // Register and configure RingPoint LED pattern
             _ringPointID = RingPoint::RegisteredPatternID();
-            if (_ringPointID < 0)
-            {
-                auto *rp = new RingPoint();
-                _ringPointID = LED_Utils::registerPattern(rp);
-            }
 
             LED_Utils::enablePattern(_ringPointID);
 

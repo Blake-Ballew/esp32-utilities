@@ -10,7 +10,7 @@ size_t LED_Utils::_PatternTickRateMS = 50;
 
 TaskHandle_t LED_Utils::_IteratePatternsTaskHandle = nullptr;
 
-int LED_Utils::registerPattern(LED_Pattern_Interface *pattern)
+int LED_Utils::registerPattern(LedPatternInterface *pattern)
 {
     if (pattern == nullptr)
     {
@@ -134,14 +134,9 @@ void LED_Utils::clearPattern(int patternID)
     FastLED.show();
 }
 
-void LED_Utils::setLeds(CRGB *leds, size_t numLeds)
-{
-    LED_Pattern_Interface::setLeds(leds, numLeds);
-}
-
 void LED_Utils::setTickRate(size_t ms)
 {
-    LED_Pattern_Interface::setTickRate(ms);
+    LedPatternInterface::setTickRate(ms);
 
     _PatternTickRateMS = ms;
 
@@ -244,7 +239,7 @@ void LED_Utils:: setThemeColor(CRGB color)
 {
     ESP_LOGV(TAG, "LED_Utils::setThemeColor: %d, %d, %d", color.r, color.g, color.b);
     _ThemeColor = color;
-    LED_Pattern_Interface::SetThemeColor(_ThemeColor);
+    LedPatternInterface::SetThemeColor(_ThemeColor);
 }
 
 CRGB &LED_Utils::ThemeColor()
