@@ -42,7 +42,7 @@ namespace DisplayModule
         // Call once at startup.
         // disp     — pointer to an already-initialised Adafruit_GFX display.
         // width/height — display dimensions in pixels.
-        void init(Adafruit_GFX *disp, uint16_t width, uint16_t height)
+        void Initialize(Adafruit_GFX *disp, uint16_t width, uint16_t height)
         {
             Utilities::init();
             Utilities::setDisplay(disp, width, height);

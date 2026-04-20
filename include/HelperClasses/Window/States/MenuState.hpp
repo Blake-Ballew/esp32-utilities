@@ -122,6 +122,17 @@ namespace DisplayModule
             _rebuildDrawCommands();
         }
 
+        void onExit() override
+        {
+            if (_scrollWheelPatternId >= 0)
+            {
+                LED_Utils::clearPattern(_scrollWheelPatternId);
+                LED_Utils::disablePattern(_scrollWheelPatternId);
+                _scrollWheelPatternId = -1;
+            }
+            WindowState::onExit();
+        }
+
         // ------------------------------------------------------------------
         // Selection — call from the Window's BUTTON_4 onInputCommand.
         // ------------------------------------------------------------------
@@ -169,17 +180,6 @@ namespace DisplayModule
             ESP_LOGV(TAG, "Scrolled down to index %d", _index);
             _configureLed();
             _rebuildDrawCommands();
-        }
-
-        void onExit() override
-        {
-            if (_scrollWheelPatternId >= 0)
-            {
-                LED_Utils::clearPattern(_scrollWheelPatternId);
-                LED_Utils::disablePattern(_scrollWheelPatternId);
-                _scrollWheelPatternId = -1;
-            }
-            WindowState::onExit();
         }
 
     private:

@@ -46,15 +46,15 @@ void System_Utils::init()
 // TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
+    uint16_t voltage = 0;
 #if HARDWARE_VERSION >= 3
-    uint16_t voltage;
-    if (!charger.readVbat_mV(voltage)) {
-        ESP_LOGE(TAG, "Failed to read battery voltage");
-        return 0;
-    }
+    // if (!charger.readVbat_mV(voltage)) {
+    //     ESP_LOGE(TAG, "Failed to read battery voltage");
+    //     return 0;
+    // }
 #else
     auto BATT_SENSE_PIN = 39;
-    uint16_t voltage = analogRead(BATT_SENSE_PIN);
+    voltage = analogRead(BATT_SENSE_PIN);
 #endif
 
     ESP_LOGV(TAG, "Battery voltage: %u", voltage);

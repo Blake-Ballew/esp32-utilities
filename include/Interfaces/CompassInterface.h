@@ -4,7 +4,6 @@ class CompassInterface
 {
 public:
     virtual int GetAzimuth() = 0;
-
     virtual void PrintRawValues() = 0;
 
     // Calibration

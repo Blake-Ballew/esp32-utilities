@@ -27,7 +27,7 @@ public:
         NavigationUtils::SavedLocationsUpdated() += SaveLocationsToFlash;
         this->LoadLocationsFromFlash();
 
-        StaticJsonDocument<128> calibrationData;
+        StaticJsonDocument<256> calibrationData;
         auto returncode = FilesystemModule::Utilities::ReadFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
         if (returncode == FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
         {
