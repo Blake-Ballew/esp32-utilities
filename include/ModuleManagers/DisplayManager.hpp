@@ -140,7 +140,7 @@ namespace DisplayModule
                     auto win = Utilities::activeWindow();
                     if (win) 
                     {
-                        ESP_LOGI(TAG, "Autonomous refresh triggered, calling onTick for active window");
+                        ESP_LOGD(TAG, "Autonomous refresh triggered, calling onTick for active window");
                         win->onTick();
                     }
                 }

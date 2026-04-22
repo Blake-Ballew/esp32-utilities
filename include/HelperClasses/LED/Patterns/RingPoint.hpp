@@ -55,7 +55,7 @@ public:
 
     bool iterateFrame()
     {
-        ESP_LOGI(TAG, "RingPoint::iterateFrame");
+        ESP_LOGD(TAG, "RingPoint::iterateFrame");
 
         _segment.clear();
 
