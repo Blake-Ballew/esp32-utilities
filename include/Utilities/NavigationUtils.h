@@ -36,14 +36,14 @@ public:
 
     // Compass Functionality
     static int GetAzimuth();
-    static int GetBearing(float fadeDegrees = 360.0f)
+    static int GetBearing(float targetHeading = 360.0f)
     {
         if (!_Compass)
         {
             return -1;
         }
 
-        return fadeDegrees - _Compass->GetAzimuth();
+        return targetHeading - _Compass->GetAzimuth();
     } 
     static double GetDistance(TinyGPSLocation &loc, double lat, double lon);
     static double GetDistanceTo(double lat, double lon);
