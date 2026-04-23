@@ -50,6 +50,7 @@ namespace DisplayModule
 
             ESP_LOGV(TAG, "Placing text cursor for %s at %d, %d", text.c_str(), x, y);
 
+            ctx.display->setTextColor(DrawColorPrimary());
             ctx.display->setCursor(static_cast<int16_t>(x),
                                    static_cast<int16_t>(y));
             ctx.display->print(text.c_str());

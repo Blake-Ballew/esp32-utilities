@@ -19,6 +19,12 @@ namespace DisplayModule
     public:
         virtual ~DrawCommand() = default;
         virtual void draw(DrawContext &ctx) = 0;
+
+        static uint16_t &DrawColorPrimary()
+        {
+            static uint16_t _DrawColorPrimary = 0x1;
+            return _DrawColorPrimary;
+        }
     };
 
 } // namespace DisplayModule

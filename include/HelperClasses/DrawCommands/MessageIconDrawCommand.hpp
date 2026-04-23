@@ -22,7 +22,7 @@ namespace DisplayModule
         {
             ESP_LOGV(TAG, "Drawing message icon at %d, %d", _x, _y);
             // Filled rectangle body
-            ctx.display->fillRect(_x, _y, 12, 8, WHITE);
+            ctx.display->fillRect(_x, _y, 12, 8, DrawColorPrimary());
             // Envelope flap — two black diagonal lines
             ctx.display->drawLine(_x,      _y,     _x + 5,  _y + 3, BLACK);
             ctx.display->drawLine(_x + 6,  _y + 3, _x + 11, _y,     BLACK);

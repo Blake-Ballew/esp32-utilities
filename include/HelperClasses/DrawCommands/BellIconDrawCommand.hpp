@@ -21,15 +21,15 @@ namespace DisplayModule
         void draw(DrawContext &ctx) override
         {
             // Bell dome
-            ctx.display->fillCircle(_x + 5, _y + 2, 3, WHITE);
+            ctx.display->fillCircle(_x + 5, _y + 2, 3, DrawColorPrimary());
             // Bell body
-            ctx.display->fillRect(_x + 2, _y + 2, 7, 6, WHITE);
+            ctx.display->fillRect(_x + 2, _y + 2, 7, 6, DrawColorPrimary());
             // Bell skirt (triangle pointing up = bottom of bell)
             ctx.display->fillTriangle(
                 _x,      _y + 7,
                 _x + 10, _y + 7,
                 _x + 5,  _y + 2,
-                WHITE);
+                DrawColorPrimary());
 
             if (_silent)
             {
