@@ -128,7 +128,6 @@ namespace DisplayModule
             {
                 LED_Utils::clearPattern(_scrollWheelPatternId);
                 LED_Utils::disablePattern(_scrollWheelPatternId);
-                _scrollWheelPatternId = -1;
             }
             WindowState::onExit();
         }
@@ -180,6 +179,24 @@ namespace DisplayModule
             ESP_LOGV(TAG, "Scrolled down to index %d", _index);
             _configureLed();
             _rebuildDrawCommands();
+        }
+
+        void onPause() override
+        {
+            if (_scrollWheelPatternId >= 0)
+            {
+                LED_Utils::clearPattern(_scrollWheelPatternId);
+                LED_Utils::disablePattern(_scrollWheelPatternId);
+            }
+        }
+
+        void onResume() override
+        {
+            if (_scrollWheelPatternId >= 0)
+            {
+                LED_Utils::enablePattern(_scrollWheelPatternId);
+                _configureLed();
+            }
         }
 
     private:
