@@ -1,6 +1,6 @@
 # CLAUDE.md - esp32-utilities
 
-This is the core library for the [Celestial Wayfinder](https://github.com/Blake-Ballew/Celestial-Wayfinder) project — a hardware navigation/communication device built on ESP32. It provides high-level managers, UI primitives, LED control, LoRa mesh networking, GPS navigation, and more.
+A hardware-focused ESP32 library providing high-level managers, UI primitives, LED control, LoRa mesh networking, GPS navigation, and more. Designed to be consumed by an application layer project.
 
 ## Build System
 
@@ -25,11 +25,12 @@ esp32-utilities/
 │   │   ├── Message_Types/      # LoRa message type definitions
 │   │   ├── Network/            # Network communication classes
 │   │   ├── OLED_Content/       # Screen content renderers
-│   │   ├── OLED_Window/        # Window management classes
-│   │   ├── Rpc/                # Remote procedure call framework
-│   │   └── Window_States/      # State machine definitions
+│   │   ├── Window/             # Window management classes
+|   |   |   └── Window_States/      # State machine definitions
+│   │   └── Rpc/                # Remote procedure call framework
+│   │   
 │   └── Utilities/              # Utility headers
-└── src/                        # Implementations (mirrors include/)
+└── src/                        # Implementations (mirrors include/). Not preferred. Stick to hpp files for new code
 ```
 
 ## Architecture
@@ -37,9 +38,9 @@ esp32-utilities/
 ### Layered Design
 
 ```
-Application (Celestial Wayfinder)
+Application Project
     ↓
-ModuleManagers (Display, LED, LoRa, GPS, Settings, Filesystem, EspNow, Rpc)
+ModuleManagers (Display, LED, LoRa, GPS, Settings, Filesystem, Rpc)
     ↓
 HelperClasses (Windows, States, Content, Patterns, Messages)
     ↓
@@ -47,8 +48,6 @@ Utilities + Interfaces
 ```
 
 ### Module Managers (Singletons)
-
-All managers use static methods — no instance needed.
 
 | Manager | Responsibility |
 |---|---|
@@ -68,7 +67,7 @@ All managers use static methods — no instance needed.
 - **Queue-Driven:** Display commands flow through FreeRTOS queues; inputs mapped to callbacks via `std::map<uint32_t, callbackPointer>`
 - **Interface/Plugin:** `LED_Pattern_Interface` and `DrawCommandInterface` allow registering new behaviors without modifying managers
 - **Factory:** `MessageBase::MessageFactory` creates polymorphic LoRa messages
-- **Template Method:** `OLED_Content` defines virtual `render()`/`update()` lifecycle
+
 
 ## Coding Conventions
 
@@ -132,6 +131,90 @@ Relevant compile-time flags:
 1. Inherit from `DrawCommandInterface` in `include/HelperClasses/DrawCommands/`
 2. Implement `draw()` method
 
-## Related Repository
+## Time Management
 
-The [Celestial Wayfinder](https://github.com/Blake-Ballew/Celestial-Wayfinder) repo contains the application layer that consumes this library. Changes to manager APIs or message formats here may require corresponding updates there.
+All time queries flow through `System_Utils`. Internally it uses `ezTime` (ropg/ezTime 0.8.3) — once synced, ezTime tracks elapsed time with `millis()`.
+
+### TimeSourceInterface
+
+File: `include/Interfaces/TimeSourceInterface.hpp`  
+Namespace: `SystemModule::`
+
+```cpp
+virtual bool TryGetCurrentUTC(time_t& outTime) = 0;
+```
+
+Returns `true` and populates `outTime` (UTC, Unix epoch) on success; `false` if time unavailable. `System_Utils::GetCurrentUTC()` iterates registered sources in order and returns the first success. Each successful call also auto-syncs ezTime's internal clock, so `GetCurrentLocal()` stays accurate without a separate sync step.
+
+Register via `System_Utils::RegisterTimeSource(TimeSourceInterface*)`. Application layer handles wiring during init.
+
+### GpsTimeSource
+
+File: `include/HelperClasses/TimeSource/GpsTimeSource.hpp`  
+Header-only. Holds a `TinyGPSPlus&` and checks GPS validity on demand.
+
+```cpp
+GpsTimeSource src(NavigationUtils::GetGPS());
+System_Utils::RegisterTimeSource(&src);
+```
+
+### Adding a New Time Source
+
+1. Create a header-only class at `include/HelperClasses/TimeSource/<ClassName>.hpp`
+2. Inherit `SystemModule::TimeSourceInterface`, implement `TryGetCurrentUTC(time_t&)`
+3. Register with `System_Utils::RegisterTimeSource()` in app init — sources are tried in registration order, first success wins
+
+### Packed Timestamp Conversion
+
+LoRa messages store TinyGPS++ packed `uint32_t time` (HHMMSSCC) and `uint32_t date` (DDMMYY). These struct fields are not changed.
+
+Convert to `time_t`: `time_t utc = NavigationUtils::PackedToTimeT(msg.time, msg.date)`
+
+### System_Utils Time API
+
+| Method | Description |
+|---|---|
+| `RegisterTimeSource(ptr)` | Add a time source to the polling list |
+| `GetCurrentUTC(time_t&)` | Poll sources; auto-syncs ezTime on success; returns bool |
+| `GetCurrentLocal()` | Local `time_t` via `LocalTimezone().now()` |
+| `IsTimeValid()` | True if any registered source has valid time |
+| `FormatTime(time_t)` | Display string — respects `time24Hour` setting |
+| `FormatDate(time_t)` | Date display string |
+| `UTCOffset()` | `int&` — Meyers singleton, read/write by reference |
+| `LocalTimezone()` | `Timezone&` — Meyers singleton, ezTime timezone object |
+| `TimeSources()` | `vector<TimeSourceInterface*>&` — Meyers singleton |
+
+### Meyers Singleton Pattern for Static State
+
+New static state uses function-local statics to avoid `.cpp` definitions:
+
+```cpp
+static int& UTCOffset()
+{
+    static int offset = 0;
+    return offset;
+}
+```
+
+Returns a reference — callers both read (`System_Utils::UTCOffset()`) and write (`System_Utils::UTCOffset() = 5`). No `.cpp` entry needed. This is the required pattern for all new static state in this codebase.
+
+### Timezone Setting
+
+`System_Utils::UTCOffset()` is set by the application when the user changes the timezone setting. Apply the offset to `LocalTimezone()` using a POSIX string (POSIX offsets are sign-inverted from common notation):
+
+```cpp
+System_Utils::UTCOffset() = newOffset;
+String posix = "UTC" + String(-newOffset);  // UTC+5 local → POSIX "UTC-5"
+System_Utils::LocalTimezone().setPosix(posix);
+```
+
+### ezTime Quick Reference
+
+| Task | Call |
+|---|---|
+| Set UTC time | `UTC.setTime(time_t utc)` |
+| Get local `time_t` | `System_Utils::LocalTimezone().now()` |
+| Build `time_t` from components | `ezt::makeTime(h, m, s, d, mo, yr)` |
+| Format for display | `LocalTimezone().dateTime(t, "H:i")` |
+| Decompose `time_t` | `ezt::breakTime(t, tmElements_t&)` |
+

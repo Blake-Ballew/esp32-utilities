@@ -725,26 +725,3 @@ void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
     ArduinoJson::serializeJson(doc, Serial);
 }
 
-void System_Utils::UpdateSettings(JsonDocument &settings)
-{
-    if (settings.containsKey("UserID"))
-    {
-        DeviceID = 0 | settings["UserID"].as<int>();
-    }
-
-    if (settings.containsKey("Device Name"))
-    {
-        DeviceName = settings["Device Name"].as<std::string>();
-    }
-
-    if (settings.containsKey("Silent Mode"))
-    {
-        silentMode = settings["Silent Mode"].as<bool>();
-        ESP_LOGI(TAG, "Assigning silentMode %d", silentMode);
-    }
-
-    if (settings.containsKey("24H Time"))
-    {
-        time24Hour = settings["24H Time"].as<bool>();
-    }
-}

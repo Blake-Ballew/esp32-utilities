@@ -10,6 +10,9 @@
 #include "driver/adc.h"
 #include "EventHandler.h"
 #include <string>
+#include <map>
+#include <ezTime.h>
+#include "TimeSourceInterface.hpp"
 
 #include "esp_ota_ops.h"
 #include "mbedtls/base64.h"
@@ -20,6 +23,7 @@
 #include "FilesystemUtils.h"
 #include "Bluetooth_Utils.h"
 #include "VersionUtils.h"
+#include "SettingsInterface.hpp"
 
 static const char *TAG = "System_Utils";
 
@@ -163,7 +167,126 @@ public:
     static EventHandler<> &getDisableInterrupts() { return disableInterrupts; }
     static EventHandler<> &getSystemShutdown() { return systemShutdown; }
 
-    static void UpdateSettings(JsonDocument &settings);
+    static void UpdateSettings(JsonDocument &settings)
+    {
+        if (settings.containsKey("UserID"))
+        {
+            DeviceID = 0 | settings["UserID"].as<int>();
+        }
+
+        if (settings.containsKey("Device Name"))
+        {
+            DeviceName = settings["Device Name"].as<std::string>();
+        }
+
+        if (settings.containsKey("Silent Mode"))
+        {
+            silentMode = settings["Silent Mode"].as<bool>();
+            ESP_LOGI(TAG, "Assigning silentMode %d", silentMode);
+        }
+
+        if (settings.containsKey("24H Time"))
+        {
+            time24Hour = settings["24H Time"].as<bool>();
+        }
+
+        if (settings.containsKey("Timezone"))
+        {
+            const char* posix = _PosixForTimezone(settings["Timezone"].as<int>());
+            LocalTimezone().setPosix(posix);
+            ESP_LOGI(TAG, "Timezone set to %s", posix);
+        }
+    }
+
+    static void GenerateDefaultSettings(std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>> &settings)
+    {
+        auto silentMode = std::make_shared<FilesystemModule::BoolSetting>("Silent Mode", false);
+        settings[silentMode->key] = silentMode;
+
+        auto time24hr = std::make_shared<FilesystemModule::BoolSetting>("24H Time", false);
+        settings[time24hr->key] = time24hr;
+
+        auto timezone = std::make_shared<FilesystemModule::EnumSetting>(
+            "Timezone",
+            1,
+            std::vector<std::string>{
+                "UTC",
+                "US/Eastern",
+                "US/Central",
+                "US/Mountain",
+                "US/Pacific",
+                "US/Alaska",
+                "US/Hawaii",
+                "Europe/London",
+                "Europe/Central",
+                "Europe/Eastern",
+                "Asia/Dubai",
+                "Asia/Kolkata",
+                "Asia/Bangkok",
+                "Asia/Shanghai",
+                "Asia/Tokyo",
+                "Australia/Sydney",
+            },
+            std::vector<int>{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }
+        );
+        settings[timezone->key] = timezone;
+    }
+
+    // Time Management
+    static void RegisterTimeSource(SystemModule::TimeSourceInterface* source)
+    {
+        TimeSources().push_back(source);
+    }
+
+    static bool GetCurrentUTC(time_t& outTime)
+    {
+        for (auto* src : TimeSources()) {
+            if (src->TryGetCurrentUTC(outTime)) {
+                UTC.setTime(outTime);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static time_t GetCurrentLocal()
+    {
+        return LocalTimezone().now();
+    }
+
+    static bool IsTimeValid()
+    {
+        time_t dummy = 0;
+        return GetCurrentUTC(dummy);
+    }
+
+    static std::string FormatTime(time_t t)
+    {
+        return std::string(LocalTimezone().dateTime(t, time24Hour ? "H:i" : "g:i A").c_str());
+    }
+
+    static std::string FormatDate(time_t t)
+    {
+        return std::string(LocalTimezone().dateTime(t, "n/j/Y").c_str());
+    }
+
+    static std::vector<SystemModule::TimeSourceInterface*>& TimeSources()
+    {
+        static std::vector<SystemModule::TimeSourceInterface*> sources;
+        return sources;
+    }
+
+    static Timezone& LocalTimezone()
+    {
+        static Timezone tz;
+        return tz;
+    }
+
+    static int& UTCOffset()
+    {
+        static int offset = 0;
+        return offset;
+    }
 
     // DEBUGGING FUNCTIONS
     static void PrintHeapFragmentation() {
@@ -173,6 +296,32 @@ public:
     }
 
 private:
+    static const char* _PosixForTimezone(int id)
+    {
+        static const std::unordered_map<int, const char*> timezones =
+        {
+            { 0,  "UTC0"                               },  // UTC
+            { 1,  "EST5EDT,M3.2.0,M11.1.0"            },  // US/Eastern
+            { 2,  "CST6CDT,M3.2.0,M11.1.0"            },  // US/Central
+            { 3,  "MST7MDT,M3.2.0,M11.1.0"            },  // US/Mountain
+            { 4,  "PST8PDT,M3.2.0,M11.1.0"            },  // US/Pacific
+            { 5,  "AKST9AKDT,M3.2.0,M11.1.0"          },  // US/Alaska
+            { 6,  "HST10"                              },  // US/Hawaii
+            { 7,  "GMT0BST,M3.5.0/1,M10.5.0"          },  // Europe/London
+            { 8,  "CET-1CEST,M3.5.0,M10.5.0/3"        },  // Europe/Central
+            { 9,  "EET-2EEST,M3.5.0/3,M10.5.0/4"      },  // Europe/Eastern
+            { 10, "GST-4"                              },  // Asia/Dubai
+            { 11, "IST-5:30"                           },  // Asia/Kolkata
+            { 12, "ICT-7"                              },  // Asia/Bangkok
+            { 13, "CST-8"                              },  // Asia/Shanghai
+            { 14, "JST-9"                              },  // Asia/Tokyo
+            { 15, "AEST-10AEDT,M10.1.0,M4.1.0/3"      },  // Australia/Sydney
+        };
+
+        auto it = timezones.find(id);
+        return it != timezones.end() ? it->second : "UTC0";
+    }
+
     // Event Handlers
     static EventHandler<> enableInterrupts;
     static EventHandler<> disableInterrupts;

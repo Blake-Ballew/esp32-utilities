@@ -3,6 +3,7 @@
 #include "System_Utils.h"
 #include "CompassInterface.h"
 #include "TinyGPS++.h"
+#include <ezTime.h>
 #include <string>
 
 namespace
@@ -33,6 +34,19 @@ public:
     static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2);
     static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1);
     static int GetSatelliteCount() { return _GPS.satellites.value(); }
+
+    static TinyGPSPlus& GetGPS() { return _GPS; }
+
+    static time_t PackedToTimeT(uint32_t gpsTime, uint32_t gpsDate)
+    {
+        uint8_t  h  = (gpsTime / 1000000) % 100;
+        uint8_t  m  = (gpsTime / 10000)   % 100;
+        uint8_t  s  = (gpsTime / 100)     % 100;
+        uint8_t  d  = gpsDate % 100;
+        uint8_t  mo = (gpsDate / 100)     % 100;
+        uint16_t y  = (gpsDate / 10000)   % 100 + 2000;
+        return ezt::makeTime(h, m, s, d, mo, y);
+    }
 
     // Compass Functionality
     static int GetAzimuth();

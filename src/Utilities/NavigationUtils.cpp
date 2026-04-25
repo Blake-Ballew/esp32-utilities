@@ -61,151 +61,41 @@ TinyGPSDate NavigationUtils::GetDate()
 
 uint64_t NavigationUtils::GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
 {
-    ESP_LOGD(TAG, "Navigation_Manager::getTimeDifference()");
-    ESP_LOGD(TAG, "time1: %lu", time1);
-    ESP_LOGD(TAG, "date1: %lu", date1);
-    ESP_LOGD(TAG, "time2: %lu", time2);
-    ESP_LOGD(TAG, "date2: %lu", date2);
+    time_t t1 = PackedToTimeT(time1, date1);
+    time_t t2 = PackedToTimeT(time2, date2);
+    time_t diffSec = (t2 >= t1) ? (t2 - t1) : 0;
 
-    uint8_t csec1, sec1, min1, hour1, day1, month1 = 0;
-    uint16_t year1 = 0;
-    uint8_t csec2, sec2, min2, hour2, day2, month2 = 0;
-    uint16_t year2 = 0;
-
-    csec1 = time1 % 100;
-    sec1 = (time1 / 100) % 100;
-    min1 = (time1 / 10000) % 100;
-    hour1 = (time1 / 1000000) % 100;
-    day1 = date1 % 100;
-    month1 = (date1 / 100) % 100;
-    year1 = (date1 / 10000) % 10000;
-
-    csec2 = time2 % 100;
-    sec2 = (time2 / 100) % 100;
-    min2 = (time2 / 10000) % 100;
-    hour2 = (time2 / 1000000) % 100;
-    day2 = date2 % 100;
-    month2 = (date2 / 100) % 100;
-    year2 = (date2 / 10000) % 10000;
-
-    ESP_LOGV(TAG, "csec1: %d", csec1);
-    ESP_LOGV(TAG, "sec1: %d", sec1);
-    ESP_LOGV(TAG, "min1: %d", min1);
-    ESP_LOGV(TAG, "hour1: %d", hour1);
-    ESP_LOGV(TAG, "day1: %d", day1);
-    ESP_LOGV(TAG, "month1: %d", month1);
-    ESP_LOGV(TAG, "year1: %d", year1);
-    ESP_LOGV(TAG, "csec2: %d", csec2);
-    ESP_LOGV(TAG, "sec2: %d", sec2);
-    ESP_LOGV(TAG, "min2: %d", min2);
-    ESP_LOGV(TAG, "hour2: %d", hour2);
-    ESP_LOGV(TAG, "day2: %d", day2);
-    ESP_LOGV(TAG, "month2: %d", month2);
-    ESP_LOGV(TAG, "year2: %d", year2);
+    uint8_t  s  = diffSec % 60; diffSec /= 60;
+    uint8_t  mn = diffSec % 60; diffSec /= 60;
+    uint8_t  h  = diffSec % 24; diffSec /= 24;
+    uint32_t d  = (uint32_t)diffSec;
 
     uint64_t diff = 0;
-
-    // Centiseconds
-    if (csec1 > csec2)
-    {
-        csec2 += 100;
-        sec2--;
-    }
-
-    diff |= (csec2 - csec1);
-
-    // Seconds
-    if (sec1 > sec2)
-    {
-        sec2 += 60;
-        min2--;
-    }
-
-    diff |= (sec2 - sec1) << 8;
-
-    // Minutes
-    if (min1 > min2)
-    {
-        min2 += 60;
-        hour2--;
-    }
-
-    diff |= (min2 - min1) << 16;
-
-    // Hours
-    if (hour1 > hour2)
-    {
-        hour2 += 24;
-        day2--;
-    }
-
-    diff |= (hour2 - hour1) << 24;
-
-    // Days
-    if (day1 > day2)
-    {
-        // Get number of days in month
-        uint8_t daysInMonth = 0;
-        switch (month2)
-        {
-        case 1:
-        case 3:
-        case 5:
-        case 7:
-        case 8:
-        case 10:
-        case 12:
-            daysInMonth = 31;
-            break;
-        case 2:
-            if (year2 % 4 == 0)
-            {
-                daysInMonth = 29;
-            }
-            else
-            {
-                daysInMonth = 28;
-            }
-            break;
-        case 4:
-        case 6:
-        case 9:
-        case 11:
-            daysInMonth = 30;
-            break;
-        }
-
-        day2 += daysInMonth;
-        month2--;
-    }
-
-    // Date data stored in upper 32 bits
-    diff |= ((uint64_t)(day2 - day1) << 32);
-
-    // Months
-    if (month1 > month2)
-    {
-        month2 += 12;
-        year2--;
-    }
-    diff |= ((uint64_t)(month2 - month1) << 40);
-
-    // Years
-    diff |= ((uint64_t)(year2 - year1) << 48);
-
-    ESP_LOGV(TAG, "diff: %llu", diff);
-
-    return diff;    
+    diff |= (uint64_t)s  << 8;
+    diff |= (uint64_t)mn << 16;
+    diff |= (uint64_t)h  << 24;
+    diff |= (uint64_t)(d & 0xFF) << 32;
+    return diff;
 }
 
 uint64_t NavigationUtils::GetTimeDifference(uint32_t time1, uint32_t date1)
 {
-    NavigationUtils::UpdateGPS();
+    time_t now = 0;
+    System_Utils::GetCurrentUTC(now);
+    time_t msgTime = PackedToTimeT(time1, date1);
+    time_t diffSec = (now >= msgTime) ? (now - msgTime) : 0;
 
-    uint32_t time2 = GetTime().value();
-    uint32_t date2 = GetDate().value();
+    uint8_t  s  = diffSec % 60; diffSec /= 60;
+    uint8_t  mn = diffSec % 60; diffSec /= 60;
+    uint8_t  h  = diffSec % 24; diffSec /= 24;
+    uint32_t d  = (uint32_t)diffSec;
 
-    return GetTimeDifference(time1, date1, time2, date2);
+    uint64_t diff = 0;
+    diff |= (uint64_t)s  << 8;
+    diff |= (uint64_t)mn << 16;
+    diff |= (uint64_t)h  << 24;
+    diff |= (uint64_t)(d & 0xFF) << 32;
+    return diff;
 }
 
 int NavigationUtils::GetAzimuth()

@@ -22,7 +22,9 @@
     "adafruit/Adafruit SSD1306": "^2.5.7",
     "mathieucarbou/ESPAsyncWebServer": "^3.6.0",
     "tzapu/WiFiManager": "^2.0.17",
-    "WiFiManager": "https://github.com/rmsz005/AlooWifiManager.git"  },
+    "WiFiManager": "https://github.com/rmsz005/AlooWifiManager.git",
+    "ropg/ezTime": "0.8.3"
+  },
   "frameworks": "*",
   "platforms": "*",
   "build": {
@@ -40,6 +42,7 @@
       "-Iinclude/HelperClasses/OLED_Content",
       "-Iinclude/HelperClasses/OLED_Window",
       "-Iinclude/HelperClasses/Window_States",
+      "-Iinclude/HelperClasses/TimeSource",
       "-Iinclude/HelperClasses/Message_Types",
       "-Iinclude/HelperClasses/Network",
       "-Iinclude/ModuleManagers",
