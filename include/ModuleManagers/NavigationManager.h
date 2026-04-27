@@ -9,79 +9,83 @@ namespace
     const char *LOCATION_FILE PROGMEM = "/SavedLocations.msgpk";
 }
 
-// Manager class to iniitialize NavigationUtils
-class NavigationManager
+namespace NavigationModule
 {
-private:
-    static constexpr const char *TAG = "NavigationManager";
-
-
-public:
-    NavigationManager() {}
-
-    void InitializeUtils(CompassInterface *compass, Stream &gpsInputStream)
+    class Manager
     {
-        ESP_LOGI(TAG, "NavigationManager::InitializeUtils");
-        NavigationUtils::Init(compass, gpsInputStream);
+    private:
+        static constexpr const char* TAG = "NavigationManager";
 
-        NavigationUtils::SavedLocationsUpdated() += SaveLocationsToFlash;
-        this->LoadLocationsFromFlash();
+    public:
+        Manager() {}
 
-        StaticJsonDocument<256> calibrationData;
-        auto returncode = FilesystemModule::Utilities::ReadFile(NavigationUtils::GetCalibrationFilename(), calibrationData);
-        if (returncode == FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+        void InitializeUtils(CompassInterface* compass, Stream& gpsInputStream)
         {
-            NavigationUtils::SetCalibrationData(calibrationData);
+            ESP_LOGI(TAG, "NavigationModule::Manager::InitializeUtils");
+            NavigationModule::Utilities::Init(compass, gpsInputStream);
 
-            std::string buf;
-            serializeJson(calibrationData, buf);
-            ESP_LOGI(TAG, "Calibration data loaded from flash: %s", buf.c_str());
+            NavigationModule::Utilities::SavedLocationsUpdated() += SaveLocationsToFlash;
+            this->LoadLocationsFromFlash();
+
+            StaticJsonDocument<256> calibrationData;
+            auto returncode = FilesystemModule::Utilities::ReadFile(
+                NavigationModule::Utilities::GetCalibrationFilename(), calibrationData);
+            if (returncode == FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+            {
+                NavigationModule::Utilities::SetCalibrationData(calibrationData);
+
+                std::string buf;
+                serializeJson(calibrationData, buf);
+                ESP_LOGI(TAG, "Calibration data loaded from flash: %s", buf.c_str());
+            }
         }
-    }
 
-    void InitializeUtils(CompassInterface *compass)
-    {
-        NavigationUtils::Init(compass);
-
-        NavigationUtils::SavedLocationsUpdated() += SaveLocationsToFlash;
-        this->LoadLocationsFromFlash();
-    }
-
-    // TODO: Implement if needed
-    static void AutoStreamGPS()
-    {
-
-    }
-
-    static void SaveLocationsToFlash()
-    {
-        DynamicJsonDocument doc(16000);
-
-        NavigationUtils::SerializeSavedLocations(doc);
-        auto returncode = FilesystemModule::Utilities::WriteFile(LOCATION_FILE, doc);
-
-        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+        void InitializeUtils(CompassInterface* compass)
         {
-            ESP_LOGE(TAG, "Failed to save locations to flash. Error code: %d", (int)returncode);
-        }
-        else
-        {
-            ESP_LOGI(TAG, "Saved locations to flash");
-        }
-    }
+            NavigationModule::Utilities::Init(compass);
 
-    void LoadLocationsFromFlash()
-    {
-        DynamicJsonDocument doc(16000);
-        auto returncode = FilesystemModule::Utilities::ReadFile(LOCATION_FILE, doc);
+            NavigationModule::Utilities::SavedLocationsUpdated() += SaveLocationsToFlash;
+            this->LoadLocationsFromFlash();
+        }
 
-        if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+        // TODO: Implement if needed
+        static void AutoStreamGPS()
         {
-            ESP_LOGE(TAG, "Failed to load locations from flash. Error code: %d", (int)returncode);
         }
-        else
+
+        static void SaveLocationsToFlash()
         {
-            NavigationUtils::DeserializeSavedLocations(doc);
+            DynamicJsonDocument doc(16000);
+
+            NavigationModule::Utilities::SerializeSavedLocations(doc);
+            auto returncode = FilesystemModule::Utilities::WriteFile(LOCATION_FILE, doc);
+
+            if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+            {
+                ESP_LOGE(TAG, "Failed to save locations to flash. Error code: %d", (int)returncode);
+            }
+            else
+            {
+                ESP_LOGI(TAG, "Saved locations to flash");
+            }
         }
-    }
-};
+
+        void LoadLocationsFromFlash()
+        {
+            DynamicJsonDocument doc(16000);
+            auto returncode = FilesystemModule::Utilities::ReadFile(LOCATION_FILE, doc);
+
+            if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
+            {
+                ESP_LOGE(TAG, "Failed to load locations from flash. Error code: %d", (int)returncode);
+            }
+            else
+            {
+                NavigationModule::Utilities::DeserializeSavedLocations(doc);
+            }
+        }
+    };
+}
+
+// Backward-compatibility alias — prefer NavigationModule::Manager in new code
+using NavigationManager = NavigationModule::Manager;

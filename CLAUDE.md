@@ -55,7 +55,7 @@ Utilities + Interfaces
 | `LED_Manager` | WS2812B animation, compass ring rendering, pattern registration |
 | `Settings_Manager` | JSON settings persistence (SPIFFS) |
 | `LoraManager` | LoRa mesh networking, MessagePack serialization |
-| `NavigationManager` | GPS + compass integration, heading/distance calculation |
+| `NavigationModule::Manager` | GPS + compass integration, heading/distance calculation |
 | `FilesystemManager` | SPIFFS file I/O |
 | `EspNowManager` | ESP-NOW protocol |
 | `RpcManager` | Remote procedure call infrastructure |
@@ -217,4 +217,59 @@ System_Utils::LocalTimezone().setPosix(posix);
 | Build `time_t` from components | `ezt::makeTime(h, m, s, d, mo, yr)` |
 | Format for display | `LocalTimezone().dateTime(t, "H:i")` |
 | Decompose `time_t` | `ezt::breakTime(t, tmElements_t&)` |
+
+## Navigation Module
+
+### NavigationModule::Utilities
+
+File: `include/Utilities/NavigationUtilities.hpp`  
+Fully inline static utility class. No instance needed. Backward-compat alias: `using NavigationUtils = NavigationModule::Utilities`.
+
+All GPS, compass, saved locations, and geolocation source registry functionality lives here. Static state uses Meyers singletons internally — no `.cpp` definitions required.
+
+### NavigationModule::Manager
+
+File: `include/ModuleManagers/NavigationManager.h`  
+Instantiated in the application layer. Handles initialization, saved-location persistence to SPIFFS, and calibration data loading. Backward-compat alias: `using NavigationManager = NavigationModule::Manager`.
+
+```cpp
+// In app
+NavigationModule::Manager navManager;
+navManager.InitializeUtils(&compass, Serial2);
+```
+
+### GeolocationInterface
+
+File: `include/Interfaces/GeolocationInterface.hpp`  
+Namespace: `NavigationModule::`
+
+```cpp
+virtual bool TryGetCurrentLocation(double& outLat, double& outLon) = 0;
+```
+
+Returns `true` and populates `outLat`/`outLon` (WGS84 decimal degrees) on success. `NavigationModule::Utilities::GetCurrentLocation()` iterates registered sources in order, first success wins.
+
+### GpsGeolocationSource
+
+File: `include/HelperClasses/Geolocation/GpsGeolocationSource.hpp`  
+Header-only. Holds a `TinyGPSPlus&` and checks `location.isValid()` on demand.
+
+```cpp
+GpsGeolocationSource src(NavigationModule::Utilities::GetGPS());
+NavigationModule::Utilities::RegisterLocationSource(&src);
+```
+
+### Adding a New Geolocation Source
+
+1. Create a header-only class at `include/HelperClasses/Geolocation/<ClassName>.hpp`
+2. Inherit `NavigationModule::GeolocationInterface`, implement `TryGetCurrentLocation(double&, double&)`
+3. Register with `NavigationModule::Utilities::RegisterLocationSource()` in app init
+
+### NavigationModule::Utilities Geolocation API
+
+| Method | Description |
+|---|---|
+| `RegisterLocationSource(ptr)` | Add a geolocation source to the polling list |
+| `GetCurrentLocation(double& lat, double& lon)` | Poll sources; returns bool, first success wins |
+| `LocationSources()` | `vector<GeolocationInterface*>&` — Meyers singleton |
 
