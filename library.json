@@ -23,7 +23,7 @@
     "mathieucarbou/ESPAsyncWebServer": "^3.6.0",
     "tzapu/WiFiManager": "^2.0.17",
     "WiFiManager": "https://github.com/rmsz005/AlooWifiManager.git",
-    "ropg/ezTime": "0.8.3"
+    "ezTime": "https://github.com/Blake-Ballew/ezTime.git"
   },
   "frameworks": "*",
   "platforms": "*",
