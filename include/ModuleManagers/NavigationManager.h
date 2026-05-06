@@ -19,10 +19,10 @@ namespace NavigationModule
     public:
         Manager() {}
 
-        void InitializeUtils(CompassInterface* compass, Stream& gpsInputStream)
+        void InitializeUtils(CompassInterface* compass)
         {
             ESP_LOGI(TAG, "NavigationModule::Manager::InitializeUtils");
-            NavigationModule::Utilities::Init(compass, gpsInputStream);
+            NavigationModule::Utilities::Init(compass);
 
             NavigationModule::Utilities::SavedLocationsUpdated() += SaveLocationsToFlash;
             this->LoadLocationsFromFlash();
@@ -39,15 +39,6 @@ namespace NavigationModule
                 ESP_LOGI(TAG, "Calibration data loaded from flash: %s", buf.c_str());
             }
         }
-
-        void InitializeUtils(CompassInterface* compass)
-        {
-            NavigationModule::Utilities::Init(compass);
-
-            NavigationModule::Utilities::SavedLocationsUpdated() += SaveLocationsToFlash;
-            this->LoadLocationsFromFlash();
-        }
-
         // TODO: Implement if needed
         static void AutoStreamGPS()
         {

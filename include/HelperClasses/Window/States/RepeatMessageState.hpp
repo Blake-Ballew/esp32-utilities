@@ -125,14 +125,12 @@ namespace DisplayModule
             if (_message->GetInstanceMessageType() == MessagePing::MessageType())
             {
                 auto *ping = static_cast<MessagePing *>(_message);
-                if (ping->IsLive)
-                {
-                    NavigationUtils::UpdateGPS();
-                    ping->lat  = NavigationUtils::GetLocation().lat();
-                    ping->lng  = NavigationUtils::GetLocation().lng();
-                    ping->time = NavigationUtils::GetTime().value();
-                    ping->date = NavigationUtils::GetDate().value();
-                }
+
+                time_t time;
+                System_Utils::GetCurrentUTC(time);
+
+                NavigationModule::Utilities::GetCurrentLocation(ping->lat, ping->lng);
+                NavigationModule::Utilities::TimeTToGpsPacked(time, ping->time, ping->date);
             }
 
             LoraUtils::SendMessage(_message, 1);

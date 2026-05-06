@@ -122,11 +122,12 @@ public:
                         else
                         {
                             // Fill in time received if not set
-                            if (msg->time == 0 && msg->date == 0 && NavigationUtils::IsGPSConnected())
+                            time_t now = 0;
+                            if (msg->time == 0 && msg->date == 0 && System_Utils::GetCurrentUTC(now))
                             {
                                 ESP_LOGI(TAG, "Filling in timestamp for incoming message");
-                                msg->time = NavigationUtils::GetTime().value();
-                                msg->date = NavigationUtils::GetDate().value();
+                                // TODO: Don't cross modules like this
+                                NavigationUtils::TimeTToGpsPacked(now, msg->time, msg->date);
                             }
 
                             auto fwd = ShouldMessageBeForwarded(msg);

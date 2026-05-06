@@ -32,72 +32,72 @@ namespace NavigationModule
             _Compass() = compass;
         }
 
-        static void Init(CompassInterface* compass, Stream& gpsInputStream)
-        {
-            _Compass() = compass;
-            _GpsInputStream() = &gpsInputStream;
-        }
+        // static void Init(CompassInterface* compass, Stream& gpsInputStream)
+        // {
+        //     _Compass() = compass;
+        //     _GpsInputStream() = &gpsInputStream;
+        // }
 
         // GPS Functionality
-        static void UpdateGPS()
-        {
-            ESP_LOGI(TAG, "Updating GPS data...");
+        // static void UpdateGPS()
+        // {
+        //     ESP_LOGI(TAG, "Updating GPS data...");
 
-            while (_GpsInputStream()->available() > 0)
-            {
-                GetGPS().encode(_GpsInputStream()->read());
-            }
+        //     while (_GpsInputStream()->available() > 0)
+        //     {
+        //         GetGPS().encode(_GpsInputStream()->read());
+        //     }
 
-            if (GetGPS().location.isValid())
-            {
-                ESP_LOGI(TAG, "Valid GPS location received. Latitude: %f, Longitude: %f",
-                    GetGPS().location.lat(), GetGPS().location.lng());
-                _LastCoordinate() = GetGPS().location;
-            }
-            else
-            {
-                ESP_LOGW(TAG, "Invalid GPS location. Satellite count: %d", GetGPS().satellites.value());
-            }
-        }
+        //     if (GetGPS().location.isValid())
+        //     {
+        //         ESP_LOGI(TAG, "Valid GPS location received. Latitude: %f, Longitude: %f",
+        //             GetGPS().location.lat(), GetGPS().location.lng());
+        //         _LastCoordinate() = GetGPS().location;
+        //     }
+        //     else
+        //     {
+        //         ESP_LOGW(TAG, "Invalid GPS location. Satellite count: %d", GetGPS().satellites.value());
+        //     }
+        // }
 
-        static bool IsGPSConnected()
-        {
-            return _LastCoordinate().isValid();
-        }
+        // static bool IsGPSConnected()
+        // {
+        //     return _LastCoordinate().isValid();
+        // }
 
-        static TinyGPSLocation GetLocation()
-        {
-            return _LastCoordinate();
-        }
+        // static TinyGPSLocation GetLocation()
+        // {
+        //     return _LastCoordinate();
+        // }
 
-        static TinyGPSTime GetTime()
-        {
-            return GetGPS().time;
-        }
+        // static TinyGPSTime GetTime()
+        // {
+        //     return GetGPS().time;
+        // }
 
-        static TinyGPSDate GetDate()
-        {
-            return GetGPS().date;
-        }
+        // static TinyGPSDate GetDate()
+        // {
+        //     return GetGPS().date;
+        // }
 
-        static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
-        {
-            time_t t1 = PackedToTimeT(time1, date1);
-            time_t t2 = PackedToTimeT(time2, date2);
-            time_t diffSec = (t2 >= t1) ? (t2 - t1) : 0;
+        // static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1, uint32_t time2, uint32_t date2)
+        // {
+        //     time_t t1 = PackedToTimeT(time1, date1);
+        //     time_t t2 = PackedToTimeT(time2, date2);
+        //     time_t diffSec = (t2 >= t1) ? (t2 - t1) : 0;
 
-            uint8_t  s  = diffSec % 60; diffSec /= 60;
-            uint8_t  mn = diffSec % 60; diffSec /= 60;
-            uint8_t  h  = diffSec % 24; diffSec /= 24;
-            uint32_t d  = (uint32_t)diffSec;
+        //     uint8_t  s  = diffSec % 60; diffSec /= 60;
+        //     uint8_t  mn = diffSec % 60; diffSec /= 60;
+        //     uint8_t  h  = diffSec % 24; diffSec /= 24;
+        //     uint32_t d  = (uint32_t)diffSec;
 
-            uint64_t diff = 0;
-            diff |= (uint64_t)s  << 8;
-            diff |= (uint64_t)mn << 16;
-            diff |= (uint64_t)h  << 24;
-            diff |= (uint64_t)(d & 0xFF) << 32;
-            return diff;
-        }
+        //     uint64_t diff = 0;
+        //     diff |= (uint64_t)s  << 8;
+        //     diff |= (uint64_t)mn << 16;
+        //     diff |= (uint64_t)h  << 24;
+        //     diff |= (uint64_t)(d & 0xFF) << 32;
+        //     return diff;
+        // }
 
         static uint64_t GetTimeDifference(uint32_t time1, uint32_t date1)
         {
@@ -119,10 +119,10 @@ namespace NavigationModule
             return diff;
         }
 
-        static int GetSatelliteCount()
-        {
-            return GetGPS().satellites.value();
-        }
+        // static int GetSatelliteCount()
+        // {
+        //     return GetGPS().satellites.value();
+        // }
 
         static TinyGPSPlus& GetGPS()
         {
@@ -141,7 +141,29 @@ namespace NavigationModule
             return ezt::makeTime(h, m, s, d, mo, y);
         }
 
-        // Compass Functionality
+        static void TimeTToGpsPacked(time_t t, uint32_t &gpsTime, uint32_t &gpsDate)
+        {
+            tmElements_t tm;
+            ezt::breakTime(t, tm);
+
+            uint8_t  h  = tm.Hour;
+            uint8_t  m  = tm.Minute;
+            uint8_t  s  = tm.Second;
+            uint8_t  d  = tm.Day;
+            uint8_t  mo = tm.Month;
+            uint16_t y  = tm.Year + 1970;  // tmElements_t years are offset from 1970
+
+            gpsTime = (uint32_t)h  * 1000000
+                    + (uint32_t)m  * 10000
+                    + (uint32_t)s  * 100;
+
+            gpsDate = (uint32_t)((y - 2000) % 100) * 10000
+                    + (uint32_t)mo * 100
+                    + (uint32_t)d;
+        }
+
+        // // Compass Functionality
+        // TODO: Rename all these shitty functions
         static int GetAzimuth()
         {
             if (_Compass() == nullptr)
@@ -160,14 +182,19 @@ namespace NavigationModule
             return targetHeading - _Compass()->GetAzimuth();
         }
 
-        static double GetDistance(TinyGPSLocation& loc, double lat, double lon)
+        static double GetDistance(double latFrom, double lonFrom, double lat, double lon)
         {
-            return GetGPS().distanceBetween(loc.lat(), loc.lng(), lat, lon);
+            return GetGPS().distanceBetween(latFrom, lonFrom, lat, lon);
         }
 
         static double GetDistanceTo(double lat, double lon)
         {
-            UpdateGPS();
+            double latFrom, lonFrom = 0.0;
+
+            if (!GetCurrentLocation(latFrom, lonFrom))
+            {
+                return -1;
+            }
 
             ESP_LOGI(TAG, "GetDistanceTo()");
             ESP_LOGI(TAG, "My Lat: %f", _LastCoordinate().lat());
@@ -175,32 +202,37 @@ namespace NavigationModule
             ESP_LOGI(TAG, "Target Lat: %f", lat);
             ESP_LOGI(TAG, "Target Lon: %f", lon);
 
-            return GetGPS().distanceBetween(
-                _LastCoordinate().lat(), _LastCoordinate().lng(), lat, lon);
+            return GetGPS().distanceBetween(latFrom, lonFrom, lat, lon);
         }
 
-        static double GetHeading(TinyGPSLocation& loc, double lat, double lon)
+        static double GetHeading(double lat, double lon)
         {
-            UpdateGPS();
+            double latFrom, lonFrom = 0.0;
 
-            if (!_LastCoordinate().isValid())
+            if (!GetCurrentLocation(latFrom, lonFrom))
             {
                 return -1;
             }
 
-            return GetGPS().courseTo(loc.lat(), loc.lng(), lat, lon);
+            ESP_LOGI(TAG, "GetHeading()");
+            ESP_LOGI(TAG, "My Lat: %f", _LastCoordinate().lat());
+            ESP_LOGI(TAG, "My Lon: %f", _LastCoordinate().lng());
+            ESP_LOGI(TAG, "Target Lat: %f", lat);
+            ESP_LOGI(TAG, "Target Lon: %f", lon);
+
+            return GetGPS().courseTo(latFrom, lonFrom, lat, lon);
         }
 
         static double GetHeadingTo(double lat, double lon)
         {
-            UpdateGPS();
+            double latFrom, lonFrom = 0.0;
 
-            if (!_LastCoordinate().isValid())
+            if (!GetCurrentLocation(latFrom, lonFrom))
             {
                 return -1;
             }
 
-            return GetGPS().courseTo(_LastCoordinate().lat(), _LastCoordinate().lng(), lat, lon);
+            return GetGPS().courseTo(latFrom, lonFrom, lat, lon);
         }
 
         // Stub implementations (only used for debug screen)
@@ -473,30 +505,30 @@ namespace NavigationModule
             ESP_LOGV(TAG, "%s", buf.c_str());
         }
 
-        static void FlashSampleLocations()
-        {
-            _SavedLocations().clear();
+        // static void FlashSampleLocations()
+        // {
+        //     _SavedLocations().clear();
 
-            SavedLocation nyc;
-            nyc.Name = "NYC";
-            nyc.Latitude = 40.7128;
-            nyc.Longitude = -74.0060;
-            _SavedLocations().push_back(nyc);
+        //     SavedLocation nyc;
+        //     nyc.Name = "NYC";
+        //     nyc.Latitude = 40.7128;
+        //     nyc.Longitude = -74.0060;
+        //     _SavedLocations().push_back(nyc);
 
-            SavedLocation sf;
-            sf.Name = "SF";
-            sf.Latitude = 37.7749;
-            sf.Longitude = -122.4194;
-            _SavedLocations().push_back(sf);
+        //     SavedLocation sf;
+        //     sf.Name = "SF";
+        //     sf.Latitude = 37.7749;
+        //     sf.Longitude = -122.4194;
+        //     _SavedLocations().push_back(sf);
 
-            SavedLocation atl;
-            atl.Name = "ATL";
-            atl.Latitude = 33.7490;
-            atl.Longitude = -84.3880;
-            _SavedLocations().push_back(atl);
+        //     SavedLocation atl;
+        //     atl.Name = "ATL";
+        //     atl.Latitude = 33.7490;
+        //     atl.Longitude = -84.3880;
+        //     _SavedLocations().push_back(atl);
 
-            SavedLocationsUpdated().Invoke();
-        }
+        //     SavedLocationsUpdated().Invoke();
+        // }
 
         // Geolocation Source Registry
         static void RegisterLocationSource(GeolocationInterface* source)
@@ -510,9 +542,12 @@ namespace NavigationModule
             {
                 if (src->TryGetCurrentLocation(outLat, outLon))
                 {
+                    ESP_LOGI(TAG, "Location obtained. Lat: %f, Lon: %f", outLat, outLon);
                     return true;
                 }
             }
+
+            ESP_LOGW(TAG, "Failed to obtain location from all sources");
             return false;
         }
 

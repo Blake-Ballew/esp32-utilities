@@ -40,7 +40,7 @@
       "-Iinclude/HelperClasses/Window",
       "-Iinclude/HelperClasses/Window/States",
       "-Iinclude/HelperClasses/TimeSource",
-      "-Iinclude/HelperClasses/Geolocation",
+      "-Iinclude/HelperClasses/GPS",
       "-Iinclude/HelperClasses/Message_Types",
       "-Iinclude/HelperClasses/Network",
       "-Iinclude/ModuleManagers",
