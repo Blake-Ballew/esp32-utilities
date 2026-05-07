@@ -108,13 +108,10 @@ namespace DisplayModule
 
         void onTick() override
         {
-            NavigationUtils::UpdateGPS();
-
             if (_ringPointID >= 0)
             {
-                auto currentLoc = NavigationUtils::GetLocation();
-                double bearing  = NavigationUtils::GetHeading(currentLoc, _targetLat, _targetLon);
-                double distance = NavigationUtils::GetDistance(currentLoc, _targetLat, _targetLon);
+                double bearing  = NavigationUtils::GetHeadingTo(_targetLat, _targetLon);
+                double distance = NavigationUtils::GetDistanceTo(_targetLat, _targetLon);
 
                 ArduinoJson::StaticJsonDocument<128> cfg;
                 cfg["bearing"]  = bearing;
@@ -153,9 +150,17 @@ namespace DisplayModule
                 ++line;
             }
 
-            // Current distance
-            auto currentLoc = NavigationUtils::GetLocation();
-            double distance = NavigationUtils::GetDistance(currentLoc, _targetLat, _targetLon);
+            double myLat = 0.0, myLon = 0.0;
+            if (!NavigationUtils::GetCurrentLocation(myLat, myLon))
+            {
+                addDrawCommand(std::make_shared<TextDrawCommand>(
+                    std::string("No Location Data"),
+                    TextFormat{ TextAlignH::CENTER, TextAlignV::LINE, static_cast<uint8_t>(line) }
+                ));
+                return;
+            }
+
+            double distance = NavigationUtils::GetDistance(myLat, myLon, _targetLat, _targetLon);
 
             char distBuf[24];
             snprintf(distBuf, sizeof(distBuf), "Dist: %.1f m",

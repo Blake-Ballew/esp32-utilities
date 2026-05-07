@@ -104,6 +104,11 @@ namespace DisplayModule
                     return static_cast<uint16_t>((ctx.height / 2) - (H / 2));
             }
         }
+
+        static std::shared_ptr<TextDrawCommand> createCenteredMessage(const std::string &msg)
+        {
+            return std::make_shared<TextDrawCommand>(msg, TextFormat{TextAlignH::CENTER, TextAlignV::CENTER});
+        }
     };
 
 } // namespace DisplayModule

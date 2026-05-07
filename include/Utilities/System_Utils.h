@@ -282,11 +282,11 @@ public:
         return tz;
     }
 
-    static int& UTCOffset()
-    {
-        static int offset = 0;
-        return offset;
-    }
+    // static int& UTCOffset()
+    // {
+    //     static int offset = 0;
+    //     return offset;
+    // }
 
     // DEBUGGING FUNCTIONS
     static void PrintHeapFragmentation() {

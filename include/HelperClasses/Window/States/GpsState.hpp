@@ -53,15 +53,13 @@ namespace DisplayModule
         {
             clearDrawCommands();
 
-            NavigationUtils::UpdateGPS();
+            double myLat, myLon;
 
-            if (NavigationUtils::IsGPSConnected())
+            if (NavigationUtils::GetCurrentLocation(myLat, myLon))
             {
-                auto loc = NavigationUtils::GetLocation();
-
                 char lat[32], lon[32];
-                snprintf(lat, sizeof(lat), "Lat: %.8f", loc.lat());
-                snprintf(lon, sizeof(lon), "Lon: %.8f", loc.lng());
+                snprintf(lat, sizeof(lat), "Lat: %.8f", myLat);
+                snprintf(lon, sizeof(lon), "Lon: %.8f", myLon);
 
                 addDrawCommand(std::make_shared<TextDrawCommand>(
                     std::string(lat),
@@ -79,11 +77,11 @@ namespace DisplayModule
                     TextFormat{ TextAlignH::CENTER, TextAlignV::LINE, 2 }
                 ));
 
-                std::string satelliteStr = "Satellites: " + std::to_string(NavigationUtils::GetSatelliteCount());
-                addDrawCommand(std::make_shared<TextDrawCommand>(
-                    satelliteStr,
-                    TextFormat{ TextAlignH::CENTER, TextAlignV::LINE, 3 }
-                ));
+                // std::string satelliteStr = "Satellites: " + std::to_string(NavigationUtils::GetSatelliteCount());
+                // addDrawCommand(std::make_shared<TextDrawCommand>(
+                //     satelliteStr,
+                //     TextFormat{ TextAlignH::CENTER, TextAlignV::LINE, 3 }
+                // ));
             }
         }
     };

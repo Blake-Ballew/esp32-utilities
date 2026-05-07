@@ -316,6 +316,15 @@ namespace DisplayModule
             return static_cast<uint8_t>(_drawCtx().height / CHAR_H);
         }
 
+        static void clearAndDisplay(std::shared_ptr<DrawCommand> cmd, size_t displayTimeMs = 2000)
+        {
+            auto &drawCtx = Utilities::drawContext();
+            drawCtx.display->fillScreen(0);
+            cmd->draw(drawCtx);
+            Utilities::onRenderComplete();
+            vTaskDelay(pdMS_TO_TICKS(displayTimeMs));
+        }
+
         static EventHandler<const InputContext &> &getInputRaised() 
         { 
             static EventHandler<const InputContext &> handler;
