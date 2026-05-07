@@ -31,7 +31,7 @@ namespace NavigationModule
             _UpdateGps();
 
             // TODO: check how old this location is before returning it
-            if (_lastLocation.isValid())
+            if (!_lastLocation.isValid() || (_lastLocation.lat() == 0 && _lastLocation.lng() == 0))
             {
                 ESP_LOGI(_TAG, "GPS location not valid");
                 return false;
