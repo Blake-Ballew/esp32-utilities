@@ -6,3 +6,6 @@
 ./platformio.ini
 src/main.cpp
 .qodo
+
+# Auto-generated version file.
+include/Utilities/VersionUtils.h
