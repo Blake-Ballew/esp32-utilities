@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"C:\\\\Users\\\\Blake\\\\Visual_Studio_Code\" -name \"MessageBase*\" -o -name \"MessagePing*\" 2>/dev/null)",
+      "Bash(pio run *)"
+    ]
+  }
+}

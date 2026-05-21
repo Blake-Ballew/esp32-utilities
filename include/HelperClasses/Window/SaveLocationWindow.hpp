@@ -8,6 +8,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+namespace { constexpr size_t MAX_LOCATION_NAME_LENGTH = 23; }
+
 namespace DisplayModule
 {
     // -------------------------------------------------------------------------
@@ -45,7 +47,7 @@ namespace DisplayModule
             {
                 auto payload = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
                 (*payload)["cfgVal"] = "";
-                (*payload)["maxLen"] = static_cast<int>(STATUS_LENGTH);
+                (*payload)["maxLen"] = static_cast<int>(MAX_LOCATION_NAME_LENGTH);
                 initialData.payload = payload;
             }
             setInitialState(_editState);

@@ -22,7 +22,7 @@ namespace NavigationModule
                 return false;
             }
             outTime = NavigationUtils::PackedToTimeT(_gps.time.value(), _gps.date.value());
-            ESP_LOGI(_TAG, "Returning timestamp %d from GPS", outTime);
+            ESP_LOGD(_TAG, "Returning timestamp %d from GPS", outTime);
             return true;
         }
 
@@ -38,7 +38,7 @@ namespace NavigationModule
             }
             outLat = _lastLocation.lat();
             outLon = _lastLocation.lng();
-            ESP_LOGI(_TAG, "Returning GPS location %.6f, %.6f", outLat, outLon);
+            ESP_LOGD(_TAG, "Returning GPS location %.6f, %.6f", outLat, outLon);
             return true;
         }
 
@@ -50,7 +50,7 @@ namespace NavigationModule
 
         void _UpdateGps()
         {
-            ESP_LOGI(_TAG, "Reading %d bytes from GPS stream", _gpsStream.available());
+            ESP_LOGV(_TAG, "Reading %d bytes from GPS stream", _gpsStream.available());
             std::string debugStr;
 
             while (_gpsStream.available() > 0)
@@ -61,10 +61,10 @@ namespace NavigationModule
             }
             if (!debugStr.empty())
             {
-                ESP_LOGI(_TAG, "GPS data received: %s", debugStr.c_str());
+                ESP_LOGV(_TAG, "GPS data received: %s", debugStr.c_str());
             }
 
-            ESP_LOGI(_TAG, "Num GPS satellites: %d, HDOP: %.1f", _gps.satellites.value(), _gps.hdop.hdop());
+            ESP_LOGD(_TAG, "Num GPS satellites: %d, HDOP: %.1f", _gps.satellites.value(), _gps.hdop.hdop());
 
             if (_gps.location.isValid())
             {

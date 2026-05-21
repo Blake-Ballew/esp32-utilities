@@ -9,6 +9,8 @@
 #include "LED_Utils.h"
 #include "ScrollWheel.hpp"
 
+namespace { constexpr size_t MAX_LOCATION_NAME_LENGTH = 21; }
+
 namespace DisplayModule
 {
     // -------------------------------------------------------------------------
@@ -117,7 +119,7 @@ namespace DisplayModule
                 && _selectedIt != NavigationUtils::GetSavedLocationsEnd())
             {
                 (*doc)["cfgVal"] = _selectedIt->Name;
-                (*doc)["maxLen"] = static_cast<int>(STATUS_LENGTH);
+                (*doc)["maxLen"] = static_cast<int>(MAX_LOCATION_NAME_LENGTH);
             }
             return doc;
         }
