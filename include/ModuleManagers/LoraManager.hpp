@@ -3,18 +3,16 @@
 #include "LoraUtilities.hpp"
 #include "FilesystemUtils.h"
 #include "LoraDriverInterface.h"
+#include <atomic>
 
 namespace
 {
-    const size_t MAX_MESSAGE_SIZE            = 512;
-    const uint8_t DEFAULT_NODE_ID            = 1;
-    const size_t MESSAGE_RECEIVE_TIMEOUT_MS  = 100;
-    const size_t RECEIVE_THREAD_SLEEP_MS     = 100;
-    const size_t AFTER_SEND_BLOCK_TIME_MS    = 500;
-    const size_t NUM_REBROADCAST_ATTEMPTS    = 1;
-    const size_t SEND_THREAD_TICK_MS         = 250;
-    const size_t  MAX_SEND_DELAY_TICKS       = 15;
-    const uint8_t MAX_BOUNCES_LEFT           = 5;
+    const size_t  MAX_MESSAGE_SIZE         = 512;
+    const size_t  AFTER_SEND_BLOCK_TIME_MS = 50;
+    const size_t  NUM_REBROADCAST_ATTEMPTS = 1;
+    const size_t  MIN_SEND_DELAY_MS        = 100;
+    const size_t  MAX_SEND_DELAY_MS        = 3000;
+    const uint8_t MAX_BOUNCES_LEFT         = 5;
 }
 
 namespace LoraModule
@@ -45,12 +43,22 @@ public:
 
     void RadioTask()
     {
+        // Self-register task handle so the DIO0 ISR and SendQueueTask can notify us
+        _ReceiveTaskHandle = xTaskGetCurrentTaskHandle();
+
+        // Enter continuous receive mode — safe here because handle is now set
+        _Driver->StartReceiving();
+
         while (true)
         {
+            // Block until DIO0 ISR (packet received) or SendQueueTask (message to send) wakes us
+            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+            // Try to read a received packet (data already buffered by library ISR)
             uint8_t buffer[MAX_MESSAGE_SIZE];
             size_t  len = 0;
 
-            if (_Driver->ReceiveMessage(buffer, len, MESSAGE_RECEIVE_TIMEOUT_MS))
+            if (_Driver->ReceiveMessage(buffer, len, 0))
             {
                 auto msg = LoraModule::Utilities::DeserializeMessage(buffer, len);
 
@@ -99,7 +107,24 @@ public:
 
                         if (shouldFwd)
                         {
-                            ESP_LOGI(TAG, "Forwarding — bouncesLeft %d -> %d", msg->bouncesLeft, msg->bouncesLeft - 1);
+                            // Re-enter RX immediately so the radio stays live during the wait
+                            _Driver->StartReceiving();
+
+                            // RSSI-based backoff: weak signal = better relay candidate = shorter wait.
+                            // Maps [-130, -80] dBm → [0, 2000] ms  (stronger signal = longer delay,
+                            // letting distant nodes — which are better positioned — relay first).
+                            int rssi = _Driver->PacketRssi();
+                            int clampedRssi = rssi < -130 ? -130 : (rssi > -80 ? -80 : rssi);
+                            uint32_t rssiDelayMs = static_cast<uint32_t>((clampedRssi + 130) * 2000 / 50);
+
+                            ESP_LOGI(TAG, "Relay wait %u ms (RSSI %d dBm) — bouncesLeft %d -> %d",
+                                     rssiDelayMs, rssi, msg->bouncesLeft, msg->bouncesLeft - 1);
+
+                            if (rssiDelayMs > 0)
+                            {
+                                vTaskDelay(pdMS_TO_TICKS(rssiDelayMs));
+                            }
+
                             msg->bouncesLeft--;
                             LoraModule::Utilities::SendMessage(msg);
                             _lastReceivedMessages[msg->sender] = msg->msgID;
@@ -108,18 +133,26 @@ public:
                 }
             }
 
+            // Send any pending outbound message
             if (!_SendBufferIdle)
             {
+                // Wait for a clear channel before transmitting
+                while (_Driver->IsChannelBusy())
+                {
+                    ESP_LOGI(TAG, "Channel busy — waiting");
+                    vTaskDelay(pdMS_TO_TICKS(AFTER_SEND_BLOCK_TIME_MS));
+                }
+
                 if (!_Driver->SendMessage(_SendBuffer, _SendBufferLen))
                 {
                     ESP_LOGE(TAG, "Failed to send message");
                 }
                 _SendBufferIdle = true;
                 vTaskDelay(pdMS_TO_TICKS(AFTER_SEND_BLOCK_TIME_MS));
-                continue;
             }
 
-            vTaskDelay(pdMS_TO_TICKS(RECEIVE_THREAD_SLEEP_MS));
+            // Re-enter continuous receive mode for the next packet
+            _Driver->StartReceiving();
         }
     }
 
@@ -130,81 +163,60 @@ public:
             vTaskDelete(NULL);
         }
 
-        struct QueuedMsg
-        {
-            std::shared_ptr<LoraModule::LoraMessageInterface> msg;
-            uint8_t attemptsLeft;
-            size_t  ticksLeft;
-        };
-
-        std::vector<QueuedMsg> pending;
-
         while (true)
         {
-            while (!_SendBufferIdle)
-            {
-                vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_TICK_MS));
-            }
-
+            // Block until a message is queued
             std::shared_ptr<LoraModule::LoraMessageInterface>* wrapper = nullptr;
-            if (xQueueReceive(_sendQueue, &wrapper, 0) == pdTRUE)
+            if (xQueueReceive(_sendQueue, &wrapper, portMAX_DELAY) != pdTRUE) { continue; }
+
+            auto msg = *wrapper;
+            delete wrapper;
+
+            bool isOwn = (msg->sender == LoraModule::Utilities::UserID());
+            uint8_t attemptsLeft = isOwn
+                ? std::max((uint8_t)1, LoraModule::Utilities::DefaultSendAttempts())
+                : static_cast<uint8_t>(NUM_REBROADCAST_ATTEMPTS);
+
+            ESP_LOGI(TAG, "Queued msgID 0x%08X sender 0x%08X — %s — attempts %d",
+                     msg->msgID, msg->sender, isOwn ? "own" : "relay", attemptsLeft);
+
+            while (attemptsLeft > 0)
             {
-                auto msg = *wrapper;
-                delete wrapper;
+                // Random backoff in [MIN_SEND_DELAY_MS, MAX_SEND_DELAY_MS)
+                uint32_t delayMs = MIN_SEND_DELAY_MS +
+                    static_cast<uint32_t>(rand() % (MAX_SEND_DELAY_MS - MIN_SEND_DELAY_MS));
+                vTaskDelay(pdMS_TO_TICKS(delayMs));
 
-                bool isOwn = (msg->sender == LoraModule::Utilities::UserID());
-                uint8_t attempts = isOwn
-                                   ? std::max((uint8_t)1, LoraModule::Utilities::DefaultSendAttempts())
-                                   : static_cast<uint8_t>(NUM_REBROADCAST_ATTEMPTS);
-
-                pending.push_back({msg, attempts, static_cast<size_t>((rand() % MAX_SEND_DELAY_TICKS) + 1)});
-
-                ESP_LOGI(TAG, "Queued msgID 0x%08X sender 0x%08X — %s — attempts %d",
-                         msg->msgID, msg->sender,
-                         isOwn ? "own" : "relay",
-                         attempts);
-            }
-
-            for (auto it = pending.begin(); it != pending.end(); )
-            {
-                it->ticksLeft--;
-                if (it->ticksLeft == 0)
+                // Wait for RadioTask to finish any in-progress send
+                while (!_SendBufferIdle.load())
                 {
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                }
+
+                size_t outLen = 0;
+                if (LoraModule::Utilities::SerializeMessage(msg, _SendBuffer, outLen))
+                {
+                    _SendBufferLen = outLen;
+                    _SendBufferIdle.store(false);
+
+                    if (_ReceiveTaskHandle != nullptr)
+                    {
+                        xTaskNotifyGive(_ReceiveTaskHandle);
+                    }
+
                     ESP_LOGI(TAG, "Transmitting msgID 0x%08X — attemptsLeft %d -> %d",
-                             it->msg->msgID, it->attemptsLeft, it->attemptsLeft - 1);
-
-                    size_t outLen = 0;
-                    if (LoraModule::Utilities::SerializeMessage(it->msg, _SendBuffer, outLen))
-                    {
-                        _SendBufferLen  = outLen;
-                        _SendBufferIdle = false;
-                    }
-                    else
-                    {
-                        ESP_LOGE(TAG, "Failed to serialize message");
-                    }
-
-                    it->attemptsLeft--;
-                    if (it->attemptsLeft > 0)
-                    {
-                        it->ticksLeft = (rand() % MAX_SEND_DELAY_TICKS) + 1;
-                        ++it;
-                    }
-                    else
-                    {
-                        ESP_LOGI(TAG, "msgID 0x%08X — all attempts exhausted, removing", it->msg->msgID);
-                        it = pending.erase(it);
-                    }
-
-                    break;  // one message per tick
+                             msg->msgID, attemptsLeft, attemptsLeft - 1);
                 }
                 else
                 {
-                    ++it;
+                    ESP_LOGE(TAG, "Failed to serialize msgID 0x%08X — dropping", msg->msgID);
+                    break;
                 }
+
+                attemptsLeft--;
             }
 
-            vTaskDelay(pdMS_TO_TICKS(SEND_THREAD_TICK_MS));
+            ESP_LOGI(TAG, "msgID 0x%08X — all attempts exhausted, removing", msg->msgID);
         }
     }
 
@@ -234,7 +246,7 @@ protected:
     TaskHandle_t _SendTaskHandle    = nullptr;
     TaskHandle_t _ReceiveTaskHandle = nullptr;
 
-    bool     _SendBufferIdle = true;
+    std::atomic<bool> _SendBufferIdle { true };
     uint8_t  _SendBuffer[MAX_MESSAGE_SIZE]{};
     size_t   _SendBufferLen = 0;
 };
