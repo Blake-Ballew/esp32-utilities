@@ -23,9 +23,6 @@ int System_Utils::nextQueueID = 0;
 
 std::unordered_map<uint8_t, bool> System_Utils::adcUsers;
 
-StaticTimer_t System_Utils::healthTimerBuffer;
-int System_Utils::healthTimerID;
-// Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
 bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
 
@@ -33,15 +30,6 @@ int System_Utils::otaTaskID = -1;
 EventHandler<> System_Utils::enableInterrupts;
 EventHandler<> System_Utils::disableInterrupts;
 EventHandler<> System_Utils::systemShutdown;
-
-void System_Utils::init()
-{
-#if HARDWARE_VERSION == 1
-    healthTimerID = registerTimer("System Health Monitor", 60000, monitorSystemHealth, healthTimerBuffer);
-    startTimer(healthTimerID);
-    monitorSystemHealth(nullptr);
-#endif
-}
 
 // TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
@@ -76,23 +64,6 @@ long System_Utils::getBatteryPercentage()
     }
     long percentage = map(voltage, 1750, 2100, 0, 100);
     return percentage;
-}
-
-// TODO: Move this into application
-void System_Utils::monitorSystemHealth(TimerHandle_t xTimer)
-{
-    auto BATT_SENSE_PIN = 39;
-    uint16_t voltage = analogRead(BATT_SENSE_PIN);
-
-    if (voltage < 1750)
-    {
-        // Battery is low. Shut down.
-
-        // Show message and flash leds before turning off
-        auto KEEP_ALIVE_PIN = 5;
-
-        digitalWrite(KEEP_ALIVE_PIN, LOW);
-    }
 }
 
 void System_Utils::shutdownBatteryWarning()

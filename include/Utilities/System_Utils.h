@@ -58,11 +58,8 @@ public:
 
     static bool silentMode;
     static bool time24Hour;
-    // static Adafruit_SSD1306 *OLEDdisplay;
 
-    static void init();
     static long getBatteryPercentage();
-    static void monitorSystemHealth(TimerHandle_t xTimer);
     static void shutdownBatteryWarning();
 
     // Timer functionality
@@ -341,7 +338,5 @@ private:
     // ADC Users
     static std::unordered_map<uint8_t, bool> adcUsers;
 
-    static StaticTimer_t healthTimerBuffer;
-    static int healthTimerID;
     static int otaTaskID;
 };
