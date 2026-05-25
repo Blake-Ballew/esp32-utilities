@@ -12,11 +12,11 @@
 #include <memory>
 #include <cstdint>
 #include <cstddef>
-#include <map>
+#include <algorithm>
 
 namespace FilesystemModule
 {
-    using SettingsMap = std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>>;
+    using SettingsMap = std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>>;
 
     static const char *TAG = "FilesystemModule";
 
@@ -116,10 +116,18 @@ namespace FilesystemModule
 
         // =============== Settings Management ===============
 
-        static SettingsMap &DeviceSettings() 
+        static SettingsMap &DeviceSettings()
         {
             static SettingsMap _DeviceSettings;
             return _DeviceSettings;
+        }
+
+        static std::shared_ptr<FilesystemModule::SettingsInterface> FindSetting(const std::string &key)
+        {
+            auto &s = DeviceSettings();
+            auto it = std::find_if(s.begin(), s.end(),
+                [&key](const std::shared_ptr<FilesystemModule::SettingsInterface> &x) { return x->key == key; });
+            return (it != s.end()) ? *it : nullptr;
         }
 
         static Preferences &SettingsPreference()
@@ -137,11 +145,11 @@ namespace FilesystemModule
         static void RpcGetSettingsFile(JsonDocument &doc)
         {
             doc.clear();
-            
+
             for (auto &setting : DeviceSettings())
             {
-                auto obj = doc.createNestedObject(setting.first);
-                setting.second->toJson(obj);
+                auto obj = doc.createNestedObject(setting->key);
+                setting->toJson(obj);
             }
         }
 
@@ -149,70 +157,50 @@ namespace FilesystemModule
 
         static bool FetchBoolSetting(std::string key, bool defaultVal = false)
         {
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            auto setting = FindSetting(key);
+            if (setting && setting->getType() == "bool")
             {
-                auto &setting = DeviceSettings()[key];
-                if (setting->getType() == "bool")
-                {
-                    auto boolSetting = std::static_pointer_cast<BoolSetting>(setting);
-                    return boolSetting->value;
-                }
+                return std::static_pointer_cast<BoolSetting>(setting)->value;
             }
             return defaultVal;
         }
-        
+
         static int FetchIntSetting(std::string key, int defaultVal = 0)
         {
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            auto setting = FindSetting(key);
+            if (setting && setting->getType() == "int")
             {
-                auto &setting = DeviceSettings()[key];
-                if (setting->getType() == "int")
-                {
-                    auto intSetting = std::static_pointer_cast<IntSetting>(setting);
-                    return intSetting->value;
-                }
+                return std::static_pointer_cast<IntSetting>(setting)->value;
             }
             return defaultVal;
         }
 
         static float FetchFloatSetting(std::string key, float defaultVal = 0.0f)
         {
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            auto setting = FindSetting(key);
+            if (setting && setting->getType() == "float")
             {
-                auto &setting = DeviceSettings()[key];
-                if (setting->getType() == "float")
-                {
-                    auto floatSetting = std::static_pointer_cast<FloatSetting>(setting);
-                    return floatSetting->value;
-                }
+                return std::static_pointer_cast<FloatSetting>(setting)->value;
             }
             return defaultVal;
         }
 
         static std::string FetchStringSetting(std::string key, std::string defaultVal = "")
         {
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            auto setting = FindSetting(key);
+            if (setting && setting->getType() == "string")
             {
-                auto &setting = DeviceSettings()[key];
-                if (setting->getType() == "string")
-                {
-                    auto stringSetting = std::static_pointer_cast<StringSetting>(setting);
-                    return stringSetting->value;
-                }
+                return std::static_pointer_cast<StringSetting>(setting)->value;
             }
             return defaultVal;
         }
 
         static int FetchEnumSetting(std::string key, int defaultVal = 0)
         {
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            auto setting = FindSetting(key);
+            if (setting && setting->getType() == "enum")
             {
-                auto &setting = DeviceSettings()[key];
-                if (setting->getType() == "enum")
-                {
-                    auto enumSetting = std::static_pointer_cast<EnumSetting>(setting);
-                    return enumSetting->value;
-                }
+                return std::static_pointer_cast<EnumSetting>(setting)->value;
             }
             return defaultVal;
         }
@@ -234,13 +222,13 @@ namespace FilesystemModule
             doc["Success"] = true;
         }
 
-        static void RpcUpdateSetting(JsonDocument &doc) 
+        static void RpcUpdateSetting(JsonDocument &doc)
         {
             auto key = doc["SettingKey"].as<std::string>();
+            auto setting = FindSetting(key);
 
-            if (DeviceSettings().find(key) != DeviceSettings().end())
+            if (setting)
             {
-                auto &setting = DeviceSettings()[key];
                 doc[SettingsInterface::write_key] = doc["SettingValue"];
                 auto obj = doc.as<ArduinoJson::JsonObjectConst>();
                 setting->fromJson(obj);
@@ -259,7 +247,7 @@ namespace FilesystemModule
             }
         }
 
-        static void RpcUpdateSettings(JsonDocument &doc) 
+        static void RpcUpdateSettings(JsonDocument &doc)
         {
             bool success = true;
 
@@ -268,23 +256,23 @@ namespace FilesystemModule
                 Preferences& prefs = SettingsPreference();
                 auto settingsArray = doc["Settings"].as<JsonArray>();
 
-                for (JsonVariant setting : settingsArray)
+                for (JsonVariant entry : settingsArray)
                 {
-                    auto key = setting["SettingKey"].as<std::string>();
+                    auto key = entry["SettingKey"].as<std::string>();
+                    auto s = FindSetting(key);
 
-                    if (DeviceSettings().find(key) == DeviceSettings().end())
+                    if (!s)
                     {
                         ESP_LOGW(TAG, "Setting not found: %s", key.c_str());
                         success = false;
                         continue;
                     }
 
-                    auto& s = DeviceSettings()[key];
-                    setting[SettingsInterface::write_key] = setting["SettingValue"];
-                    auto obj = setting.as<JsonObjectConst>();
+                    entry[SettingsInterface::write_key] = entry["SettingValue"];
+                    auto obj = entry.as<JsonObjectConst>();
                     s->fromJson(obj);
                     s->saveToPreferences(prefs);
-                    ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), setting["SettingValue"].as<const char*>());
+                    ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), entry["SettingValue"].as<const char*>());
                 }
             }
             else
@@ -302,9 +290,9 @@ namespace FilesystemModule
 
             for (auto &setting : settings)
             {
-                setting.second->toJsonSettingsDoc(doc);
-                auto valueStr = doc[setting.first.c_str()].as<std::string>();
-                ESP_LOGD(TAG, "Setting %s: %s", setting.first.c_str(), valueStr.c_str());
+                setting->toJsonSettingsDoc(doc);
+                auto valueStr = doc[setting->key.c_str()].as<std::string>();
+                ESP_LOGD(TAG, "Setting %s: %s", setting->key.c_str(), valueStr.c_str());
             }
 
             _SettingsUpdated.Invoke(doc);

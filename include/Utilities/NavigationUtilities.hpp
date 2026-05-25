@@ -173,13 +173,16 @@ namespace NavigationModule
             return _Compass()->GetAzimuth();
         }
 
-        static int GetBearing(float targetHeading = 360.0f)
+        static float GetBearing(float targetHeading = 360.0f)
         {
             if (!_Compass())
             {
-                return -1;
+                return -1.0f;
             }
-            return targetHeading - _Compass()->GetAzimuth();
+            float bearing = targetHeading - static_cast<float>(_Compass()->GetAzimuth());
+            if (bearing < 0.0f)   { bearing += 360.0f; }
+            if (bearing >= 360.0f) { bearing -= 360.0f; }
+            return bearing;
         }
 
         static double GetDistance(double latFrom, double lonFrom, double lat, double lon)
@@ -196,11 +199,11 @@ namespace NavigationModule
                 return -1;
             }
 
-            ESP_LOGI(TAG, "GetDistanceTo()");
-            ESP_LOGI(TAG, "My Lat: %f", _LastCoordinate().lat());
-            ESP_LOGI(TAG, "My Lon: %f", _LastCoordinate().lng());
-            ESP_LOGI(TAG, "Target Lat: %f", lat);
-            ESP_LOGI(TAG, "Target Lon: %f", lon);
+            ESP_LOGV(TAG, "GetDistanceTo()");
+            ESP_LOGV(TAG, "My Lat: %f", latFrom);
+            ESP_LOGV(TAG, "My Lon: %f", lonFrom);
+            ESP_LOGV(TAG, "Target Lat: %f", lat);
+            ESP_LOGV(TAG, "Target Lon: %f", lon);
 
             return GetGPS().distanceBetween(latFrom, lonFrom, lat, lon);
         }
@@ -215,8 +218,8 @@ namespace NavigationModule
             }
 
             ESP_LOGI(TAG, "GetHeading()");
-            ESP_LOGI(TAG, "My Lat: %f", _LastCoordinate().lat());
-            ESP_LOGI(TAG, "My Lon: %f", _LastCoordinate().lng());
+            ESP_LOGI(TAG, "My Lat: %f", latFrom);
+            ESP_LOGI(TAG, "My Lon: %f", lonFrom                                                                                                                                                                                                                                                                                                                                                          );
             ESP_LOGI(TAG, "Target Lat: %f", lat);
             ESP_LOGI(TAG, "Target Lon: %f", lon);
 
@@ -542,7 +545,7 @@ namespace NavigationModule
             {
                 if (src->TryGetCurrentLocation(outLat, outLon))
                 {
-                    ESP_LOGI(TAG, "Location obtained. Lat: %f, Lon: %f", outLat, outLon);
+                    ESP_LOGD(TAG, "Location obtained. Lat: %f, Lon: %f", outLat, outLon);
                     return true;
                 }
             }

@@ -74,6 +74,7 @@ public:
                     if (msg->sender == LoraModule::Utilities::UserID())
                     {
                         ESP_LOGI(TAG, "Message echoed back from this node — dropping");
+                        LoraModule::Utilities::IncrementEchoCount();
                     }
                     else
                     {

@@ -10,7 +10,6 @@
 #include "driver/adc.h"
 #include "EventHandler.h"
 #include <string>
-#include <map>
 #include <ezTime.h>
 #include "TimeSourceInterface.hpp"
 
@@ -198,13 +197,13 @@ public:
         }
     }
 
-    static void GenerateDefaultSettings(std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>> &settings)
+    static void GenerateDefaultSettings(std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>> &settings)
     {
         auto silentMode = std::make_shared<FilesystemModule::BoolSetting>("Silent Mode", false);
-        settings[silentMode->key] = silentMode;
+        settings.push_back(silentMode);
 
         auto time24hr = std::make_shared<FilesystemModule::BoolSetting>("24H Time", false);
-        settings[time24hr->key] = time24hr;
+        settings.push_back(time24hr);
 
         auto timezone = std::make_shared<FilesystemModule::EnumSetting>(
             "Timezone",
@@ -229,7 +228,7 @@ public:
             },
             std::vector<int>{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }
         );
-        settings[timezone->key] = timezone;
+        settings.push_back(timezone);
     }
 
     // Time Management

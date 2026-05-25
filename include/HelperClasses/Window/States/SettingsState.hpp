@@ -71,8 +71,8 @@ namespace DisplayModule
         StateTransferData buildExitData(uint8_t inputID) override
         {
             StateTransferData d;
-            d.payload = std::make_shared<DynamicJsonDocument>(256); 
-            if (!_settingsIt->second) 
+            d.payload = std::make_shared<DynamicJsonDocument>(256);
+            if (!(*_settingsIt))
             {
                 return d;
             }
@@ -81,7 +81,7 @@ namespace DisplayModule
             auto settings = FilesystemModule::Utilities::DeviceSettings();
             if (settings.empty()) return d;
 
-            const auto &node = _settingsIt->second;
+            const auto &node = *_settingsIt;
             auto valueObj = (*d.payload).to<JsonObject>();
             node->toJson(valueObj);
             ESP_LOGI(TAG, "Built payload for selection with type '%s'", node->getType().c_str());
@@ -92,7 +92,9 @@ namespace DisplayModule
                 ESP_LOGI(TAG, "Built payload for selection: %s", jsonStr.c_str());
             }
             else
+            {
                 ESP_LOGI(TAG, "No payload for selection");
+            }
 
             return d;
         }
@@ -101,7 +103,7 @@ namespace DisplayModule
         {
             auto settings = FilesystemModule::Utilities::DeviceSettings();
             if (settings.empty()) return "";
-            return _settingsIt->second->getType();
+            return (*_settingsIt)->getType();
         }
 
     private:
@@ -155,8 +157,8 @@ namespace DisplayModule
             std::string debugStr;
             serializeJson(payloadObj, debugStr);
             ESP_LOGI(TAG, "Applying edit result with payload: %s", debugStr.c_str());
-            _settingsIt->second->fromJson(payloadObj);
-            _settingsIt->second->saveToPreferences(FilesystemModule::Utilities::SettingsPreference());
+            (*_settingsIt)->fromJson(payloadObj);
+            (*_settingsIt)->saveToPreferences(FilesystemModule::Utilities::SettingsPreference());
         }
 
         // ------------------------------------------------------------------
@@ -171,12 +173,12 @@ namespace DisplayModule
 
             // Selected item label — centred
             addDrawCommand(std::make_shared<TextDrawCommand>(
-                _settingsIt->first,
+                (*_settingsIt)->key,
                 TextFormat{ TextAlignH::CENTER, TextAlignV::LINE, 3 }
             ));
 
             // Current value hint for leaf nodes
-            const auto &node = _settingsIt->second;
+            const auto &node = *_settingsIt;
             std::string hint = _valueHint(node);
             if (!hint.empty())
             {

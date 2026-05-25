@@ -7,11 +7,12 @@
     {
       "name": "Blake Ballew",
       "email": "blakeb130@gmail.com",
-      "url": "https://github.com/blakeb130"
+      "url": "https://blake-ballew.github.io/"
     }
   ],
   "license": "MIT",
   "dependencies": {
+    "mikalhart/TinyGPSPlus": "1.0.3",
     "h2zero/NimBLE-Arduino": "^2.3.6",
     "bblanchon/StreamUtils": "^1.7.3",
     "madhephaestus/ESP32Encoder": "^0.10.1",
@@ -19,7 +20,6 @@
     "adafruit/Adafruit BusIO": "^1.14.1",
     "adafruit/Adafruit Unified Sensor": "^1.1.9",
     "adafruit/Adafruit GFX Library": "^1.11.5",
-    "adafruit/Adafruit SSD1306": "^2.5.7",
     "mathieucarbou/ESPAsyncWebServer": "^3.6.0",
     "tzapu/WiFiManager": "^2.0.17",
     "WiFiManager": "https://github.com/rmsz005/AlooWifiManager.git",

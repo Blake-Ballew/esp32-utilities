@@ -33,7 +33,7 @@ namespace NavigationModule
             // TODO: check how old this location is before returning it
             if (!_lastLocation.isValid() || (_lastLocation.lat() == 0 && _lastLocation.lng() == 0))
             {
-                ESP_LOGI(_TAG, "GPS location not valid");
+                ESP_LOGV(_TAG, "GPS location not valid");
                 return false;
             }
             outLat = _lastLocation.lat();

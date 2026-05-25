@@ -76,8 +76,12 @@ namespace LoraModule
                 MyLastBroadcastMsg() = msg;
                 xSemaphoreGive(MessageAccessMutex());
             }
+            EchoCount() = 0;
             MyLastBroadcastChanged().Invoke();
         }
+
+        static uint32_t GetEchoCount() { return EchoCount(); }
+        static void     IncrementEchoCount() { EchoCount()++; }
 
         // Records a senderId→msgId pair in the routing map for deduplication.
         // Call after MessageExists() to mark this message as seen.
@@ -296,11 +300,11 @@ namespace LoraModule
         static constexpr const char* SETTING_LORA_PASSWORD = "Lora Password";
         static constexpr size_t      LORA_PASSWORD_MAX_LEN = 21;
 
-        static void GenerateDefaultSettings(std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>>& settings)
+        static void GenerateDefaultSettings(std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>>& settings)
         {
             auto pw = std::make_shared<FilesystemModule::StringSetting>(
                 SETTING_LORA_PASSWORD, "", LORA_PASSWORD_MAX_LEN);
-            settings[pw->key] = pw;
+            settings.push_back(pw);
         }
 
         static void UpdateSettings(JsonDocument& settings)
@@ -346,6 +350,12 @@ namespace LoraModule
         {
             static std::shared_ptr<LoraMessageInterface> msg;
             return msg;
+        }
+
+        static uint32_t& EchoCount()
+        {
+            static uint32_t n = 0;
+            return n;
         }
 
         static std::unordered_map<uint32_t, MessageCreator>& Creators()
