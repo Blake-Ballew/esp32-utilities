@@ -1,11 +1,5 @@
 #include "System_Utils.h"
 
-#if HARDWARE_VERSION >= 3
-#include <BQ25672.h> // power management IC
-
-static BQ25672 charger(Wire);
-#endif
-
 std::string System_Utils::DeviceName = "ESP32";
 size_t System_Utils::DeviceID = 0;
 
@@ -22,6 +16,7 @@ std::unordered_map<int, QueueHandle_t> System_Utils::systemQueues;
 int System_Utils::nextQueueID = 0;
 
 std::unordered_map<uint8_t, bool> System_Utils::adcUsers;
+std::function<long()> System_Utils::_batteryCallback;
 
 bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
@@ -31,39 +26,16 @@ EventHandler<> System_Utils::enableInterrupts;
 EventHandler<> System_Utils::disableInterrupts;
 EventHandler<> System_Utils::systemShutdown;
 
-// TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
-    uint16_t voltage = 0;
-#if HARDWARE_VERSION >= 3
-    // if (!charger.readVbat_mV(voltage)) {
-    //     ESP_LOGE(TAG, "Failed to read battery voltage");
-    //     return 0;
-    // }
-#else
-    auto BATT_SENSE_PIN = 39;
-    voltage = analogRead(BATT_SENSE_PIN);
-#endif
+    if (_batteryCallback)
+        return _batteryCallback();
+    return 0;
+}
 
-    ESP_LOGV(TAG, "Battery voltage: %u", voltage);
-
-    // Show full battery if BATT_SENSE_PIN is low. Device is plugged in.
-
-    if (voltage == 0)
-    {
-        return 100;
-    }
-
-    if (voltage > 2100)
-    {
-        voltage = 2100;
-    }
-    else if (voltage < 1750)
-    {
-        voltage = 1750;
-    }
-    long percentage = map(voltage, 1750, 2100, 0, 100);
-    return percentage;
+void System_Utils::registerBatteryCallback(std::function<long()> fn)
+{
+    _batteryCallback = fn;
 }
 
 void System_Utils::shutdownBatteryWarning()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <functional>
 #include <unordered_map>
 #include <vector>
 #include "Adafruit_SSD1306.h"
@@ -60,6 +61,7 @@ public:
     static bool time24Hour;
 
     static long getBatteryPercentage();
+    static void registerBatteryCallback(std::function<long()> fn);
     static void shutdownBatteryWarning();
 
     // Timer functionality
@@ -334,6 +336,9 @@ private:
     // Queue functionality
     static std::unordered_map<int, QueueHandle_t> systemQueues;
     static int nextQueueID;
+
+    // Battery callback
+    static std::function<long()> _batteryCallback;
 
     // ADC Users
     static std::unordered_map<uint8_t, bool> adcUsers;

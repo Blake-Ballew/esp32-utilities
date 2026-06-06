@@ -176,7 +176,7 @@ namespace NavigationModule
         static float GetBearing(float targetHeading = 360.0f)
         {
             if (!_Compass())
-            {
+            { 
                 return -1.0f;
             }
             float bearing = targetHeading - static_cast<float>(_Compass()->GetAzimuth());
