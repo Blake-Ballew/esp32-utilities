@@ -159,11 +159,15 @@ public:
     static void enableInterruptsInvoke();
     static void disableInterruptsInvoke();
     static void systemShutdownInvoke();
+    static void enablePowerSavingsInvoke();
+    static void disablePowerSavingsInvoke();
 
     // Event Handler Getters
     static EventHandler<> &getEnableInterrupts() { return enableInterrupts; }
     static EventHandler<> &getDisableInterrupts() { return disableInterrupts; }
     static EventHandler<> &getSystemShutdown() { return systemShutdown; }
+    static EventHandler<> &getEnablePowerSavings() { return enablePowerSavings; }
+    static EventHandler<> &getDisablePowerSavings() { return disablePowerSavings; }
 
     static void UpdateSettings(JsonDocument &settings)
     {
@@ -324,6 +328,8 @@ private:
     static EventHandler<> enableInterrupts;
     static EventHandler<> disableInterrupts;
     static EventHandler<> systemShutdown;
+    static EventHandler<> enablePowerSavings;
+    static EventHandler<> disablePowerSavings;
 
     // Timer functionality
     static std::unordered_map<int, TimerHandle_t> systemTimers;
