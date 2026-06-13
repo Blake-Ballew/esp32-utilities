@@ -60,18 +60,22 @@ public:
 
             if (_Driver->ReceiveMessage(buffer, len, 0))
             {
-                auto msg = LoraModule::Utilities::DeserializeMessage(buffer, len);
+                // Phase 1: Extract base fields for routing — works for any message format,
+                // regardless of whether we can decrypt the payload.
+                uint32_t routeSender = 0, routeMsgID = 0;
+                uint8_t  routeBouncesLeft = 0;
 
-                if (msg != nullptr)
+                if (LoraModule::Utilities::ReadBaseFields(buffer, len,
+                                                          routeSender, routeMsgID, routeBouncesLeft))
                 {
-                    if (msg->bouncesLeft > MAX_BOUNCES_LEFT)
+                    if (routeBouncesLeft > MAX_BOUNCES_LEFT)
                     {
                         ESP_LOGW(TAG, "Clamping bouncesLeft %d -> %d from sender 0x%08X",
-                                 msg->bouncesLeft, MAX_BOUNCES_LEFT, msg->sender);
-                        msg->bouncesLeft = MAX_BOUNCES_LEFT;
+                                 routeBouncesLeft, MAX_BOUNCES_LEFT, routeSender);
+                        routeBouncesLeft = MAX_BOUNCES_LEFT;
                     }
 
-                    if (msg->sender == LoraModule::Utilities::UserID())
+                    if (routeSender == LoraModule::Utilities::UserID())
                     {
                         ESP_LOGI(TAG, "Message echoed back from this node — dropping");
                         LoraModule::Utilities::IncrementEchoCount();
@@ -79,31 +83,38 @@ public:
                     else
                     {
                         ESP_LOGI(TAG, "Received from sender 0x%08X  msgID 0x%08X  bouncesLeft %d",
-                                 msg->sender, msg->msgID, msg->bouncesLeft);
+                                 routeSender, routeMsgID, routeBouncesLeft);
 
-                        bool shouldFwd = ShouldMessageBeForwarded(msg->sender, msg->msgID, msg->bouncesLeft);
+                        bool shouldFwd = ShouldMessageBeForwarded(routeSender, routeMsgID, routeBouncesLeft);
 
                         if (!shouldFwd)
                         {
-                            auto it = _lastReceivedMessages.find(msg->sender);
-                            if (msg->bouncesLeft == 0)
+                            auto it = _lastReceivedMessages.find(routeSender);
+                            if (routeBouncesLeft == 0)
                             {
                                 ESP_LOGI(TAG, "Not forwarding — bouncesLeft == 0");
                             }
-                            else if (it != _lastReceivedMessages.end() && it->second == msg->msgID)
+                            else if (it != _lastReceivedMessages.end() && it->second == routeMsgID)
                             {
                                 ESP_LOGI(TAG, "Not forwarding — duplicate (last seen msgID 0x%08X)", it->second);
                             }
                         }
 
-                        bool isNew = !LoraModule::Utilities::MessageExists(msg->sender, msg->msgID);
-                        LoraModule::Utilities::RecordRouting(msg->sender, msg->msgID);
+                        bool isNew = !LoraModule::Utilities::MessageExists(routeSender, routeMsgID);
+                        LoraModule::Utilities::RecordRouting(routeSender, routeMsgID);
 
-                        auto& events = LoraModule::Utilities::MessageEvents();
-                        auto evIt = events.find(msg->SchemaGuid());
-                        if (evIt != events.end())
+                        // Phase 2: Attempt full deserialization + application dispatch.
+                        // Returns nullptr if encryption keys don't match ("different chatroom").
+                        // Routing above has already happened regardless.
+                        auto msg = LoraModule::Utilities::DeserializeMessage(buffer, len);
+                        if (msg != nullptr)
                         {
-                            evIt->second.Invoke(msg, isNew);
+                            auto& events = LoraModule::Utilities::MessageEvents();
+                            auto evIt = events.find(msg->SchemaGuid());
+                            if (evIt != events.end())
+                            {
+                                evIt->second.Invoke(msg, isNew);
+                            }
                         }
 
                         if (shouldFwd)
@@ -119,16 +130,35 @@ public:
                             uint32_t rssiDelayMs = static_cast<uint32_t>((clampedRssi + 130) * 2000 / 50);
 
                             ESP_LOGI(TAG, "Relay wait %u ms (RSSI %d dBm) — bouncesLeft %d -> %d",
-                                     rssiDelayMs, rssi, msg->bouncesLeft, msg->bouncesLeft - 1);
+                                     rssiDelayMs, rssi, routeBouncesLeft, routeBouncesLeft - 1);
 
                             if (rssiDelayMs > 0)
                             {
                                 vTaskDelay(pdMS_TO_TICKS(rssiDelayMs));
                             }
 
-                            msg->bouncesLeft--;
-                            LoraModule::Utilities::SendMessage(msg);
-                            _lastReceivedMessages[msg->sender] = msg->msgID;
+                            if (msg != nullptr)
+                            {
+                                // Full message available — re-serialize cleanly via the send queue.
+                                msg->bouncesLeft--;
+                                LoraModule::Utilities::SendMessage(msg);
+                            }
+                            else
+                            {
+                                // Different chatroom — relay raw bytes with bouncesLeft decremented,
+                                // preserving the original ciphertext so the intended recipients can decrypt.
+                                size_t relayLen = 0;
+                                if (LoraModule::Utilities::RelayMessage(buffer, len,
+                                                                         _RelayBuffer, relayLen,
+                                                                         routeBouncesLeft - 1))
+                                {
+                                    while (!_SendBufferIdle.load()) { vTaskDelay(pdMS_TO_TICKS(10)); }
+                                    memcpy(_SendBuffer, _RelayBuffer, relayLen);
+                                    _SendBufferLen = relayLen;
+                                    _SendBufferIdle.store(false);
+                                }
+                            }
+                            _lastReceivedMessages[routeSender] = routeMsgID;
                         }
                     }
                 }
@@ -249,6 +279,7 @@ protected:
 
     std::atomic<bool> _SendBufferIdle { true };
     uint8_t  _SendBuffer[MAX_MESSAGE_SIZE]{};
+    uint8_t  _RelayBuffer[MAX_MESSAGE_SIZE]{};
     size_t   _SendBufferLen = 0;
 };
 

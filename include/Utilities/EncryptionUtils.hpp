@@ -1,9 +1,12 @@
 #pragma once
 
 #include <mbedtls/aes.h>
-#include <mbedtls/sha256.h>
+#include <mbedtls/pkcs5.h>
+#include <mbedtls/md.h>
+#include <esp_random.h>
 #include <string>
 #include <cstring>
+#include <algorithm>
 
 class EncryptionUtils
 {
@@ -11,18 +14,36 @@ public:
     static constexpr size_t KEY_SIZE = 16;
     static constexpr size_t IV_SIZE  = 16;
 
-    // Derives a 128-bit AES key and IV from a password via SHA-256.
-    // Bytes 0–15 → key, bytes 16–31 → iv.
-    static void PasswordToKey(const std::string& password, uint8_t key[KEY_SIZE], uint8_t iv[IV_SIZE])
+    // Derives a 128-bit AES key from a password via PBKDF2-HMAC-SHA256.
+    // Uses a fixed application salt so all devices derive the same key from the same password.
+    // Empty password must never be passed — callers must check EncryptionEnabled() first.
+    static void DeriveKey(const std::string& password, uint8_t key[KEY_SIZE])
     {
-        uint8_t hash[32];
-        mbedtls_sha256(
-            reinterpret_cast<const uint8_t*>(password.c_str()),
-            password.size(),
-            hash,
-            0);
-        memcpy(key, hash,      KEY_SIZE);
-        memcpy(iv,  hash + 16, IV_SIZE);
+        static constexpr uint8_t SALT[]     = "CelestialWayfinder-LoRa-v1";
+        static constexpr size_t  SALT_LEN   = sizeof(SALT) - 1;
+        static constexpr uint32_t ITERATIONS = 10000;
+
+        mbedtls_md_context_t ctx;
+        mbedtls_md_init(&ctx);
+        mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
+        mbedtls_pkcs5_pbkdf2_hmac(
+            &ctx,
+            reinterpret_cast<const uint8_t*>(password.c_str()), password.size(),
+            SALT, SALT_LEN,
+            ITERATIONS,
+            KEY_SIZE, key);
+        mbedtls_md_free(&ctx);
+    }
+
+    // Fills iv[IV_SIZE] with cryptographically random bytes from the ESP32 hardware RNG.
+    static void GenerateIV(uint8_t iv[IV_SIZE])
+    {
+        static_assert(IV_SIZE % 4 == 0, "IV_SIZE must be a multiple of 4");
+        for (size_t i = 0; i < IV_SIZE; i += 4)
+        {
+            uint32_t r = esp_random();
+            memcpy(iv + i, &r, 4);
+        }
     }
 
     // AES-128-CBC + PKCS7 padding. out must be at least inLen + 16 bytes.

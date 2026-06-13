@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include "EncryptionUtils.hpp"
 
 #define MSG_BASE_SIZE 512
 #define NAME_LENGTH 12
@@ -62,21 +63,24 @@ namespace LoraModule
     class LoraMessageInterface
     {
     public:
-        static constexpr const char* TAG            = "LoraMessage";
+        static constexpr const char* TAG              = "LoraMessage";
         static constexpr const char* KEY_PAYLOAD      = "p";
         static constexpr const char* KEY_MSG_ID       = "i";
         static constexpr const char* KEY_BOUNCES_LEFT = "B";
         static constexpr const char* KEY_FROM         = "f";
         static constexpr const char* KEY_TIME         = "T";
         static constexpr const char* KEY_DATE         = "D";
+        static constexpr const char* KEY_IV           = "v"; // per-message CBC IV (all-zeros = plaintext)
 
         uint32_t msgID       = 0;
         uint8_t  bouncesLeft = 0;
         uint32_t sender      = 0;
         uint32_t time        = 0;
         uint32_t date        = 0;
+        uint8_t  iv[EncryptionUtils::IV_SIZE]{};
 
         // Writes base routing fields to root and calls serializePayload() into doc["p"].
+        // The IV is written only when non-zero (i.e. for encrypted messages).
         virtual bool serialize(JsonDocument& doc)
         {
             doc[KEY_MSG_ID]       = msgID;
@@ -84,6 +88,15 @@ namespace LoraModule
             doc[KEY_FROM]         = sender;
             doc[KEY_TIME]         = time;
             doc[KEY_DATE]         = date;
+
+            bool hasIV = false;
+            for (size_t i = 0; i < EncryptionUtils::IV_SIZE; i++) {
+                if (iv[i] != 0) { hasIV = true; break; }
+            }
+            if (hasIV) {
+                JsonArray ivArr = doc.createNestedArray(KEY_IV);
+                for (size_t i = 0; i < EncryptionUtils::IV_SIZE; i++) { ivArr.add(iv[i]); }
+            }
 
             JsonObject payload = doc.createNestedObject(KEY_PAYLOAD);
             if (!serializePayload(payload)) { return false; }
@@ -99,6 +112,13 @@ namespace LoraModule
             sender      = doc[KEY_FROM]          | 0u;
             time        = doc[KEY_TIME]          | 0u;
             date        = doc[KEY_DATE]          | 0u;
+
+            memset(iv, 0, EncryptionUtils::IV_SIZE);
+            JsonArray ivArr = doc[KEY_IV].as<JsonArray>();
+            if (!ivArr.isNull()) {
+                size_t i = 0;
+                for (uint8_t b : ivArr) { if (i < EncryptionUtils::IV_SIZE) iv[i++] = b; }
+            }
         }
 
         virtual bool serializePayload(JsonObject& payload) = 0;

@@ -16,8 +16,6 @@
 
 namespace FilesystemModule
 {
-    using SettingsMap = std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>>;
-
     static const char *TAG = "FilesystemModule";
 
     enum FilesystemReturnCode

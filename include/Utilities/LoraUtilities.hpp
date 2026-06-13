@@ -123,10 +123,11 @@ namespace LoraModule
             StaticJsonDocument<MSG_BASE_SIZE> payloadDoc;
             JsonObject payload;
 
-            // Encrypted wire format: 0xEE | uint16_t LE baseLen | base bytes | uint16_t LE cipherLen | cipher bytes
+            // Encrypted wire format: 0xEE | uint16_t LE baseLen | base bytes (includes IV) | uint16_t LE cipherLen | cipher bytes
             if (len > 0 && buffer[0] == 0xEE)
             {
-                if (!EncryptionEnabled()) { return nullptr; }
+                // No early-return for !EncryptionEnabled() — if we have no key, Decrypt will fail
+                // and we return nullptr. The caller (LoraManager) handles routing separately.
                 if (len < 5) { return nullptr; }
                 uint16_t baseLen = static_cast<uint16_t>(buffer[1]) | (static_cast<uint16_t>(buffer[2]) << 8);
                 size_t baseOffset = 3;
@@ -135,6 +136,14 @@ namespace LoraModule
                 if (deserializeMsgPack(doc, buffer + baseOffset, baseLen) != DeserializationError::Ok)
                 {
                     return nullptr;
+                }
+
+                // Read the per-message IV from the base header before decrypting.
+                uint8_t iv[EncryptionUtils::IV_SIZE]{};
+                JsonArray ivArr = doc[LoraMessageInterface::KEY_IV].as<JsonArray>();
+                if (!ivArr.isNull()) {
+                    size_t i = 0;
+                    for (uint8_t b : ivArr) { if (i < EncryptionUtils::IV_SIZE) iv[i++] = b; }
                 }
 
                 size_t cipherOffset = baseOffset + baseLen;
@@ -146,7 +155,7 @@ namespace LoraModule
                 uint8_t plaintext[MSG_BASE_SIZE];
                 size_t plaintextLen = 0;
                 if (!EncryptionUtils::Decrypt(buffer + cipherOffset, cipherLen, plaintext, plaintextLen,
-                                              EncryptionKey(), EncryptionIV()))
+                                              EncryptionKey(), iv))
                 {
                     return nullptr;
                 }
@@ -159,6 +168,11 @@ namespace LoraModule
             }
             else
             {
+                // Plaintext message. If we have encryption enabled this message is from a different
+                // "chatroom" — we cannot dispatch it. Return nullptr; LoraManager routes it via
+                // ReadBaseFields + RelayMessage regardless.
+                if (EncryptionEnabled()) { return nullptr; }
+
                 if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok)
                 {
                     return nullptr;
@@ -185,13 +199,25 @@ namespace LoraModule
         static bool SerializeMessage(const std::shared_ptr<LoraMessageInterface>& msg,
                                      uint8_t* buffer, size_t& outLen)
         {
+            if (EncryptionEnabled())
+            {
+                // Generate a fresh random IV for this message and store it on the object
+                // so it is serialized into the base header along with the other fields.
+                EncryptionUtils::GenerateIV(msg->iv);
+            }
+            else
+            {
+                memset(msg->iv, 0, EncryptionUtils::IV_SIZE);
+            }
+
             StaticJsonDocument<MSG_BASE_SIZE> doc;
             if (!msg->serialize(doc)) { return false; }
 
             if (EncryptionEnabled())
             {
-                // Serialize payload separately, encrypt it, then write custom wire format:
-                // 0xEE | uint16_t LE baseLen | base bytes | uint16_t LE cipherLen | cipher bytes
+                // Serialize payload separately, encrypt it with the per-message IV, then write
+                // custom wire format: 0xEE | uint16_t LE baseLen | base bytes | uint16_t LE cipherLen | cipher bytes
+                // The IV is embedded inside the base bytes as field KEY_IV.
                 JsonObject payloadObj = doc[LoraMessageInterface::KEY_PAYLOAD].as<JsonObject>();
 
                 uint8_t plaintext[MSG_BASE_SIZE];
@@ -200,7 +226,7 @@ namespace LoraModule
                 uint8_t ciphertext[MSG_BASE_SIZE + 16];
                 size_t ciphertextLen = 0;
                 if (!EncryptionUtils::Encrypt(plaintext, plaintextLen, ciphertext, ciphertextLen,
-                                              EncryptionKey(), EncryptionIV()))
+                                              EncryptionKey(), msg->iv))
                 {
                     return false;
                 }
@@ -297,7 +323,7 @@ namespace LoraModule
             return n;
         }
 
-        static constexpr const char* SETTING_LORA_PASSWORD = "Lora Password";
+        static constexpr const char* SETTING_LORA_PASSWORD = "Channel Key";
         static constexpr size_t      LORA_PASSWORD_MAX_LEN = 21;
 
         static void GenerateDefaultSettings(std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>>& settings)
@@ -305,6 +331,12 @@ namespace LoraModule
             auto pw = std::make_shared<FilesystemModule::StringSetting>(
                 SETTING_LORA_PASSWORD, "", LORA_PASSWORD_MAX_LEN);
             settings.push_back(pw);
+
+            auto frequency = std::make_shared<FilesystemModule::FloatSetting>("Frequency", 914.9, 902.3, 914.9, 0.2);
+            settings.push_back(frequency);
+
+            auto broadcastAttempts = std::make_shared<FilesystemModule::IntSetting>("Num Broadcasts", 3, 1, 5, 1);
+            settings.push_back(broadcastAttempts);
         }
 
         static void UpdateSettings(JsonDocument& settings)
@@ -315,8 +347,80 @@ namespace LoraModule
                 EncryptionEnabled() = !pw.empty();
                 if (EncryptionEnabled())
                 {
-                    EncryptionUtils::PasswordToKey(pw, EncryptionKey(), EncryptionIV());
+                    // Empty password → plaintext mode; DeriveKey must never be called with "".
+                    EncryptionUtils::DeriveKey(pw, EncryptionKey());
                 }
+            }
+
+            UserName() = settings["User Name"].as<std::string>();
+            DefaultSendAttempts() = settings["Num Broadcasts"] | (uint8_t)3;
+        }
+
+        // Reads sender / msgID / bouncesLeft from ANY message format (encrypted or plaintext)
+        // without attempting decryption. Used by LoraManager to make routing decisions for
+        // messages that cannot be dispatched (wrong chatroom).
+        static bool ReadBaseFields(const uint8_t* buffer, size_t len,
+                                   uint32_t& sender, uint32_t& msgID, uint8_t& bouncesLeft)
+        {
+            StaticJsonDocument<MSG_BASE_SIZE> doc;
+            if (len > 0 && buffer[0] == 0xEE)
+            {
+                if (len < 5) { return false; }
+                uint16_t baseLen = static_cast<uint16_t>(buffer[1]) | (static_cast<uint16_t>(buffer[2]) << 8);
+                if (3 + baseLen > len) { return false; }
+                if (deserializeMsgPack(doc, buffer + 3, baseLen) != DeserializationError::Ok) { return false; }
+            }
+            else
+            {
+                if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok) { return false; }
+            }
+            sender      = doc[LoraMessageInterface::KEY_FROM]         | 0u;
+            msgID       = doc[LoraMessageInterface::KEY_MSG_ID]       | 0u;
+            bouncesLeft = doc[LoraMessageInterface::KEY_BOUNCES_LEFT] | uint8_t(0);
+            return sender != 0 && msgID != 0;
+        }
+
+        // Re-packs a received message with a decremented bouncesLeft for raw relay.
+        // For encrypted messages the ciphertext is copied verbatim so downstream devices
+        // with the correct key can still decrypt. Used when DeserializeMessage returns nullptr
+        // (wrong chatroom) but the message should still be forwarded.
+        static bool RelayMessage(const uint8_t* buffer, size_t len,
+                                 uint8_t* outBuffer, size_t& outLen, uint8_t newBouncesLeft)
+        {
+            StaticJsonDocument<MSG_BASE_SIZE> doc;
+            if (len > 0 && buffer[0] == 0xEE)
+            {
+                if (len < 5) { return false; }
+                uint16_t baseLen = static_cast<uint16_t>(buffer[1]) | (static_cast<uint16_t>(buffer[2]) << 8);
+                if (3 + baseLen > len) { return false; }
+                if (deserializeMsgPack(doc, buffer + 3, baseLen) != DeserializationError::Ok) { return false; }
+
+                doc[LoraMessageInterface::KEY_BOUNCES_LEFT] = newBouncesLeft;
+
+                uint8_t newBase[MSG_BASE_SIZE];
+                size_t newBaseLen = serializeMsgPack(doc, newBase, sizeof(newBase));
+                if (newBaseLen == 0) { return false; }
+
+                // Preserve the cipher section (cipherLen uint16 + cipher bytes) verbatim.
+                size_t cipherSection    = 3 + baseLen;
+                size_t cipherSectionLen = len - cipherSection;
+                outLen = 3 + newBaseLen + cipherSectionLen;
+                if (outLen > MSG_BASE_SIZE) { return false; }
+
+                outBuffer[0] = 0xEE;
+                outBuffer[1] = static_cast<uint8_t>(newBaseLen & 0xFF);
+                outBuffer[2] = static_cast<uint8_t>((newBaseLen >> 8) & 0xFF);
+                memcpy(outBuffer + 3, newBase, newBaseLen);
+                memcpy(outBuffer + 3 + newBaseLen, buffer + cipherSection, cipherSectionLen);
+                return true;
+            }
+            else
+            {
+                // Plaintext: re-serialize full doc with updated bouncesLeft.
+                if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok) { return false; }
+                doc[LoraMessageInterface::KEY_BOUNCES_LEFT] = newBouncesLeft;
+                outLen = serializeMsgPack(doc, outBuffer, MSG_BASE_SIZE);
+                return outLen > 0;
             }
         }
 
@@ -331,12 +435,6 @@ namespace LoraModule
         {
             static uint8_t k[EncryptionUtils::KEY_SIZE]{};
             return k;
-        }
-
-        static uint8_t* EncryptionIV()
-        {
-            static uint8_t v[EncryptionUtils::IV_SIZE]{};
-            return v;
         }
 
         // senderId → most-recently-seen msgId, for MessageExists() deduplication.

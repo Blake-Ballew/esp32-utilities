@@ -46,6 +46,11 @@ public:
         }
     }
 
+    size_t Count()
+    {
+        return _callbacks.size();
+    }
+
 protected:
     std::vector<CallbackType> _callbacks;
 };
