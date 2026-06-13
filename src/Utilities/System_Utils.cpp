@@ -1,11 +1,5 @@
 #include "System_Utils.h"
 
-#if HARDWARE_VERSION >= 3
-#include <BQ25672.h> // power management IC
-
-static BQ25672 charger(Wire);
-#endif
-
 std::string System_Utils::DeviceName = "ESP32";
 size_t System_Utils::DeviceID = 0;
 
@@ -22,10 +16,8 @@ std::unordered_map<int, QueueHandle_t> System_Utils::systemQueues;
 int System_Utils::nextQueueID = 0;
 
 std::unordered_map<uint8_t, bool> System_Utils::adcUsers;
+std::function<long()> System_Utils::_batteryCallback;
 
-StaticTimer_t System_Utils::healthTimerBuffer;
-int System_Utils::healthTimerID;
-// Adafruit_SSD1306 *System_Utils::OLEDdisplay = nullptr;
 bool System_Utils::otaInitialized = false;
 int System_Utils::otaTaskID = -1;
 
@@ -34,65 +26,16 @@ EventHandler<> System_Utils::enableInterrupts;
 EventHandler<> System_Utils::disableInterrupts;
 EventHandler<> System_Utils::systemShutdown;
 
-void System_Utils::init()
-{
-#if HARDWARE_VERSION == 1
-    healthTimerID = registerTimer("System Health Monitor", 60000, monitorSystemHealth, healthTimerBuffer);
-    startTimer(healthTimerID);
-    monitorSystemHealth(nullptr);
-#endif
-}
-
-// TODO: Make actual battery curve
 long System_Utils::getBatteryPercentage()
 {
-    uint16_t voltage = 0;
-#if HARDWARE_VERSION >= 3
-    // if (!charger.readVbat_mV(voltage)) {
-    //     ESP_LOGE(TAG, "Failed to read battery voltage");
-    //     return 0;
-    // }
-#else
-    auto BATT_SENSE_PIN = 39;
-    voltage = analogRead(BATT_SENSE_PIN);
-#endif
-
-    ESP_LOGV(TAG, "Battery voltage: %u", voltage);
-
-    // Show full battery if BATT_SENSE_PIN is low. Device is plugged in.
-
-    if (voltage == 0)
-    {
-        return 100;
-    }
-
-    if (voltage > 2100)
-    {
-        voltage = 2100;
-    }
-    else if (voltage < 1750)
-    {
-        voltage = 1750;
-    }
-    long percentage = map(voltage, 1750, 2100, 0, 100);
-    return percentage;
+    if (_batteryCallback)
+        return _batteryCallback();
+    return 0;
 }
 
-// TODO: Move this into application
-void System_Utils::monitorSystemHealth(TimerHandle_t xTimer)
+void System_Utils::registerBatteryCallback(std::function<long()> fn)
 {
-    auto BATT_SENSE_PIN = 39;
-    uint16_t voltage = analogRead(BATT_SENSE_PIN);
-
-    if (voltage < 1750)
-    {
-        // Battery is low. Shut down.
-
-        // Show message and flash leds before turning off
-        auto KEEP_ALIVE_PIN = 5;
-
-        digitalWrite(KEEP_ALIVE_PIN, LOW);
-    }
+    _batteryCallback = fn;
 }
 
 void System_Utils::shutdownBatteryWarning()

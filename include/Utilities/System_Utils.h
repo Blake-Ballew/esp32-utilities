@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <functional>
 #include <unordered_map>
 #include <vector>
 #include "Adafruit_SSD1306.h"
@@ -10,7 +11,6 @@
 #include "driver/adc.h"
 #include "EventHandler.h"
 #include <string>
-#include <map>
 #include <ezTime.h>
 #include "TimeSourceInterface.hpp"
 
@@ -59,11 +59,9 @@ public:
 
     static bool silentMode;
     static bool time24Hour;
-    // static Adafruit_SSD1306 *OLEDdisplay;
 
-    static void init();
     static long getBatteryPercentage();
-    static void monitorSystemHealth(TimerHandle_t xTimer);
+    static void registerBatteryCallback(std::function<long()> fn);
     static void shutdownBatteryWarning();
 
     // Timer functionality
@@ -198,13 +196,13 @@ public:
         }
     }
 
-    static void GenerateDefaultSettings(std::map<std::string, std::shared_ptr<FilesystemModule::SettingsInterface>> &settings)
+    static void GenerateDefaultSettings(std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>> &settings)
     {
         auto silentMode = std::make_shared<FilesystemModule::BoolSetting>("Silent Mode", false);
-        settings[silentMode->key] = silentMode;
+        settings.push_back(silentMode);
 
         auto time24hr = std::make_shared<FilesystemModule::BoolSetting>("24H Time", false);
-        settings[time24hr->key] = time24hr;
+        settings.push_back(time24hr);
 
         auto timezone = std::make_shared<FilesystemModule::EnumSetting>(
             "Timezone",
@@ -229,7 +227,7 @@ public:
             },
             std::vector<int>{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }
         );
-        settings[timezone->key] = timezone;
+        settings.push_back(timezone);
     }
 
     // Time Management
@@ -339,10 +337,11 @@ private:
     static std::unordered_map<int, QueueHandle_t> systemQueues;
     static int nextQueueID;
 
+    // Battery callback
+    static std::function<long()> _batteryCallback;
+
     // ADC Users
     static std::unordered_map<uint8_t, bool> adcUsers;
 
-    static StaticTimer_t healthTimerBuffer;
-    static int healthTimerID;
     static int otaTaskID;
 };

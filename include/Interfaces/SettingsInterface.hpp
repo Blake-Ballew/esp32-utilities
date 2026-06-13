@@ -1,11 +1,19 @@
 #pragma once
 
+#include <ArduinoJson.h>
 #include <Preferences.h>
 #include <Arduino.h>
 #include <algorithm>
+#include <vector>
+#include <memory>
+#include <string>
 
 namespace FilesystemModule
 {
+    class SettingsInterface; // forward declaration required by SettingsMap below
+
+    using SettingsMap = std::vector<std::shared_ptr<FilesystemModule::SettingsInterface>>;
+    
     // Fallback for clamp if C++17 is not available
     template<typename T>
     T clamp(T value, T min_val, T max_val) {
