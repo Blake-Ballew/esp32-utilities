@@ -11,6 +11,9 @@ int LED_Manager::buttonFlashPatternID = -1;
 
 int LED_Manager::patternTaskID = -1;
 
+TimerHandle_t LED_Manager::hapticTimer = nullptr;
+StaticTimer_t LED_Manager::hapticTimerBuffer;
+
 void LED_Manager::init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore)
 {
     ESP_LOGI(TAG, "LED_Manager::init");
@@ -149,12 +152,33 @@ void LED_Manager::ledShutdownAnimation()
     }
 }
 
+// Timer callback: runs in the FreeRTOS timer service (Tmr Svc) daemon, not the
+// caller's task, so turning the motor off costs the display/render loop nothing.
+void LED_Manager::hapticOff(TimerHandle_t)
+{
+#if HARDWARE_VERSION >= 3
+    analogWrite(HAPTIC_VIBRATION_PIN, 0);
+#endif
+}
+
 void LED_Manager::applyHapticFeedback(uint8_t intensity)
 {
 #if HARDWARE_VERSION >= 3
+    static constexpr TickType_t HAPTIC_MS = 80;
+
+    // Constant drive for HAPTIC_MS, then off — same strong pulse as the old
+    // blocking delay(80), but the turn-off is scheduled on a one-shot timer so
+    // the caller (the render loop) keeps running instead of stalling 80 ms per
+    // input. Re-firing mid-pulse just restarts the window from the latest input.
     analogWrite(HAPTIC_VIBRATION_PIN, intensity);
-    delay(80);
-    analogWrite(HAPTIC_VIBRATION_PIN, 0);
+
+    if (hapticTimer == nullptr)
+    {
+        hapticTimer = xTimerCreateStatic(
+            "haptic", HAPTIC_MS / portTICK_PERIOD_MS, pdFALSE, nullptr,
+            hapticOff, &hapticTimerBuffer);
+    }
+    xTimerReset(hapticTimer, 0);
 #endif
 }
 

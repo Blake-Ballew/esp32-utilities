@@ -59,6 +59,12 @@ private:
     static TimerHandle_t patternTimer;
     static StaticTimer_t patternTimerBuffer;
 
+    // One-shot timer that switches the haptic motor off, so applyHapticFeedback()
+    // never blocks the calling task (e.g. the display/render loop).
+    static TimerHandle_t hapticTimer;
+    static StaticTimer_t hapticTimerBuffer;
+    static void hapticOff(TimerHandle_t xTimer);
+
     static int buttonFlashPatternID;
 
     static uint8_t r, g, b;
