@@ -42,8 +42,6 @@ namespace FilesystemModule
                 ESP.restart();
             }
 
-            SettingsPreference().begin(SettingsInterface::preference_namespace, false);
-            DeviceInfo().begin("DeviceInfo", false);
         }
 
         // Reads a file from the SPIFFS filesystem into a JsonDocument
@@ -230,7 +228,9 @@ namespace FilesystemModule
                 doc[SettingsInterface::write_key] = doc["SettingValue"];
                 auto obj = doc.as<ArduinoJson::JsonObjectConst>();
                 setting->fromJson(obj);
+                SettingsPreference().begin(SettingsInterface::preference_namespace, false);
                 setting->saveToPreferences(SettingsPreference());
+                SettingsPreference().end();
                 ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), doc["SettingValue"].as<const char*>());
 
                 doc.clear();
@@ -251,6 +251,7 @@ namespace FilesystemModule
 
             if (doc.containsKey("Settings") && doc["Settings"].is<JsonArray>())
             {
+                SettingsPreference().begin(SettingsInterface::preference_namespace, false);
                 Preferences& prefs = SettingsPreference();
                 auto settingsArray = doc["Settings"].as<JsonArray>();
 
@@ -272,6 +273,8 @@ namespace FilesystemModule
                     s->saveToPreferences(prefs);
                     ESP_LOGI(TAG, "Updated setting: %s to %s", key.c_str(), entry["SettingValue"].as<const char*>());
                 }
+                
+                SettingsPreference().end();
             }
             else
             {

@@ -71,7 +71,7 @@ namespace DisplayModule
         StateTransferData buildExitData(uint8_t inputID) override
         {
             StateTransferData d;
-            d.payload = std::make_shared<DynamicJsonDocument>(256);
+            d.payload = std::make_shared<DynamicJsonDocument>(512);
             if (!(*_settingsIt))
             {
                 return d;
@@ -158,7 +158,9 @@ namespace DisplayModule
             serializeJson(payloadObj, debugStr);
             ESP_LOGI(TAG, "Applying edit result with payload: %s", debugStr.c_str());
             (*_settingsIt)->fromJson(payloadObj);
+            FilesystemModule::Utilities::SettingsPreference().begin(FilesystemModule::SettingsInterface::preference_namespace, false);
             (*_settingsIt)->saveToPreferences(FilesystemModule::Utilities::SettingsPreference());
+            FilesystemModule::Utilities::SettingsPreference().end();
         }
 
         // ------------------------------------------------------------------

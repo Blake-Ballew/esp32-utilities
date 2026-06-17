@@ -177,6 +177,8 @@ void Bluetooth_Utils::initBluetooth()
     WiFi.disconnect(true);  // Disconnect from the network
     WiFi.mode(WIFI_OFF);    // Switch WiFi off
 
+    ESP_LOGI("Bluetooth_Utils", "Initializing Bluetooth as %s...", _DeviceName().c_str());
+
     BLEDevice::init(_DeviceName());
     NimBLEDevice::setMTU(BLE_ATT_MTU_MAX); // Use maximum MTU for largest packets.
 

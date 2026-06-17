@@ -30,9 +30,6 @@ public:
         if (_Driver == nullptr) { return false; }
         if (!_Driver->Init())  { return false; }
 
-        auto userID = FilesystemModule::Utilities::DeviceInfo().getUInt("UserID");
-        LoraModule::Utilities::UserID() = userID;
-
         LoraModule::Utilities::Init();
 
         _sendQueue = System_Utils::getQueue(LoraModule::Utilities::MessageSendQueueID());
@@ -60,6 +57,7 @@ public:
 
             if (_Driver->ReceiveMessage(buffer, len, 0))
             {
+                ESP_LOGI(TAG, "Received LoRa message: %d bytes", len);
                 // Phase 1: Extract base fields for routing — works for any message format,
                 // regardless of whether we can decrypt the payload.
                 uint32_t routeSender = 0, routeMsgID = 0;
@@ -75,7 +73,7 @@ public:
                         routeBouncesLeft = MAX_BOUNCES_LEFT;
                     }
 
-                    if (routeSender == LoraModule::Utilities::UserID())
+                    if (routeSender == System_Utils::DeviceID)
                     {
                         ESP_LOGI(TAG, "Message echoed back from this node — dropping");
                         LoraModule::Utilities::IncrementEchoCount();
@@ -203,7 +201,7 @@ public:
             auto msg = *wrapper;
             delete wrapper;
 
-            bool isOwn = (msg->sender == LoraModule::Utilities::UserID());
+            bool isOwn = (msg->sender == System_Utils::DeviceID);
             uint8_t attemptsLeft = isOwn
                 ? std::max((uint8_t)1, LoraModule::Utilities::DefaultSendAttempts())
                 : static_cast<uint8_t>(NUM_REBROADCAST_ATTEMPTS);
@@ -224,7 +222,8 @@ public:
                     vTaskDelay(pdMS_TO_TICKS(10));
                 }
 
-                size_t outLen = 0;
+                size_t outLen = 0;                
+
                 if (LoraModule::Utilities::SerializeMessage(msg, _SendBuffer, outLen))
                 {
                     _SendBufferLen = outLen;
@@ -260,7 +259,7 @@ public:
 protected:
     bool ShouldMessageBeForwarded(uint32_t senderID, uint32_t msgID, uint8_t bouncesLeft)
     {
-        if (senderID == LoraModule::Utilities::UserID()) { return false; }
+        if (senderID == System_Utils::DeviceID) { return false; }
         if (bouncesLeft == 0) { return false; }
 
         auto it = _lastReceivedMessages.find(senderID);
