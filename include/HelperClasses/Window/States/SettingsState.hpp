@@ -71,7 +71,7 @@ namespace DisplayModule
         StateTransferData buildExitData(uint8_t inputID) override
         {
             StateTransferData d;
-            d.payload = std::make_shared<DynamicJsonDocument>(512);
+            d.payload = std::make_shared<JsonDocument>();
             if (!(*_settingsIt))
             {
                 return d;
@@ -195,7 +195,7 @@ namespace DisplayModule
         static std::string _valueHint(const std::shared_ptr<FilesystemModule::SettingsInterface> &node)
         {
             auto type = node->getType();
-            DynamicJsonDocument doc (512);
+            JsonDocument doc;
             auto valueObj = doc.to<JsonObject>();
             node->toJson(valueObj);
 

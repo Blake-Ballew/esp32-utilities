@@ -106,7 +106,7 @@ namespace DisplayModule
         // Payload builder for owning Window (BUTTON_4 handler)
         // ------------------------------------------------------------------
 
-        void buildSelectPayload(std::shared_ptr<ArduinoJson::DynamicJsonDocument> doc) const
+        void buildSelectPayload(std::shared_ptr<ArduinoJson::JsonDocument> doc) const
         {
             if (_locations.empty() || _it == _locations.end())
                 return;
@@ -143,7 +143,7 @@ namespace DisplayModule
 
                 if (_scrollWheelID >= 0)
                 {
-                    ArduinoJson::StaticJsonDocument<64> cfg;
+                    ArduinoJson::JsonDocument cfg;
                     cfg["numItems"] = _locations.size();
                     cfg["currItem"] = std::distance(_locations.begin(), _it);
                     LED_Utils::configurePattern(_scrollWheelID, cfg);

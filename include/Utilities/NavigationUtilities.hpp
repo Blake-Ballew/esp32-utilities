@@ -357,12 +357,12 @@ namespace NavigationModule
             }
             else
             {
-                locationArray = doc.createNestedArray("Locations");
+                locationArray = doc["Locations"].to<ArduinoJson::JsonArray>();
             }
 
             for (auto location : _SavedLocations())
             {
-                JsonObject locationObject = locationArray.createNestedObject();
+                JsonObject locationObject = locationArray.add<ArduinoJson::JsonObject>();
                 locationObject["Name"] = location.Name;
                 locationObject["Lat"] = location.Latitude;
                 locationObject["Lng"] = location.Longitude;
@@ -491,10 +491,10 @@ namespace NavigationModule
         static void RpcGetSavedLocations(JsonDocument& doc)
         {
             doc.clear();
-            JsonArray locationArray = doc.createNestedArray("Locations");
+            JsonArray locationArray = doc["Locations"].to<ArduinoJson::JsonArray>();
             for (auto location : _SavedLocations())
             {
-                JsonObject locationObject = locationArray.createNestedObject();
+                JsonObject locationObject = locationArray.add<ArduinoJson::JsonObject>();
                 locationObject["Name"] = location.Name;
                 locationObject["Lat"] = location.Latitude;
                 locationObject["Lng"] = location.Longitude;

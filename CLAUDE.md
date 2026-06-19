@@ -76,7 +76,7 @@ Utilities + Interfaces
 - **Member variables:** camelCase; static members for class-level state
 - **Logging:** `ESP_LOG` macros (ESP-IDF style) — not `Serial.print`
 - **C++ standard:** C++17 — use `std::unordered_map`, `std::vector`, `std::string`, lambdas, move semantics
-- **JSON:** `ArduinoJson` v6 (`StaticJsonDocument` / `DynamicJsonDocument`)
+- **JSON:** `ArduinoJson` v7 (`JsonDocument` — elastic capacity)
 - **Serialization:** MessagePack via ArduinoJson for LoRa messages
 
 ## Hardware

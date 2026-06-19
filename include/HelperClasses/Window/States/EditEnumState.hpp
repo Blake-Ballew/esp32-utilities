@@ -106,9 +106,9 @@ namespace DisplayModule
 
         size_t selectedIndex() const { return _index; }
 
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const override
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const override
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(128);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["return"] = _index;
             return doc;
         }
@@ -117,15 +117,13 @@ namespace DisplayModule
         // Input payload builder
         // ------------------------------------------------------------------
 
-        static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        static std::shared_ptr<ArduinoJson::JsonDocument>
         buildInputPayload(const std::vector<std::string> &options,
                           size_t selectedIndex = 0)
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(
-                64 + options.size() * 32
-            );
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
 
-            auto arr = doc->createNestedArray("valTxt");
+            auto arr = (*doc)["valTxt"].to<ArduinoJson::JsonArray>();
             for (const auto &opt : options)
                 arr.add(opt);
 

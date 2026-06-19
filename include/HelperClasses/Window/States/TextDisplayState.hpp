@@ -15,7 +15,7 @@ namespace DisplayModule
     // Displays one or more formatted text lines.  Lines can be supplied either
     // programmatically (setLines) or via StateTransferData payload.
     //
-    // Payload schema (DynamicJsonDocument):
+    // Payload schema (JsonDocument):
     //   {
     //     "txtLines": [
     //       {
@@ -110,16 +110,16 @@ namespace DisplayModule
         // Helpers — build and send a payload from a line vector
         // ------------------------------------------------------------------
 
-        static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        static std::shared_ptr<ArduinoJson::JsonDocument>
         buildPayload(const std::vector<TextDrawData> &lines)
         {
             const size_t capacity = 64 + lines.size() * 128;
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(capacity);
-            auto arr = doc->createNestedArray("txtLines");
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
+            auto arr = (*doc)["txtLines"].to<ArduinoJson::JsonArray>();
 
             for (const auto &tdd : lines)
             {
-                auto obj = arr.createNestedObject();
+                auto obj = arr.add<ArduinoJson::JsonObject>();
                 obj["text"]   = tdd.text;
                 obj["HAlign"] = static_cast<int>(tdd.format.hAlign);
                 obj["VAlign"] = static_cast<int>(tdd.format.vAlign);

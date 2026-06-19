@@ -27,7 +27,7 @@ namespace NavigationModule
             NavigationModule::Utilities::SavedLocationsUpdated() += SaveLocationsToFlash;
             this->LoadLocationsFromFlash();
 
-            StaticJsonDocument<256> calibrationData;
+            JsonDocument calibrationData;
             auto returncode = FilesystemModule::Utilities::ReadFile(
                 NavigationModule::Utilities::GetCalibrationFilename(), calibrationData);
             if (returncode == FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)
@@ -46,7 +46,7 @@ namespace NavigationModule
 
         static void SaveLocationsToFlash()
         {
-            DynamicJsonDocument doc(16000);
+            JsonDocument doc;
 
             NavigationModule::Utilities::SerializeSavedLocations(doc);
             auto returncode = FilesystemModule::Utilities::WriteFile(LOCATION_FILE, doc);
@@ -63,7 +63,7 @@ namespace NavigationModule
 
         void LoadLocationsFromFlash()
         {
-            DynamicJsonDocument doc(16000);
+            JsonDocument doc;
             auto returncode = FilesystemModule::Utilities::ReadFile(LOCATION_FILE, doc);
 
             if (returncode != FilesystemModule::FilesystemReturnCode::FILESYSTEM_OK)

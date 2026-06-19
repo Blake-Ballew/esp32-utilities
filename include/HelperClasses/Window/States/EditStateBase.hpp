@@ -44,7 +44,7 @@ namespace DisplayModule
         void setConfirmAction(ConfirmAction fn) { _confirmAction = std::move(fn); }
 
         // Override in each derived state to return the result payload.
-        virtual std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        virtual std::shared_ptr<ArduinoJson::JsonDocument>
         buildResultPayload() const { return nullptr; }
 
     protected:

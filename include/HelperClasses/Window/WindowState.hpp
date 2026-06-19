@@ -18,7 +18,7 @@ namespace DisplayModule
     // -------------------------------------------------------------------------
     // Passed between states on entry/exit.
     //
-    // payload is a shared_ptr<DynamicJsonDocument> — short-lived heap allocation,
+    // payload is a shared_ptr<JsonDocument> — short-lived heap allocation,
     // ref-counted so no manual delete is needed anywhere. Sending state allocates
     // it on exit; receiving state reads it on enter and lets it drop when done.
     // Both sides can hold a copy of the shared_ptr if needed.
@@ -27,7 +27,7 @@ namespace DisplayModule
     {
         uint8_t  inputID  = 0;
         uint32_t actionID = 0; // what triggered the transition
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> payload;
+        std::shared_ptr<ArduinoJson::JsonDocument> payload;
     };
 
     // -------------------------------------------------------------------------

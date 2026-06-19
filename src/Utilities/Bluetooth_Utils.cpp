@@ -105,7 +105,7 @@ public:
 
     void processIncomingRpc() {
         // Process the packet
-        DynamicJsonDocument doc(1000);
+        JsonDocument doc;
         DeserializationError error = deserializeMsgPack(doc, _incomingPacketBuffer, _incomingPacketBufferIndex);
         if (error) {
             ESP_LOGW("[BLE]", "Failed to deserialize incoming RPC packet");

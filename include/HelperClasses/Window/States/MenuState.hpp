@@ -228,7 +228,7 @@ namespace DisplayModule
             
             if (!_items.empty())
             {
-                StaticJsonDocument<64> cfg;
+                JsonDocument cfg;
                 cfg["numItems"] = _items.size();
                 cfg["currItem"] = _index; 
 

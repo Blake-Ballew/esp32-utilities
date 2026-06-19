@@ -22,7 +22,7 @@ namespace ConnectivityModule
 
         void SendBroadcast()
         {
-            StaticJsonDocument<100> doc;
+            JsonDocument doc;
             doc["IpAddress"] = WiFi.localIP().toString();
             doc["Port"] = _portToBroadcast;
 

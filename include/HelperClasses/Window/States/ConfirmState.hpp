@@ -19,7 +19,7 @@ namespace DisplayModule
     //   used.
     //
     // On exit (BUTTON_3 = No, BUTTON_4 = Yes):
-    //   A fresh DynamicJsonDocument is allocated and placed in
+    //   A fresh JsonDocument is allocated and placed in
     //   transferData.payload.  It contains:
     //     { "confirmed": true|false }
     //
@@ -81,9 +81,9 @@ namespace DisplayModule
 
         void confirm(bool value) { _confirmed = value; }
 
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["confirmed"] = _confirmed;
             return doc;
         }
