@@ -94,8 +94,11 @@ namespace LoraModule
                 if (iv[i] != 0) { hasIV = true; break; }
             }
             if (hasIV) {
-                JsonArray ivArr = doc.createNestedArray(KEY_IV);
-                for (size_t i = 0; i < EncryptionUtils::IV_SIZE; i++) { ivArr.add(iv[i]); }
+                // Store the IV as a length-delimited msgpack str of raw bytes rather than an
+                // int array: 17 wire bytes vs ~27, and ArduinoJson v6 strings carry an explicit
+                // length so embedded 0x00 bytes round-trip intact.
+                doc[KEY_IV] = JsonString(reinterpret_cast<const char*>(iv),
+                                         EncryptionUtils::IV_SIZE, JsonString::Copied);
             }
 
             JsonObject payload = doc.createNestedObject(KEY_PAYLOAD);
@@ -114,10 +117,9 @@ namespace LoraModule
             date        = doc[KEY_DATE]          | 0u;
 
             memset(iv, 0, EncryptionUtils::IV_SIZE);
-            JsonArray ivArr = doc[KEY_IV].as<JsonArray>();
-            if (!ivArr.isNull()) {
-                size_t i = 0;
-                for (uint8_t b : ivArr) { if (i < EncryptionUtils::IV_SIZE) iv[i++] = b; }
+            JsonString ivStr = doc[KEY_IV].as<JsonString>();
+            if (!ivStr.isNull() && ivStr.size() == EncryptionUtils::IV_SIZE) {
+                memcpy(iv, ivStr.c_str(), EncryptionUtils::IV_SIZE);
             }
         }
 

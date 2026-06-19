@@ -119,10 +119,7 @@ namespace NavigationModule
             return diff;
         }
 
-        // static int GetSatelliteCount()
-        // {
-        //     return GetGPS().satellites.value();
-        // }
+
 
         static TinyGPSPlus& GetGPS()
         {

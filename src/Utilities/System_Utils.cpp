@@ -25,6 +25,8 @@ int System_Utils::otaTaskID = -1;
 EventHandler<> System_Utils::enableInterrupts;
 EventHandler<> System_Utils::disableInterrupts;
 EventHandler<> System_Utils::systemShutdown;
+EventHandler<> System_Utils::enablePowerSavings;
+EventHandler<> System_Utils::disablePowerSavings;
 
 long System_Utils::getBatteryPercentage()
 {
@@ -60,6 +62,18 @@ void System_Utils::systemShutdownInvoke()
 {
     ESP_LOGV(TAG, "Shutting down system");
     systemShutdown.Invoke();
+}
+
+void System_Utils::enablePowerSavingsInvoke()
+{
+    ESP_LOGV(TAG, "Enabling power savings");
+    enablePowerSavings.Invoke();
+}
+
+void System_Utils::disablePowerSavingsInvoke()
+{
+    ESP_LOGV(TAG, "Disabling power savings");
+    disablePowerSavings.Invoke();
 }
 
 int System_Utils::registerTimer(const char *timerName, size_t periodMS, TimerCallbackFunction_t callback)
