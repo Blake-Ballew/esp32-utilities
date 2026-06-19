@@ -113,7 +113,7 @@ namespace DisplayModule
                 double bearing  = NavigationUtils::GetHeadingTo(_targetLat, _targetLon);
                 double distance = NavigationUtils::GetDistanceTo(_targetLat, _targetLon);
 
-                ArduinoJson::StaticJsonDocument<128> cfg;
+                ArduinoJson::JsonDocument cfg;
                 cfg["bearing"]  = bearing;
                 cfg["distance"] = distance;
                 cfg["color_R"]  = _colorR;

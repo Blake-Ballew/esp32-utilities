@@ -131,7 +131,7 @@ namespace DisplayModule
 
                 if (_scrollWheelID >= 0)
                 {
-                    ArduinoJson::StaticJsonDocument<64> cfg;
+                    ArduinoJson::JsonDocument cfg;
                     cfg["numItems"] = _messages.size();
                     cfg["currItem"] = std::distance(_messages.begin(), _it);
                     LED_Utils::configurePattern(_scrollWheelID, cfg);

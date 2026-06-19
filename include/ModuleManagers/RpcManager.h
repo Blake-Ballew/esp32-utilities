@@ -54,7 +54,7 @@ namespace RpcModule
                     {
                         ESP_LOGV(TAG, "Polling channel %d", channel.second.ChannelID);
 
-                        DynamicJsonDocument rpcPayload(channel.second.BufferMaxSize);
+                        JsonDocument rpcPayload;
                         auto channelID = channel.second.ChannelID;
                         if (!channel.second.PollFunctionPointer(channelID, rpcPayload))
                         {
@@ -132,7 +132,7 @@ namespace RpcModule
                 ESP_LOGI(TAG, "Received request body");
 
                 // Deserialize MessagePack to JSON
-                DynamicJsonDocument doc(16000);
+                JsonDocument doc;
                 DeserializationError error = deserializeMsgPack(doc, data, len);
                 
                 if (error) {
@@ -207,7 +207,7 @@ namespace RpcModule
                 (WebRequestMethodComposite)HTTP_GET,
                 [](AsyncWebServerRequest *request) 
                 { 
-                    StaticJsonDocument<256> doc;
+                    JsonDocument doc;
                     doc["DeviceName"] = System_Utils::DeviceName;
                     doc["DeviceID"] = System_Utils::DeviceID;
                     doc["FirmwareVersion"] = FIRMWARE_VERSION_STRING;

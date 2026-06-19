@@ -653,20 +653,20 @@ void System_Utils::GetSystemInfoRpc(JsonDocument &doc)
 
 void System_Utils::sendDisplayContents(Adafruit_SSD1306 *display)
 {
-    DynamicJsonDocument doc(10000);
+    JsonDocument doc;
     auto buffer = display->getBuffer();
 
     size_t bufferLength = (display->width() * display->height()) / 8;
 
     doc[COMMAND_FIELD] = (int)DISPLAY_CONTENTS;
-    auto displayBuffer = doc.createNestedArray(DISPLAY_BUFFER_FIELD);
+    auto displayBuffer = doc[DISPLAY_BUFFER_FIELD].to<ArduinoJson::JsonArray>();
 
     doc[DISPLAY_WIDTH] = display->width();
     doc[DISPLAY_HEIGHT] = display->height();
 
     for (size_t i = 0; i < display->height() / 8; i++)
     {
-        doc[DISPLAY_BUFFER_FIELD].createNestedArray();
+        doc[DISPLAY_BUFFER_FIELD].add<ArduinoJson::JsonArray>();
     }
 
     for (size_t i = 0; i < display->width(); i++)

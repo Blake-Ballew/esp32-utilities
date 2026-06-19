@@ -112,9 +112,9 @@ namespace DisplayModule
         // ------------------------------------------------------------------
 
         // For BUTTON_4 (Edit) — sends current name to EditStringState
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildEditPayload() const
+        std::shared_ptr<ArduinoJson::JsonDocument> buildEditPayload() const
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(256);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             if (NavigationUtils::GetSavedLocationsSize() > 0
                 && _selectedIt != NavigationUtils::GetSavedLocationsEnd())
             {
@@ -125,7 +125,7 @@ namespace DisplayModule
         }
 
         // For BUTTON_2 (Track) — sends target coordinates to TrackingState
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildTrackPayload() const
+        std::shared_ptr<ArduinoJson::JsonDocument> buildTrackPayload() const
         {
             if (NavigationUtils::GetSavedLocationsSize() == 0
                 || _selectedIt == NavigationUtils::GetSavedLocationsEnd())
@@ -133,14 +133,14 @@ namespace DisplayModule
                 return nullptr;
             }
 
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(256);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["lat"]     = _selectedIt->Latitude;
             (*doc)["lon"]     = _selectedIt->Longitude;
             (*doc)["color_R"] = LED_Utils::ThemeColor().r;
             (*doc)["color_G"] = LED_Utils::ThemeColor().g;
             (*doc)["color_B"] = LED_Utils::ThemeColor().b;
 
-            auto arr = (*doc).createNestedArray("displayTxt");
+            auto arr = (*doc)["displayTxt"].to<ArduinoJson::JsonArray>();
             arr.add(_selectedIt->Name);
             return doc;
         }
@@ -169,7 +169,7 @@ namespace DisplayModule
 
                 if (_scrollWheelID >= 0)
                 {
-                    ArduinoJson::StaticJsonDocument<64> cfg;
+                    ArduinoJson::JsonDocument cfg;
                     cfg["numItems"] = count;
                     cfg["currItem"] = std::distance(
                         NavigationUtils::GetSavedLocationsBegin(), _selectedIt);

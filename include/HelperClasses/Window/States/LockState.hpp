@@ -180,12 +180,12 @@ namespace DisplayModule
 
         void _configureLed()
         {
-            StaticJsonDocument<256> cfg;
-            auto array = cfg.createNestedArray("inputStates");
+            JsonDocument cfg;
+            auto array = cfg["inputStates"].to<ArduinoJson::JsonArray>();
 
             for (auto inputID : _sequence)
             {
-                auto inputState = array.createNestedObject();
+                auto inputState = array.add<ArduinoJson::JsonObject>();
 
                 inputState["input"] = inputID;
 

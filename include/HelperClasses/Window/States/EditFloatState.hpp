@@ -81,9 +81,9 @@ namespace DisplayModule
 
         float currentValue() const { return _value; }
 
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const override
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const override
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["return"] = _value;
             return doc;
         }
@@ -92,13 +92,13 @@ namespace DisplayModule
         // Input payload builder
         // ------------------------------------------------------------------
 
-        static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        static std::shared_ptr<ArduinoJson::JsonDocument>
         buildInputPayload(float current,
                           float minVal,
                           float maxVal,
                           float step = 0.1f)
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(256);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["cfgVal"] = current;
             (*doc)["minVal"] = minVal;
             (*doc)["maxVal"] = maxVal;

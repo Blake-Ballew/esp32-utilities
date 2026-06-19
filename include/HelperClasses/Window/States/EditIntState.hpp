@@ -90,9 +90,9 @@ namespace DisplayModule
 
         int32_t currentValue() const { return _value; }
 
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const override
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const override
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["return"] = _value;
             return doc;
         }
@@ -101,14 +101,14 @@ namespace DisplayModule
         // Input payload builder
         // ------------------------------------------------------------------
 
-        static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        static std::shared_ptr<ArduinoJson::JsonDocument>
         buildInputPayload(int32_t current,
                           int32_t minVal,
                           int32_t maxVal,
                           int32_t step    = 1,
                           bool    isSigned = true)
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(128);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["cfgVal"] = current;
             (*doc)["minVal"] = minVal;
             (*doc)["maxVal"] = maxVal;

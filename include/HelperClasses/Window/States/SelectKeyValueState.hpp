@@ -119,10 +119,10 @@ namespace DisplayModule
         // ------------------------------------------------------------------
 
         // Returns a payload with the selected value, or nullptr if nothing selected.
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const
         {
             if (_items.empty()) return nullptr;
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["return"] = _items[_index].second;
             return doc;
         }
@@ -142,18 +142,16 @@ namespace DisplayModule
         // Payload builder — create a payload to send TO this state
         // ------------------------------------------------------------------
 
-        static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        static std::shared_ptr<ArduinoJson::JsonDocument>
         buildInputPayload(const std::string &prompt,
                           const std::vector<Item> &items)
         {
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(
-                128 + items.size() * 64
-            );
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["prompt"] = prompt;
-            auto arr = doc->createNestedArray("items");
+            auto arr = (*doc)["items"].to<ArduinoJson::JsonArray>();
             for (const auto &[key, val] : items)
             {
-                auto obj = arr.createNestedObject();
+                auto obj = arr.add<ArduinoJson::JsonObject>();
                 obj["key"]   = key;
                 obj["value"] = val;
             }

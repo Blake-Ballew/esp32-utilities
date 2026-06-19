@@ -144,7 +144,7 @@ namespace FilesystemModule
 
             for (auto &setting : DeviceSettings())
             {
-                auto obj = doc.createNestedObject(setting->key);
+                auto obj = doc[setting->key].to<ArduinoJson::JsonObject>();
                 setting->toJson(obj);
             }
         }
@@ -287,7 +287,7 @@ namespace FilesystemModule
 
         static void InvokeSettingsUpdated(SettingsMap &settings, size_t jsonDocSize = 2048)
         {
-            DynamicJsonDocument doc(jsonDocSize);
+            JsonDocument doc;
 
             for (auto &setting : settings)
             {
@@ -309,7 +309,7 @@ namespace FilesystemModule
 
     protected:
         // Settings File
-        static DynamicJsonDocument _SettingsFile;
+        static JsonDocument _SettingsFile;
         static std::string _SettingsFilename;
 
         // Event handler for settings file updates

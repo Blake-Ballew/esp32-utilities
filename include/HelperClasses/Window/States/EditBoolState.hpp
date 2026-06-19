@@ -63,10 +63,10 @@ namespace DisplayModule
 
         bool currentValue() const { return _value; }
 
-        std::shared_ptr<ArduinoJson::DynamicJsonDocument> buildResultPayload() const override
+        std::shared_ptr<ArduinoJson::JsonDocument> buildResultPayload() const override
         {
             ESP_LOGI(TAG, "Building result payload for EditBoolState with value: %s", _value ? "true" : "false");
-            auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(512);
+            auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             (*doc)["return"] = _value;
             return doc;
         }
@@ -75,10 +75,10 @@ namespace DisplayModule
         // Input payload builder — create a payload to send TO this state
         // ------------------------------------------------------------------
 
-        // static std::shared_ptr<ArduinoJson::DynamicJsonDocument>
+        // static std::shared_ptr<ArduinoJson::JsonDocument>
         // buildInputPayload(bool currentValue)
         // {
-        //     auto doc = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+        //     auto doc = std::make_shared<ArduinoJson::JsonDocument>();
         //     (*doc)["cfgVal"] = currentValue;
         //     return doc;
         // }

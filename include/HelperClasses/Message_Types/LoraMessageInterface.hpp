@@ -94,14 +94,13 @@ namespace LoraModule
                 if (iv[i] != 0) { hasIV = true; break; }
             }
             if (hasIV) {
-                // Store the IV as a length-delimited msgpack str of raw bytes rather than an
-                // int array: 17 wire bytes vs ~27, and ArduinoJson v6 strings carry an explicit
-                // length so embedded 0x00 bytes round-trip intact.
-                doc[KEY_IV] = JsonString(reinterpret_cast<const char*>(iv),
-                                         EncryptionUtils::IV_SIZE, JsonString::Copied);
+                // Store the IV as a msgpack bin blob of raw bytes rather than an int array:
+                // compact on the wire (IV_SIZE + 2 header bytes) and embedded 0x00 bytes
+                // round-trip intact since bin carries an explicit length.
+                doc[KEY_IV] = MsgPackBinary(iv, EncryptionUtils::IV_SIZE);
             }
 
-            JsonObject payload = doc.createNestedObject(KEY_PAYLOAD);
+            JsonObject payload = doc[KEY_PAYLOAD].to<ArduinoJson::JsonObject>();
             if (!serializePayload(payload)) { return false; }
 
             return !doc.overflowed();
@@ -117,9 +116,9 @@ namespace LoraModule
             date        = doc[KEY_DATE]          | 0u;
 
             memset(iv, 0, EncryptionUtils::IV_SIZE);
-            JsonString ivStr = doc[KEY_IV].as<JsonString>();
-            if (!ivStr.isNull() && ivStr.size() == EncryptionUtils::IV_SIZE) {
-                memcpy(iv, ivStr.c_str(), EncryptionUtils::IV_SIZE);
+            auto ivBin = doc[KEY_IV].as<MsgPackBinary>();
+            if (ivBin.data() && ivBin.size() == EncryptionUtils::IV_SIZE) {
+                memcpy(iv, ivBin.data(), EncryptionUtils::IV_SIZE);
             }
         }
 

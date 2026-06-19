@@ -45,7 +45,7 @@ namespace DisplayModule
             // Enter edit state with an empty string and max-length constraint
             StateTransferData initialData;
             {
-                auto payload = std::make_shared<ArduinoJson::DynamicJsonDocument>(64);
+                auto payload = std::make_shared<ArduinoJson::JsonDocument>();
                 (*payload)["cfgVal"] = "";
                 (*payload)["maxLen"] = static_cast<int>(MAX_LOCATION_NAME_LENGTH);
                 initialData.payload = payload;

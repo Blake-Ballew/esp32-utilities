@@ -168,8 +168,8 @@ namespace FilesystemModule
         void toJson(JsonObject& obj) const override {
             obj[value_key] = currentIndex();
             obj[type_key] = type;
-            ArduinoJson::JsonArray arr_labels = obj.createNestedArray(labels_key);
-            ArduinoJson::JsonArray arr_values = obj.createNestedArray(values_key);
+            ArduinoJson::JsonArray arr_labels = obj[labels_key].to<ArduinoJson::JsonArray>();
+            ArduinoJson::JsonArray arr_values = obj[values_key].to<ArduinoJson::JsonArray>();
             for (const auto& l : labels) arr_labels.add(l);
             for (const auto& v : values) arr_values.add(v);
         }

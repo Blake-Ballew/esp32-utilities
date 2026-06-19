@@ -119,13 +119,13 @@ namespace LoraModule
 
         static std::shared_ptr<LoraMessageInterface> DeserializeMessage(const uint8_t* buffer, size_t len)
         {
-            StaticJsonDocument<MSG_BASE_SIZE> doc;
-            StaticJsonDocument<MSG_BASE_SIZE> payloadDoc;
+            JsonDocument doc;
+            JsonDocument payloadDoc;
             JsonObject payload;
 
             // Single msgpack document. The routing header is always plaintext; the "p" field is
-            // either a map (plaintext payload) or a str of raw AES-CBC ciphertext (encrypted).
-            // The IV lives in the header as the "v" str.
+            // either a map (plaintext payload) or a bin of raw AES-CBC ciphertext (encrypted).
+            // The IV lives in the header as the "v" bin.
             if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok)
             {
                 return nullptr;
@@ -147,17 +147,17 @@ namespace LoraModule
                 // chatroom's key fails the PKCS7 check in Decrypt and returns nullptr.
                 if (!EncryptionEnabled()) { return nullptr; }
 
-                JsonString cipher = payloadVar.as<JsonString>();
-                if (cipher.isNull()) { return nullptr; }
+                MsgPackBinary cipher = payloadVar.as<MsgPackBinary>();
+                if (!cipher.data()) { return nullptr; }
 
                 uint8_t iv[EncryptionUtils::IV_SIZE]{};
-                JsonString ivStr = doc[LoraMessageInterface::KEY_IV].as<JsonString>();
-                if (ivStr.isNull() || ivStr.size() != EncryptionUtils::IV_SIZE) { return nullptr; }
-                memcpy(iv, ivStr.c_str(), EncryptionUtils::IV_SIZE);
+                auto ivBin = doc[LoraMessageInterface::KEY_IV].as<MsgPackBinary>();
+                if (!ivBin.data() || ivBin.size() != EncryptionUtils::IV_SIZE) { return nullptr; }
+                memcpy(iv, ivBin.data(), EncryptionUtils::IV_SIZE);
 
                 uint8_t plaintext[MSG_BASE_SIZE];
                 size_t plaintextLen = 0;
-                if (!EncryptionUtils::Decrypt(reinterpret_cast<const uint8_t*>(cipher.c_str()),
+                if (!EncryptionUtils::Decrypt(reinterpret_cast<const uint8_t*>(cipher.data()),
                                               cipher.size(), plaintext, plaintextLen,
                                               EncryptionKey(), iv))
                 {
@@ -202,7 +202,7 @@ namespace LoraModule
                 memset(msg->iv, 0, EncryptionUtils::IV_SIZE);
             }
 
-            StaticJsonDocument<MSG_BASE_SIZE> doc;
+            JsonDocument doc;
             if (!msg->serialize(doc)) 
             { 
                 ESP_LOGE("LoraUtilities", "Failed to serialize message");
@@ -217,8 +217,8 @@ namespace LoraModule
             if (EncryptionEnabled())
             {
                 // Serialize the payload object on its own and encrypt it, then swap the payload
-                // map in the document for the raw ciphertext as a msgpack str. The result is a
-                // single self-describing document — no 0xEE framing — where "p" being a str
+                // map in the document for the raw ciphertext as a msgpack bin. The result is a
+                // single self-describing document — no 0xEE framing — where "p" being a bin
                 // (rather than a map) signals encryption.
                 JsonObject payloadObj = doc[LoraMessageInterface::KEY_PAYLOAD].as<JsonObject>();
 
@@ -234,8 +234,7 @@ namespace LoraModule
                 }
 
                 doc.remove(LoraMessageInterface::KEY_PAYLOAD);
-                doc[LoraMessageInterface::KEY_PAYLOAD] =
-                    JsonString(reinterpret_cast<const char*>(ciphertext), ciphertextLen, JsonString::Copied);
+                doc[LoraMessageInterface::KEY_PAYLOAD] = MsgPackBinary(ciphertext, ciphertextLen);
             }
 
             outLen = serializeMsgPack(doc, buffer, MSG_BASE_SIZE);
@@ -246,7 +245,7 @@ namespace LoraModule
         {
             uint8_t buffer[MSG_BASE_SIZE];
             size_t len = serializeMsgPack(doc, buffer, sizeof(buffer));
-            StaticJsonDocument<MSG_BASE_SIZE> doc2;
+            JsonDocument doc2;
             auto rc = deserializeMsgPack(doc2, buffer, len);
             if (rc != DeserializationError::Ok)
             {
@@ -345,7 +344,7 @@ namespace LoraModule
         {
             // The routing header is always plaintext top-level msgpack, regardless of whether
             // the "p" payload is an encrypted str — so a single deserialize covers both formats.
-            StaticJsonDocument<MSG_BASE_SIZE> doc;
+            JsonDocument doc;
             if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok) 
             { 
                 ESP_LOGE("LoraUtilities", "Failed to deserialize message");
@@ -369,10 +368,10 @@ namespace LoraModule
         static bool RelayMessage(const uint8_t* buffer, size_t len,
                                  uint8_t* outBuffer, size_t& outLen, uint8_t newBouncesLeft)
         {
-            // One document round-trips both formats: the encrypted "p" and "v" strs (and the
+            // One document round-trips both formats: the encrypted "p" and "v" bins (and the
             // plaintext "p" map) re-serialize byte-identical, so the ciphertext is preserved
             // for downstream nodes without any special-casing — only bouncesLeft changes.
-            StaticJsonDocument<MSG_BASE_SIZE> doc;
+            JsonDocument doc;
             if (deserializeMsgPack(doc, buffer, len) != DeserializationError::Ok) 
             { 
                 ESP_LOGW("LoraUtilities", "Failed to deserialize message for relay");
