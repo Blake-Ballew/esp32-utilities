@@ -79,22 +79,6 @@ Utilities + Interfaces
 - **JSON:** `ArduinoJson` v7 (`JsonDocument` — elastic capacity)
 - **Serialization:** MessagePack via ArduinoJson for LoRa messages
 
-## Hardware
-
-Two hardware versions are supported via conditional compilation:
-
-| Define | v1 | v2 |
-|---|---|---|
-| Display | 128×32 SSD1306 | 128×64 SSD1306 |
-| LEDs | 30 WS2812B | 31 WS2812B |
-| Compass ring | 16 LEDs | 16 LEDs |
-
-Other hardware: 8 debounced buttons, UART GPS, SPI LoRa, I2C compass (HMC5883 or QMC5883L), SPIFFS, EEPROM.
-
-Relevant compile-time flags:
-- `HARDWARE_VERSION`
-- `USE_FAKE_GPS_COORDS`
-
 ## Key Dependencies
 
 | Library | Purpose |

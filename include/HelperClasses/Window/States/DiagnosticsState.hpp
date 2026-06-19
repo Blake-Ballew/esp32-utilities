@@ -66,12 +66,13 @@ namespace DisplayModule
             snprintf(line1, sizeof(line1), "Heap: %lu%s",
                      static_cast<unsigned long>(heap), units);
 
-            // Fragmentation: maxContiguous / freeHeap
+            // Fragmentation: 1 - (maxContiguous / freeHeap). 0% means all free
+            // memory is one contiguous block; ~100% means it is heavily split up.
             char line2[32];
             if (ESP.getFreeHeap() > 0)
             {
-                float frag = static_cast<float>(ESP.getMaxAllocHeap())
-                             / static_cast<float>(ESP.getFreeHeap());
+                float frag = 1.0f - static_cast<float>(ESP.getMaxAllocHeap())
+                                    / static_cast<float>(ESP.getFreeHeap());
                 snprintf(line2, sizeof(line2), "Frag: %.0f%%",
                          static_cast<double>(frag * 100.0f));
             }
