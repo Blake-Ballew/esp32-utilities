@@ -23,16 +23,12 @@ public:
         static constexpr size_t  SALT_LEN   = sizeof(SALT) - 1;
         static constexpr uint32_t ITERATIONS = 10000;
 
-        mbedtls_md_context_t ctx;
-        mbedtls_md_init(&ctx);
-        mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1);
-        mbedtls_pkcs5_pbkdf2_hmac(
-            &ctx,
+        mbedtls_pkcs5_pbkdf2_hmac_ext(
+            MBEDTLS_MD_SHA256,
             reinterpret_cast<const uint8_t*>(password.c_str()), password.size(),
             SALT, SALT_LEN,
             ITERATIONS,
             KEY_SIZE, key);
-        mbedtls_md_free(&ctx);
     }
 
     // Fills iv[IV_SIZE] with cryptographically random bytes from the ESP32 hardware RNG.
