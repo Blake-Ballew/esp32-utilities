@@ -2,7 +2,7 @@
 
 #include <Adafruit_GFX.h>
 #include "DisplayUtilities.hpp"
-#include "System_Utils.h"
+#include "SystemUtilities.hpp"
 #include "LED_Manager.h"
 
 namespace DisplayModule

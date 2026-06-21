@@ -4,7 +4,7 @@
 #include "States/AwaitWifiState.hpp"
 #include "TextDrawCommand.hpp"
 #include "DisplayUtilities.hpp"
-#include "System_Utils.h"
+#include "SystemUtilities.hpp"
 #include "RadioUtils.h"
 
 namespace DisplayModule

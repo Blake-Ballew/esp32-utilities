@@ -11,7 +11,7 @@
 #include "LoraMessageInterface.hpp"
 #include "EncryptionUtils.hpp"
 #include "EventHandler.h"
-#include "System_Utils.h"
+#include "SystemUtilities.hpp"
 #include "SettingsInterface.hpp"
 
 namespace LoraModule
