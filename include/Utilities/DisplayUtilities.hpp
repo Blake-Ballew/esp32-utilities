@@ -16,7 +16,7 @@
 #if HARDWARE_VERSION >= 3
     #define BLACK 0
 #else
-    #define BLACK SSD1306_BLACK
+    #define BLACK 0
 #endif
 
 namespace DisplayModule
