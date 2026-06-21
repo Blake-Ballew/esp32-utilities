@@ -19,7 +19,7 @@
     "adafruit/Adafruit BusIO": "^1.14.1",
     "adafruit/Adafruit Unified Sensor": "^1.1.9",
     "adafruit/Adafruit GFX Library": "^1.11.5",
-    "mathieucarbou/ESPAsyncWebServer": "^3.6.0",
+    "esp32async/ESPAsyncWebServer": "^3.11.1",
     "tzapu/WiFiManager": "^2.0.17",
     "ezTime": "https://github.com/Blake-Ballew/ezTime.git"
   },
