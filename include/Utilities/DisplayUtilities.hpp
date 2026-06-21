@@ -12,6 +12,13 @@
 #include "Interfaces/LayerInterface.hpp"
 #include "Interfaces/EventHandler.hpp"
 
+// Define the pure black color.
+#if HARDWARE_VERSION >= 3
+    #define BLACK 0
+#else
+    #define BLACK SSD1306_BLACK
+#endif
+
 namespace DisplayModule
 {  
     // -------------------------------------------------------------------------
