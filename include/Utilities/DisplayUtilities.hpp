@@ -6,7 +6,7 @@
 #include <functional>
 #include <unordered_map>
 #include <cstring>
-#include "System_Utils.h"
+#include "SystemUtilities.hpp"
 #include "Interfaces/DisplayTypes.hpp"
 #include "Interfaces/WindowInterface.hpp"
 #include "Interfaces/LayerInterface.hpp"

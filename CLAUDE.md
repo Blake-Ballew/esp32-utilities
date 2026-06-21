@@ -119,6 +119,8 @@ Utilities + Interfaces
 
 All time queries flow through `System_Utils`. Internally it uses `ezTime` (ropg/ezTime 0.8.3) — once synced, ezTime tracks elapsed time with `millis()`.
 
+> The class is `SystemModule::Utilities`, defined header-only in `include/Utilities/SystemUtilities.hpp` (formerly `System_Utils.h`/`System_Utils.cpp`). The global name `System_Utils` remains available as a backwards-compatible alias (`using System_Utils = SystemModule::Utilities;`).
+
 ### TimeSourceInterface
 
 File: `include/Interfaces/TimeSourceInterface.hpp`  
