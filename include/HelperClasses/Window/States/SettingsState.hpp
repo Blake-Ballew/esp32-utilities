@@ -147,7 +147,7 @@ namespace DisplayModule
                 ESP_LOGW(TAG, "No payload returned from edit state; nothing to apply");
                 return;
             }
-            if (!data.payload->containsKey(FilesystemModule::SettingsInterface::write_key)) 
+            if ((*data.payload)[FilesystemModule::SettingsInterface::write_key].isNull())
             {
                 ESP_LOGW(TAG, "Edit state payload missing expected key '%s'; cannot apply result", FilesystemModule::SettingsInterface::write_key);
                 return;

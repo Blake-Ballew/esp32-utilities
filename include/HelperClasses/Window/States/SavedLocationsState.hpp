@@ -78,7 +78,7 @@ namespace DisplayModule
         void onEnter(const StateTransferData &data) override
         {
             // Returned from edit state? Apply the new name.
-            if (data.payload && data.payload->containsKey("return"))
+            if (data.payload && !(*data.payload)["return"].isNull())
             {
                 std::string newName = (*data.payload)["return"].as<std::string>();
                 if (_selectedIt != NavigationUtils::GetSavedLocationsEnd()

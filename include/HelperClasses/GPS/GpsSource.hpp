@@ -22,7 +22,7 @@ namespace NavigationModule
                 return false;
             }
             outTime = NavigationUtils::PackedToTimeT(_gps.time.value(), _gps.date.value());
-            ESP_LOGD(_TAG, "Returning timestamp %d from GPS", outTime);
+            ESP_LOGD(_TAG, "Returning timestamp %ld from GPS", (long)outTime);
             return true;
         }
 

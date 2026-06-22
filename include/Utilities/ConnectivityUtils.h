@@ -168,7 +168,7 @@ namespace ConnectivityModule
 
         static void ProcessSettings(JsonDocument &doc)
         {
-            if (doc.containsKey("WiFi Provisioning"))
+            if (!doc["WiFi Provisioning"].isNull())
             {
                 auto mode = doc["WiFi Provisioning"].as<int>();
                 if (mode >= WIFI_PROV_MODE_NONE && mode <= WIFI_PROV_MODE_TEMP_AP)

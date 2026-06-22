@@ -21,8 +21,6 @@
 #include "esp_rom_crc.h"
 #include "esp_log.h"
 
-#include "FilesystemUtils.h"
-#include "Bluetooth_Utils.h"
 #include "VersionUtils.h"
 #include "SettingsInterface.hpp"
 
@@ -391,11 +389,6 @@ namespace SystemModule
         }
 
         // ---------------------------------------------------------------------
-        // Bluetooth functionality
-        // ---------------------------------------------------------------------
-        static void initBluetooth();
-
-        // ---------------------------------------------------------------------
         // WiFi functionality
         // ---------------------------------------------------------------------
         // TODO: kill this
@@ -571,14 +564,14 @@ namespace SystemModule
             serializeJsonPretty(doc, buf);
             ESP_LOGV(TAG, "UploadOtaChunkRpc packet: %s", buf.c_str());
 
-            if (!doc.containsKey("chunk")) {
+            if (doc["chunk"].isNull()) {
                 doc.clear();
                 doc["error"] = "Missing or invalid 'chunk'";
                 return;
             }
             auto b64 = doc["chunk"].as<std::string>();
 
-            if (!doc.containsKey("checksum")) {
+            if (doc["checksum"].isNull()) {
                 doc.clear();
                 doc["error"] = "Missing or invalid 'checksum'";
                 return;
@@ -724,28 +717,28 @@ namespace SystemModule
 
         static void UpdateSettings(JsonDocument &settings)
         {
-            if (settings.containsKey("UserID"))
+            if (!settings["UserID"].isNull())
             {
                 DeviceID = 0 | settings["UserID"].as<int>();
             }
 
-            if (settings.containsKey("Device Name"))
+            if (!settings["Device Name"].isNull())
             {
                 DeviceName = settings["Device Name"].as<std::string>();
             }
 
-            if (settings.containsKey("Silent Mode"))
+            if (!settings["Silent Mode"].isNull())
             {
                 silentMode = settings["Silent Mode"].as<bool>();
                 ESP_LOGI(TAG, "Assigning silentMode %d", silentMode);
             }
 
-            if (settings.containsKey("24H Time"))
+            if (!settings["24H Time"].isNull())
             {
                 time24Hour = settings["24H Time"].as<bool>();
             }
 
-            if (settings.containsKey("Timezone"))
+            if (!settings["Timezone"].isNull())
             {
                 const char* posix = _PosixForTimezone(settings["Timezone"].as<int>());
                 LocalTimezone().setPosix(posix);

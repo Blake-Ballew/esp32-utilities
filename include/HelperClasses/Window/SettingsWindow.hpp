@@ -33,7 +33,7 @@ namespace DisplayModule
                 {
                     const auto selType = _settingsState->getSelectionType();
 
-                    ESP_LOGI(TAG, "BUTTON_4 pressed in SettingsWindow; selection type = %s", selType);
+                    ESP_LOGI(TAG, "BUTTON_4 pressed in SettingsWindow; selection type = %s", selType.c_str());
 
                     // Leaf node: state builds the payload, window does the push
                     StateTransferData d = _settingsState->buildExitData(ctx.inputID);

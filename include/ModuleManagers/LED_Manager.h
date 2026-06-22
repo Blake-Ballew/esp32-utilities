@@ -3,12 +3,10 @@
 #include <FastLED.h>
 #include "ButtonFlash.hpp"
 #include "LED_Utils.h"
-// #include "Display_Utils.h"
 #include "DisplayUtilities.hpp"
 #include <utility>
 #include <vector>
 
-#define NUM_COMPASS_LEDS 16
 #define LED_MS_PER_FRAME 50
 
 #if HARDWARE_VERSION < 3
@@ -18,58 +16,74 @@
 #define HAPTIC_VIBRATION_PIN 6
 #endif
 
-/*
-LED Mappings:
-0-15: compass ring
-16: SOS button
-17: Button 4
-18: Button 3
-19: Button 2
-20: Encoder up
-21: Encoder down
-22: Button 1
-23-29: Flashlight
-*/
-
+// LED animation/rendering lives in the LedPatternInterface registry driven by
+// LED_Utils (RingPoint, RingPulse, SolidRing, ScrollWheel, Flashlight, ...).
+// LED_Manager is only responsible for bootstrapping FastLED + the pattern task
+// and for the discrete hardware outputs (buzzer, haptic motor).
 class LED_Manager
 {
 public:
-    static void init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore);
-    static CRGB *leds;
+    inline static CRGB *leds = nullptr;
 
-    static void pointNorth(int Azimuth);
-    static void pointToHeading(int Azimuth, double heading, double distanceAway, uint8_t r, uint8_t g, uint8_t b);
-    static void lightRing(uint8_t r, uint8_t g, uint8_t b);
-    static void clearRing();
-    static void toggleFlashlight();
-    static void buzzerNotification(uint16_t frequency = 1000, size_t duration = 100);
-    static void ledShutdownAnimation();
+    static void init(size_t numLeds, CRGB *ledBuffer, uint8_t cpuCore)
+    {
+        ESP_LOGI(TAG, "LED_Manager::init");
+        leds = ledBuffer;
 
-    static void displayScrollWheel(size_t currentIdx, size_t listSize);
+        ESP_LOGI(TAG, "Initializing FastLED with %d LEDs", numLeds);
 
-    static void pulseButton(uint8_t buttonNumber);
+        FastLED.setBrightness(255);
+        FastLED.clear();
+        FastLED.show();
 
-    static void pulseCircle(uint8_t r, uint8_t g, uint8_t b, size_t tick);
+        ESP_LOGI(TAG, "Starting LED pattern task on CPU core %d", cpuCore);
 
-    static void applyHapticFeedback(uint8_t intensity);
+        int patternTaskID = System_Utils::registerTask(LED_Utils::iteratePatterns, "LED Task", 4096, NULL, 1, cpuCore);
+        LED_Utils::SetIteratePatternTaskHandle(System_Utils::getTask(patternTaskID));
+
+        LED_Utils::setTickRate(LED_MS_PER_FRAME);
+
+        LedPatternInterface::SetThemeColor(LED_Utils::ThemeColor());
+    }
+
+    static void buzzerNotification(uint16_t frequency = 1000, size_t duration = 100)
+    {
+        tone(BUZZER_PIN, frequency, duration);
+    }
+
+    static void applyHapticFeedback(uint8_t intensity)
+    {
+#if HARDWARE_VERSION >= 3
+        static constexpr TickType_t HAPTIC_MS = 80;
+
+        // Constant drive for HAPTIC_MS, then off — same strong pulse as the old
+        // blocking delay(80), but the turn-off is scheduled on a one-shot timer so
+        // the caller (the render loop) keeps running instead of stalling 80 ms per
+        // input. Re-firing mid-pulse just restarts the window from the latest input.
+        analogWrite(HAPTIC_VIBRATION_PIN, intensity);
+
+        if (hapticTimer == nullptr)
+        {
+            hapticTimer = xTimerCreateStatic(
+                "haptic", HAPTIC_MS / portTICK_PERIOD_MS, pdFALSE, nullptr,
+                hapticOff, &hapticTimerBuffer);
+        }
+        xTimerReset(hapticTimer, 0);
+#endif
+    }
 
 private:
-    static bool flashlightOn;
-    static int patternTaskID;
-    static TimerHandle_t patternTimer;
-    static StaticTimer_t patternTimerBuffer;
-
     // One-shot timer that switches the haptic motor off, so applyHapticFeedback()
     // never blocks the calling task (e.g. the display/render loop).
-    static TimerHandle_t hapticTimer;
-    static StaticTimer_t hapticTimerBuffer;
-    static void hapticOff(TimerHandle_t xTimer);
+    inline static TimerHandle_t hapticTimer = nullptr;
+    inline static StaticTimer_t hapticTimerBuffer;
 
-    static int buttonFlashPatternID;
-
-    static uint8_t r, g, b;
-
-    static void updatePattern(TimerHandle_t xTimer);
-
-    static void interpolateLEDsDegrees(double deg, double distanceAway, uint8_t r, uint8_t g, uint8_t b);
+    // Timer callback: runs in the FreeRTOS timer service (Tmr Svc) daemon, not the
+    // caller's task, so turning the motor off costs the display/render loop nothing.
+    static void hapticOff(TimerHandle_t)
+    {
+#if HARDWARE_VERSION >= 3
+        analogWrite(HAPTIC_VIBRATION_PIN, 0);
+#endif
+    }
 };

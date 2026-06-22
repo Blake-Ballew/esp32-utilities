@@ -23,9 +23,11 @@ public:
         startTime = 0;
     }
 
+    virtual ~LedPatternInterface() = default;
+
     // Used to pass custom parameters to the pattern
     // This function will typically follow the pattern of:
-    // if (config.containsKey("key")) { key = config["key"]; }
+    // if (!config["key"].isNull()) { key = config["key"]; }
     virtual void configurePattern(JsonDocument &config) {}
 
     // Called to reset the pattern to its initial state
@@ -52,6 +54,20 @@ public:
     // Some animations only have one frame and will only be called here
     // Returns true if the last frame of the loop has played
     virtual bool iterateFrame() { return true; }
+
+    // Plays a pattern to completion synchronously, blocking the caller. Used for
+    // sequences that must finish before the asynchronous LED task can run them --
+    // e.g. a shutdown animation that plays right before power is cut.
+    static void PlayBlocking(LedPatternInterface &pattern)
+    {
+        pattern.resetPattern();
+        while (!pattern.iterateFrame())
+        {
+            FastLED.show();
+            delay(_MsPerTick());
+        }
+        FastLED.show();
+    }
 
     // Clears the segment and resets animation state
     virtual void clearPattern() {

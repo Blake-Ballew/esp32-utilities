@@ -351,7 +351,7 @@ namespace NavigationModule
         {
             JsonArray locationArray;
 
-            if (doc.containsKey("Locations"))
+            if (!doc["Locations"].isNull())
             {
                 locationArray = doc["Locations"].as<JsonArray>();
             }
@@ -391,7 +391,7 @@ namespace NavigationModule
         // RPC
         static void RpcAddSavedLocation(JsonDocument& doc)
         {
-            if (doc.containsKey("Name") && doc.containsKey("Lat") && doc.containsKey("Lng"))
+            if (!doc["Name"].isNull() && !doc["Lat"].isNull() && !doc["Lng"].isNull())
             {
                 SavedLocation location;
                 location.Name = doc["Name"].as<std::string>();
@@ -405,7 +405,7 @@ namespace NavigationModule
 
         static void RpcAddSavedLocations(JsonDocument& doc)
         {
-            if (doc.containsKey("Locations"))
+            if (!doc["Locations"].isNull())
             {
                 auto locations = doc["Locations"].as<JsonArray>();
                 for (auto location : locations)
@@ -427,7 +427,7 @@ namespace NavigationModule
         {
             bool success = false;
 
-            if (doc.containsKey("Idx"))
+            if (!doc["Idx"].isNull())
             {
                 auto idx = doc["Idx"].as<int>();
                 if (idx >= 0 && idx < (int)_SavedLocations().size())
@@ -452,8 +452,8 @@ namespace NavigationModule
         {
             bool success = false;
 
-            if (doc.containsKey("Idx") && doc.containsKey("Name") &&
-                doc.containsKey("Lat") && doc.containsKey("Lng"))
+            if (!doc["Idx"].isNull() && !doc["Name"].isNull() &&
+                !doc["Lat"].isNull() && !doc["Lng"].isNull())
             {
                 auto idx = doc["Idx"].as<int>();
                 if (idx >= 0 && idx < (int)_SavedLocations().size())
@@ -474,7 +474,7 @@ namespace NavigationModule
 
         static void RpcGetSavedLocation(JsonDocument& doc)
         {
-            if (doc.containsKey("Idx"))
+            if (!doc["Idx"].isNull())
             {
                 auto idx = doc["Idx"].as<int>();
                 doc.clear();

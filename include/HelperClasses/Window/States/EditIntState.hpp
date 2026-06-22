@@ -68,15 +68,15 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("signed"))
+                if (!doc["signed"].isNull())
                     _isSigned = doc["signed"].as<bool>();
-                if (doc.containsKey("cfgVal"))
+                if (!doc["cfgVal"].isNull())
                     _value = doc["cfgVal"].as<int32_t>();
-                if (doc.containsKey("minVal"))
+                if (!doc["minVal"].isNull())
                     _min = doc["minVal"].as<int32_t>();
-                if (doc.containsKey("maxVal"))
+                if (!doc["maxVal"].isNull())
                     _max = doc["maxVal"].as<int32_t>();
-                if (doc.containsKey("incVal"))
+                if (!doc["incVal"].isNull())
                     _step = doc["incVal"].as<int32_t>();
             }
 

@@ -65,10 +65,10 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("cfgVal")) _value = doc["cfgVal"].as<float>();
-                if (doc.containsKey("minVal")) _min   = doc["minVal"].as<float>();
-                if (doc.containsKey("maxVal")) _max   = doc["maxVal"].as<float>();
-                if (doc.containsKey("incVal")) _step  = doc["incVal"].as<float>();
+                if (!doc["cfgVal"].isNull()) _value = doc["cfgVal"].as<float>();
+                if (!doc["minVal"].isNull()) _min   = doc["minVal"].as<float>();
+                if (!doc["maxVal"].isNull()) _max   = doc["maxVal"].as<float>();
+                if (!doc["incVal"].isNull()) _step  = doc["incVal"].as<float>();
             }
 
             _clamp();

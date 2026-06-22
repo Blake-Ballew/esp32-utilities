@@ -19,9 +19,9 @@ namespace FilesystemModule
 
     bool canConvertFromJson(JsonVariantConst src, const SettingsObjectInterface&)
     {
-        if (src.containsKey(SETTINGS_OBJECT_CONFIG_TYPE) &&
-            src.containsKey(SETTINGS_OBJECT_CONFIG_VALUE) &&
-            src.containsKey(SETTINGS_OBJECT_DEFAULT_VALUE))
+        if (!src[SETTINGS_OBJECT_CONFIG_TYPE].isNull() &&
+            !src[SETTINGS_OBJECT_CONFIG_VALUE].isNull() &&
+            !src[SETTINGS_OBJECT_DEFAULT_VALUE].isNull())
         {
             return true;
         }

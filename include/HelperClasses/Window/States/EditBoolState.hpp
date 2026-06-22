@@ -51,7 +51,7 @@ namespace DisplayModule
                      data.payload ? data.payload->as<std::string>().c_str() : "null");
             _value = false;
 
-            if (data.payload && data.payload->containsKey("cfgVal"))
+            if (data.payload && !(*data.payload)["cfgVal"].isNull())
                 _value = (*data.payload)["cfgVal"].as<bool>();
 
             _rebuildDrawCommands();

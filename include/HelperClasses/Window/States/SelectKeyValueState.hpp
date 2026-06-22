@@ -95,10 +95,10 @@ namespace DisplayModule
             {
                 auto &doc = *data.payload;
 
-                if (doc.containsKey("prompt"))
+                if (!doc["prompt"].isNull())
                     _prompt = doc["prompt"].as<std::string>();
 
-                if (doc.containsKey("items"))
+                if (!doc["items"].isNull())
                 {
                     _items.clear();
                     for (auto item : doc["items"].as<ArduinoJson::JsonArray>())

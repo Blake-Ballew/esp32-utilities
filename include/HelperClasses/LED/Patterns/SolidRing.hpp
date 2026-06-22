@@ -18,17 +18,17 @@ public:
 
     void configurePattern(JsonDocument &config)
     {
-        if (config.containsKey("rOverride"))
+        if (!config["rOverride"].isNull())
         {
             rOverride = config["rOverride"];
         }
 
-        if (config.containsKey("gOverride"))
+        if (!config["gOverride"].isNull())
         {
             gOverride = config["gOverride"];
         }
 
-        if (config.containsKey("bOverride"))
+        if (!config["bOverride"].isNull())
         {
             bOverride = config["bOverride"];
         }

@@ -59,13 +59,13 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("lat")) _targetLat = doc["lat"].as<double>();
-                if (doc.containsKey("lon")) _targetLon = doc["lon"].as<double>();
-                if (doc.containsKey("color_R")) _colorR = doc["color_R"].as<uint8_t>();
-                if (doc.containsKey("color_G")) _colorG = doc["color_G"].as<uint8_t>();
-                if (doc.containsKey("color_B")) _colorB = doc["color_B"].as<uint8_t>();
+                if (!doc["lat"].isNull()) _targetLat = doc["lat"].as<double>();
+                if (!doc["lon"].isNull()) _targetLon = doc["lon"].as<double>();
+                if (!doc["color_R"].isNull()) _colorR = doc["color_R"].as<uint8_t>();
+                if (!doc["color_G"].isNull()) _colorG = doc["color_G"].as<uint8_t>();
+                if (!doc["color_B"].isNull()) _colorB = doc["color_B"].as<uint8_t>();
 
-                if (doc.containsKey("displayTxt") && doc["displayTxt"].is<ArduinoJson::JsonArray>())
+                if (!doc["displayTxt"].isNull() && doc["displayTxt"].is<ArduinoJson::JsonArray>())
                 {
                     for (auto txt : doc["displayTxt"].as<ArduinoJson::JsonArrayConst>())
                         _headerLines.push_back(txt.as<std::string>());
