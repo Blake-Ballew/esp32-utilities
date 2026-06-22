@@ -18,6 +18,15 @@ public:
         _callbacks.push_back(std::move(callback));
     }
 
+    // Registers a callback that runs before all previously- and later-registered
+    // callbacks (it is inserted at the front of the invocation order). Use when
+    // one subscriber must act first -- e.g. playing a shutdown animation before
+    // another subscriber cuts power.
+    void PushFront(CallbackType callback)
+    {
+        _callbacks.insert(_callbacks.begin(), std::move(callback));
+    }
+
     // -= for function pointers (finds by comparing underlying pointer)
     void operator-=(FunctionPtr callback)
     {

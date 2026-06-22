@@ -321,7 +321,7 @@ namespace LoraModule
 
         static void UpdateSettings(JsonDocument& settings)
         {
-            if (settings.containsKey(SETTING_LORA_PASSWORD))
+            if (!settings[SETTING_LORA_PASSWORD].isNull())
             {
                 const std::string pw = settings[SETTING_LORA_PASSWORD].as<std::string>();
                 EncryptionEnabled() = !pw.empty();

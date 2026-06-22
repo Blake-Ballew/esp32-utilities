@@ -107,7 +107,7 @@ namespace ConnectivityModule
 
             if (err != DeserializationError::Ok)
             {
-                ESP_LOGE(TAG, "Error deserializing RPC packet: %d", err);
+                ESP_LOGE(TAG, "Error deserializing RPC packet: %s", err.c_str());
                 return false;
             }
 

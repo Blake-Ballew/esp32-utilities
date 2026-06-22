@@ -64,7 +64,7 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("Messages")
+                if (!doc["Messages"].isNull()
                     && doc["Messages"].is<ArduinoJson::JsonArray>())
                 {
                     for (auto msg : doc["Messages"].as<ArduinoJson::JsonArrayConst>())

@@ -83,14 +83,14 @@ namespace DisplayModule
             {
                 auto &doc = *data.payload;
 
-                if (doc.containsKey("valTxt"))
+                if (!doc["valTxt"].isNull())
                 {
                     _options.clear();
                     for (auto txt : doc["valTxt"].as<ArduinoJson::JsonArray>())
                         _options.push_back(txt.as<std::string>());
                 }
 
-                if (doc.containsKey("cfgVal"))
+                if (!doc["cfgVal"].isNull())
                 {
                     size_t idx = doc["cfgVal"].as<size_t>();
                     _index = (idx < _options.size()) ? idx : 0;

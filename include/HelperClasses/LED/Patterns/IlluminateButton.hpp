@@ -27,11 +27,11 @@ public:
 
     void configurePattern(JsonDocument &config)
     {
-        if (config.containsKey("inputStates"))
+        if (!config["inputStates"].isNull())
         {
             for (auto kvp : config["inputStates"].as<JsonArray>())
             {
-                if (kvp.containsKey("input") && kvp.containsKey("state"))
+                if (!kvp["input"].isNull() && !kvp["state"].isNull())
                 {
                     _inputIdState[kvp["input"]] = kvp["state"];
                 }

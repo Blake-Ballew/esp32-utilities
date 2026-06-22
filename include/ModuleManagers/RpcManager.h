@@ -65,7 +65,7 @@ namespace RpcModule
                         serializeJson(rpcPayload, buf);
                         ESP_LOGI(TAG, "MsgPack found on channel %d: %s", channelID, buf.c_str());
 
-                        if (rpcPayload.containsKey(Utilities::RPC_FUNCTION_NAME_FIELD())) 
+                        if (!rpcPayload[Utilities::RPC_FUNCTION_NAME_FIELD()].isNull()) 
                         {
                             auto result = Utilities::CallRpc(rpcPayload[Utilities::RPC_FUNCTION_NAME_FIELD()].as<std::string>(), rpcPayload);
 
@@ -140,7 +140,7 @@ namespace RpcModule
                     return;
                 }
 
-                if (!doc.as<JsonObject>().containsKey(RpcModule::Utilities::RPC_FUNCTION_NAME_FIELD()))
+                if (doc.as<JsonObject>()[RpcModule::Utilities::RPC_FUNCTION_NAME_FIELD()].isNull())
                 {
                     request->send(404, "text/plain", "Packet does not contain function name");
                     return;

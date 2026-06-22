@@ -249,7 +249,7 @@ namespace FilesystemModule
         {
             bool success = true;
 
-            if (doc.containsKey("Settings") && doc["Settings"].is<JsonArray>())
+            if (!doc["Settings"].isNull() && doc["Settings"].is<JsonArray>())
             {
                 SettingsPreference().begin(SettingsInterface::preference_namespace, false);
                 Preferences& prefs = SettingsPreference();

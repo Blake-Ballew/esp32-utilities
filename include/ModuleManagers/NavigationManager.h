@@ -3,6 +3,7 @@
 #include "CompassInterface.h"
 #include "TinyGPS++.h"
 #include "NavigationUtils.h"
+#include "FilesystemUtils.h"
 
 namespace
 {

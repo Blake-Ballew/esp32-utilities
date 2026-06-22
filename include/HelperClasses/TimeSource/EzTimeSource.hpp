@@ -13,7 +13,7 @@ public:
             return false; 
         }
         outTime = UTC.now();
-        ESP_LOGI(_TAG, "Returning timestamp %d from EzTime dead reckoning", outTime);
+        ESP_LOGI(_TAG, "Returning timestamp %ld from EzTime dead reckoning", (long)outTime);
         return true;
     }
 

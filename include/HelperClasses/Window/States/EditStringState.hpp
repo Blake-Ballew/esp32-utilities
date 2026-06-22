@@ -94,9 +94,9 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("maxLen"))
+                if (!doc["maxLen"].isNull())
                     _maxLen = doc["maxLen"].as<size_t>();
-                if (doc.containsKey("cfgVal"))
+                if (!doc["cfgVal"].isNull())
                     _str = doc["cfgVal"].as<std::string>();
             }
 

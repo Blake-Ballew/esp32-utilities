@@ -18,12 +18,12 @@ public:
 
     void configurePattern(JsonDocument &config)
     {
-        if (config.containsKey("numItems"))
+        if (!config["numItems"].isNull())
         {
             numItems = config["numItems"];
         }
 
-        if (config.containsKey("currItem"))
+        if (!config["currItem"].isNull())
         {
             currItem = config["currItem"];
         }

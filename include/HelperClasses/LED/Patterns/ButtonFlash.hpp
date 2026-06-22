@@ -23,7 +23,7 @@ public:
 
     void configurePattern(JsonDocument &config)
     {
-        if (config.containsKey("inputID"))
+        if (!config["inputID"].isNull())
         {
             inputID = config["inputID"];
         }

@@ -69,7 +69,7 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("Locations")
+                if (!doc["Locations"].isNull()
                     && doc["Locations"].is<ArduinoJson::JsonArray>())
                 {
                     for (auto loc : doc["Locations"].as<ArduinoJson::JsonArrayConst>())
@@ -97,8 +97,10 @@ namespace DisplayModule
 
         void onExit() override
         {
+            // disablePattern() clears the pattern's own segment via the
+            // LedPatternInterface (pattern->clearPattern() -> _segment.clear()),
+            // so the state never needs to know which physical LEDs it used.
             LED_Utils::disablePattern(_scrollWheelID);
-            LED_Manager::clearRing();
             WindowState::onExit();
         }
 

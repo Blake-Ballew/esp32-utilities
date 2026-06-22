@@ -60,7 +60,7 @@ namespace DisplayModule
             if (data.payload)
             {
                 auto &doc = *data.payload;
-                if (doc.containsKey("confirmPrompt"))
+                if (!doc["confirmPrompt"].isNull())
                     _prompt = doc["confirmPrompt"].as<std::string>();
             }
 

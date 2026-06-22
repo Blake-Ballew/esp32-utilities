@@ -71,7 +71,7 @@ namespace DisplayModule
         void onEnter(const StateTransferData &data) override
         {
             // Payload overrides programmatic lines
-            if (data.payload && data.payload->containsKey("txtLines"))
+            if (data.payload && !(*data.payload)["txtLines"].isNull())
             {
                 _lines.clear();
                 uint16_t autoLine = 2; // default line counter for entries without explicit line
@@ -82,18 +82,18 @@ namespace DisplayModule
                     tdd.text = lineObj["text"].as<std::string>();
 
                     tdd.format.hAlign =
-                        lineObj.containsKey("HAlign")
+                        !lineObj["HAlign"].isNull()
                         ? static_cast<TextAlignH>(lineObj["HAlign"].as<int>())
                         : TextAlignH::CENTER;
 
                     tdd.format.vAlign =
-                        lineObj.containsKey("VAlign")
+                        !lineObj["VAlign"].isNull()
                         ? static_cast<TextAlignV>(lineObj["VAlign"].as<int>())
                         : TextAlignV::LINE;
 
                     if (tdd.format.vAlign == TextAlignV::LINE)
                     {
-                        tdd.format.line = lineObj.containsKey("Line")
+                        tdd.format.line = !lineObj["Line"].isNull()
                                           ? lineObj["Line"].as<uint16_t>()
                                           : autoLine;
                     }
@@ -113,7 +113,6 @@ namespace DisplayModule
         static std::shared_ptr<ArduinoJson::JsonDocument>
         buildPayload(const std::vector<TextDrawData> &lines)
         {
-            const size_t capacity = 64 + lines.size() * 128;
             auto doc = std::make_shared<ArduinoJson::JsonDocument>();
             auto arr = (*doc)["txtLines"].to<ArduinoJson::JsonArray>();
 
