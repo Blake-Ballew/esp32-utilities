@@ -103,7 +103,7 @@ namespace FilesystemModule
         }
 
         void loadFromPreferences(Preferences& prefs) override {
-            value = clamp(prefs.getInt(key.c_str(), default_value), min, max);
+            value = clamp((int)prefs.getInt(key.c_str(), default_value), min, max);
         }
 
         std::string getType() const override {

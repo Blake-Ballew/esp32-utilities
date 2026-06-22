@@ -131,7 +131,7 @@ namespace ConnectivityModule
             if (ProvisioningMode() == WIFI_PROV_MODE_ESP_NOW)
             {
                 ESP_LOGI(TAG, "Initializing ESP-NOW for WiFi Provisioning");
-                InitializeEspNow().Invoke(DataReceivedRpc, nullptr);
+                // InitializeEspNow().Invoke(DataReceivedRpc, nullptr);
             }
             else if (ProvisioningMode() == WIFI_PROV_MODE_TEMP_AP)
             {

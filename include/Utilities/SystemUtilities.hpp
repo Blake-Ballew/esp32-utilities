@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include <functional>
 #include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
-#include "Adafruit_SSD1306.h"
 #include "Adafruit_GFX.h"
 #include "ArduinoJson.h"
 #include "ArduinoOTA.h"
