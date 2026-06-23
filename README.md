@@ -14,19 +14,6 @@ project and is being progressively decoupled into a general-purpose toolkit.
 
 ---
 
-## Build
-
-| Task | Command |
-|---|---|
-| Build | `pio run` |
-| Clean | `pio run --target clean` |
-
-- **Framework:** PlatformIO + Arduino
-- **Target board:** `esp32dev` (env `esp32doit-devkit-v1`)
-- **Dependency resolution:** `lib_ldf_mode = deep`
-- Include paths for every `include/` and `src/` subdirectory are set explicitly in
-  [`platformio.ini`](platformio.ini) `build_flags`.
-
 ### Key dependencies
 
 | Library | Purpose |
