@@ -85,7 +85,7 @@ Utilities + Interfaces
 |---|---|
 | FastLED 3.6.0 | WS2812B LED control |
 | Adafruit SSD1306 + GFX | OLED display |
-| ArduinoJson 6.x | Settings, MessagePack serialization |
+| ArduinoJson 7.x | Settings, MessagePack serialization |
 | TinyGPSPlus | GPS NMEA parsing |
 | NimBLE-Arduino | Bluetooth LE |
 | ESPAsyncWebServer | WiFi web interface |
