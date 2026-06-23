@@ -34,8 +34,8 @@ project and is being progressively decoupled into a general-purpose toolkit.
 | FastLED | WS2812B / addressable LED control |
 | Adafruit GFX | OLED display |
 | ArduinoJson 7.x | Settings + MessagePack serialization (elastic `JsonDocument`) |
-| TinyGPSPlus | GPS NMEA parsing | Geolocation Interface |
-| Compass Interface |
+| TinyGPSPlus | GPS NMEA parsing (accessed via `GeolocationInterface`) |
+| Magnetometer / compass | App-supplied driver, accessed via `CompassInterface` |
 | ESPAsyncWebServer | WiFi web interface / RPC-over-HTTP |
 | NimBLE-Arduino | Bluetooth LE GATT server (RPC transport) |
 | ezTime | Time tracking / formatting |
@@ -79,8 +79,7 @@ its resource by integer ID) and the generic **`EventHandler<Args...>`** multicas
 
 ### 🚧 Ongoing refactor
 
-This is a **tech-debt branch**, and the codebase is mid-migration. You will see two generations of many
-components side by side:
+The codebase is **mid-migration**, so you will see two generations of many components side by side:
 
 | Legacy (being retired) | Current (preferred) |
 |---|---|
